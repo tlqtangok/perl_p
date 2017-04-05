@@ -1,6 +1,6 @@
 #!expect
 #####################
-set password IItask_0
+set password ___PW_IS_IItask_0_YES_OR_NO
 #####################
 
 set mname [lindex $argv 0]
