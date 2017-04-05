@@ -14,26 +14,26 @@ my $email_cmd =qq| mutt -a  _FILE_NAME_  -s 'see attachment: _FILE_NAME_'  -- EM
 
 
 if ( @filename_EMAIL_LIST == 0 || @filename_EMAIL_LIST == 1 ) {
-	print "- Usage:\n\tmail2 ~/txt.txt 'linqi\@synopsys.com'\n"; 
+	print "- Usage:\n\tmail2 ~/txt.txt 'linqi\@SNPSCOM'\n"; 
 	exit(1); 
 }
 elsif ( !(-e @filename_EMAIL_LIST[0]) ){
 	print "- @filename_EMAIL_LIST[0] not exists!\n"; 
-	print "- Usage:\n\tmail2 ~/txt.txt 'linqi\@synopsys.com'\n"; 
+	print "- Usage:\n\tmail2 ~/txt.txt 'linqi\@SNPSCOM'\n"; 
 	exit(2);
 }
 
 my %hash_email = (
-	linqi => "linqi\@synopsys.com",
-	jd => "linqi\@synopsys.com",
-	jidor => "linqi\@synopsys.com",
-	jt => "lyou\@synopsys.com",
-	yl => "yunluz\@synopsys.com",
-	hf => "haifeng\@synopsys.com",
-	ll => "heli\@synopsys.com",
-	ir => "iphiron\@synopsys.com",
-	mt => "miteshsi\@synopsys.com",
-	tm => "thuymain\@synopsys.com",
+	linqi => "linqi\@SNPSCOM",
+	jd => "linqi\@SNPSCOM",
+	jidor => "linqi\@SNPSCOM",
+	jt => "lyou\@SNPSCOM",
+	yl => "yunluz\@SNPSCOM",
+	hf => "haifeng\@SNPSCOM",
+	ll => "heli\@SNPSCOM",
+	ir => "iphiron\@SNPSCOM",
+	mt => "miteshsi\@SNPSCOM",
+	tm => "thuymain\@SNPSCOM",
 );
 
 
