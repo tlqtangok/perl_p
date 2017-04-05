@@ -1,0 +1,91 @@
+:: clean up ::
+
+### README of $perl_p ###
+
+# diff ia file R1 , R0 :
+cd $USER_INSTALL_DIR 
+	perl $perl_p/diff_ia_folder_R1_R0.PL `pwd` $ia_p/archi*/src/2015.03/linux/ARChitect	  # win32
+	perl $perl_p/diff_ia_folder_R1_R0.PL `pwd` $prepkg/mw_devkit_v2015.03/linux  #for mw , _xxx_/windows
+	perl $perl_p/diff_ia_folder_R1_R0.PL `pwd` /remote/arc/prepkg/mw_devkit_v2015.03/mw_lite # for mwlite
+	perl $perl_p/diff_ia_folder_R1_R0.PL `pwd`  /slowfs/us01dwslow025/nsim_builds/nsim_2015.12_engbuild_004/Linux	  # Windows
+# upload installer XML scripts to p4 depot 
+    bash $perl_p/archi_mwdt_mqx_installer_upload_p4_depot.sh -d des_upload_archi_script -T archi # -T, target; -d , description
+# upload to arcprojects for archi, to get the MSG:
+    perl $perl_p/archi_rel_to_arcprojects_msg.PL K-2015.09-SP1-RC3
+        [call] need upload_archi_msg_R0.txt as source of info
+# auto_create_makefile for many files:
+    alias perl_create_makefile=' perl $perl_p/.auto_create_makefile.PL > Makefile && echo "create Makefile and [make all] " && make all '
+	[CALL] .auto_makefile.txt as templ
+# cp_to_bak.sh
+    cp_to_bak a.txt
+# from unix path to win path
+    sh cygpath_aw.sh /cygdrive/c/arc/soft
+# my Jidor_pm, subst_file,
+    cat $perl_p/header_Jidor_pm.PL > _perl.PL    # header_Jidor_pm.PL    Jidor.pm
+# run bat file from cygwin :
+    run_bat txt.bat        #alias run_bat='sh $perl_p/run_bat.sh '  
+# install archi, set its run env :
+    pushd /SCRATCH/ARC/ARChitect_docs_RC4 && 
+	sh $perl_p/set_run_archi_env.sh 
+# b_club_list_OK.PL, used to get b_club data
+
+
+#--- MQX project from mqx2.60->mqx2.61 ---#
+. cd to $mqx_old/, then:  
+  > sh $perl_p/mqx_stage_release.sh `pwd` mqx2.61
+  mqx_stage_release.sh    # del unneed file, set permission,cp docs...
+
+. cd $mqx_p/mqx2.61, then run subst: 
+  > find_by_name '*'|perl $perl_p/mqx_dir_mqx2.60_to_mqx2.61.PL   ;   
+   # set new_mqx_ver = MQX_ROOT;  self-clean up all bak Recrusively, rm runing-*sh , 
+
+. cd to mqx2.61/build
+  > perl $perl_p/lnk_mqx_wd_change.PL  # config all .lnk file
+  > sh $perl_p/mqx_run_all_makefile_in_bat.sh -b -c -s  # check makefile pure .PHONY and rm bak.makefile, 
+   b): add [ make -f xx_makefile ] in bat	;
+   c): add [ make -f xx_makefile clean ] in bat	;
+   s): save all_makefile_run.bat file		; 
+	[CALL] perl_mqx_config em    # get all a6|a7|em|hs config--> 4 makefile
+	       perl $perl_p/mqx_makefile_auto_config.PL em # config makefile and verify ;
+	[CALL] sh run_bat.sh all_makefile_run.bat  #need all the files 755 permission ; 
+
+
+---compare hs template---
+1. perl Configure.PL => .ARChitect2*_OK.PL => generate dir_hs_cmp , dir_*... ,  vim Configure to set ARGV[ ] ; 
+            [CALL]  arch_bat/all_bat.bat 
+            [CALL]  .mv_bld_p.PL 
+            [CALL]  .cmp_ver0_cmp_ver_0_ver_1.PL 
+                [CALL]  .perl_DIR0_DIR1_HTML.PL 
+
+PS: perl .ARChitect2_bat_hs_em_700_600_OK.PL  ===> all arch_bat/*.bat, then called by dir_hs/hs_bat.bat 
+
+>auto_create_make.PL : used for create makefile in any direction by : perl_create_makefile
+
+uninstall old architect , install new architect version ;
+assure archtect2 version , record version = _201403_SP1_eng4 ;
+assure all_em.bat all_600.bat all_700.bat, view all em=5, 600=11, 700=9;
+
+cmd.exe >all_em.bat -> get project named with template,with no suffix;
+edit mv_bld*.PL , update version -> perl mv_bld*.PL em , get rename projects;
+edit em_vs_* .PL , change version0 and version1 -> perl em_vs*.PL ;
+check the em *.html in $hs_p/Diff*
+
+cmd.exe >all_700.bat -> get project named with template,with no suffix;
+cat mv_bld*.PL to see updated version -> perl mv_bld*.PL 700, get rename projects;
+edit 600_vs_* .PL , change version0 and version1 -> perl em_vs*.PL ;
+check the 700 *.html in $hs_p/Diff*
+
+cmd.exe >all_600.bat -> get project named with template,with no suffix;
+cat mv_bld*.PL to see updated version -> perl mv_bld*.PL 600, get rename projects;
+edit 600_vs_* .PL , change version0 and version1 -> perl em_vs*.PL ;
+check the 600 *.html in $hs_p/Diff*
+
+
+to HS No.=8 :
+to em NO.=5 :
+to 600 NO. =11:
+to 700 No.=9:
+---
+
+
+

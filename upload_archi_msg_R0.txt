@@ -1,0 +1,22 @@
+------ Engneer ------
+version:
+    I-2014.03-SP2-RC4
+CCList:
+    <linqi>
+Comments:
+    <Version I-2014.03-SP2-RC4>
+STARS:
+    <Star List>
+Source:
+    /slowfs/us01dwslow025/arc_test/linqi/installer_rel/archi_rel/I-2014.03-SP2-RC4/
+
+------ Media pkg ------
+Version:
+    I-2014.03-SP2-RC4
+Comments:
+    <Version I-2014.03-SP2-RC4>
+create-List:
+    /slowfs/us01dwslow025/arc_test/linqi/installer_rel/archi_rel/I-2014.03-SP2-RC4/ARChitect_I-2014.03-SP2_setupLinuxI386.bin
+    /slowfs/us01dwslow025/arc_test/linqi/installer_rel/archi_rel/I-2014.03-SP2-RC4/ARChitect_I-2014.03-SP2_setupWin32I386.exe
+    /slowfs/us01dwslow025/arc_test/linqi/installer_rel/archi_rel/I-2014.03-SP2-RC4/ARChitect_ReleaseNotes.pdf
+    /slowfs/us01dwslow025/arc_test/linqi/installer_rel/archi_rel/I-2014.03-SP2-RC4/ARChitectTools_Bookshelf_pdf.zip

@@ -1,0 +1,19 @@
+#!expect
+#####################
+set password IItask_0
+#####################
+
+set mname [lindex $argv 0]
+if {"$mname" == ""} {set mname "arcdev4"}
+
+spawn -noecho ssh -X $mname
+
+
+
+expect {
+    -re "^.*password.*$" { send "$password\n" }
+}
+
+interact 
+
+

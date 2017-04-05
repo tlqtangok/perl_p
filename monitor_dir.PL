@@ -1,0 +1,148 @@
+#!perl
+
+
+#
+##
+###
+# this script can use to monitor a dir for events.
+# if events happen, then trigger a specific callback.
+# written by Jidor Tang<linqi@synopys.com> at 2016.10.13
+###
+##
+#
+
+
+
+### global var ###
+my $dir_of_changlist_set = @ARGV? @ARGV[0] : '/slowfs/us01dwslow025/mide/IDE_BUILD_RELEASES' ; 
+my $dst_dir = '/slowfs/us01dwslow025/mide/ide_chglist_bld'; 
+my $dir_of_submit_set = 
+my $dir_to_monitor = ""; 
+my $str_r0 = "";  # old dir files
+my $str_r1 = "";  # new dir files
+my $submit_list = ""; 
+my $DEBUG = 0 ; 
+##################
+
+
+### main ###
+#use constant POLL_SECOND => 8*60 ;
+use constant POLL_SECOND => 1*60 ;
+#use constant WAIT_BLD_SECOND => 5*60 ; 
+use constant WAIT_BLD_SECOND => 1*60 ; 
+
+#use constant POLL_SECOND => 1 ;
+#use constant WAIT_BLD_SECOND => 1*60 ; 
+
+$dir_to_monitor = (@ARGV? @ARGV[0]	: $dir_of_changlist_set); 
+($str_r0, $submit_list ) = &readdir_m(); 
+
+while ( 1 ){
+	sleep( POLL_SECOND ); 	# sleep xxx seconds
+
+	( $str_r1, $submit_list ) = &readdir_m(); 
+
+	if ( $str_r0  eq $str_r1 ) {
+		print "- no submit of ide\n"   if $DEBUG  ; 
+	}
+	else {
+		&do_log(); 
+		sleep( WAIT_BLD_SECOND ); 
+		last; 
+	}
+
+
+
+}
+# break out 
+
+
+# copy ide from $dir_of_changlist_set/$submit_list ; 
+&do_copy(); 
+#&do_run_qft_mide(); 
+
+### end main ###
+
+
+
+
+
+
+### sub list ###
+sub do_run_qft_mide(){
+
+
+
+}
+
+sub readdir_m(){
+	my @ls_dir_m = `ls -th $dir_to_monitor`;
+	@ls_dir_m = grep m/\d{7,9}_\w/, @ls_dir_m; 	
+	my $submit_list = @ls_dir_m[0]; 
+	chomp ( $submit_list );
+
+	my $filename = __FILE__; 
+#	if ($submit_list =~ m/\d{7,9}_\w/ ){}
+#	else{ die "- die $filename, because latest changed folder name no match \$\{changelist\}_\$\{uid\} !\n "; }
+
+	return ("@ls_dir_m", $submit_list); 
+
+}
+
+sub do_copy (){
+	print "- copy ide from $dir_of_changlist_set/$submit_list/ to $dst_dir/$submit_list/ide/eclipse " ; 
+	my $id_cmd_cp_templ_to_changlist_dir =  " cp -r $dst_dir/chglistxxx_uidxxx $dst_dir/$submit_list "  ; 
+	my $id_cmd_cp_changelist_eclipse =   " cp -r $dir_of_changlist_set/$submit_list/products/com.arc.ide/linux/gtk/x86 $dst_dir/$submit_list/ide/eclipse " ;
+
+
+	# cp templ 
+	print "- run: $id_cmd_cp_templ_to_changlist_dir\n" if $DEBUG ; 
+	system( $id_cmd_cp_templ_to_changlist_dir ) ; 
+	
+	# cp eclipse folder 
+	# cp -r /slowfs/us01dwslow025/mide/IDE_BUILD_RELEASES/3731336_thuymain/products/com.arc.ide/linux/gtk/x86 /slowfs/us01dwslow025/mide/mide_changelist_builds/3731336_thuymain/ide/eclipse
+	print "- run: $id_cmd_cp_changelist_eclipse\n" if $DEBUG ; 
+	system ( $id_cmd_cp_changelist_eclipse ); 
+
+}
+
+sub get_timestamp(){
+	my $time_stamp = '$timestamp';
+	if ( $^O ne "MSWin32" ){
+		$time_stamp = `date "+%Y%m%d_%H%M"`;
+	}
+	elsif ( $^O eq "True"){
+		my ($second, $minute, $hour, $date, $month, $yearOffset, $dayOfWeek, $dayOfYear, $daylightSavings) = localtime();
+		# 17 16 20 24 7 116 3 236 1
+		# 2016-08-24 20:16
+
+		my $year = 1900 + $yearOffset;
+		$month = $month + 1 ;
+		$month = &add_zero_if_lt_10($month);
+		$date = &add_zero_if_lt_10($date);
+		$hour = &add_zero_if_lt_10($hour);
+		$minute = &add_zero_if_lt_10($minute);
+		$time_stamp = "$year$month${date}_${hour}$minute";
+	}
+
+	chomp( $time_stamp );
+	return $time_stamp;
+
+}
+
+sub do_log(){
+	my $timestamp = &get_timestamp(); 
+	print '- detect $submit_list:', "$submit_list at $timestamp\n" ; 
+	my $log_filename = "chglist_log.txt"; 
+	$log_filename = $dst_dir ."/". $log_filename; 
+	my $id_msg = "- $timestamp:$submit_list"; 
+	my $id_cmd_log = " echo $id_msg >> $log_filename ";
+	
+	my $ide_dst = "$dst_dir/$submit_list/ide";
+	my $perl_substi_statement = qq( perl -i.bak -pe 's|^(LATEST_MIDE \\= ).*|\\1$ide_dst|' glo.args ); 
+	$perl_substi_statement =~ s/\$ide_dst/$ide_dst/; 
+	
+	system( $id_cmd_log );
+	print $perl_substi_statement ,"\n"; 
+}
+

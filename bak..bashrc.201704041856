@@ -1,0 +1,484 @@
+#
+# $Id: sh.bashrc,v 1.5 2008/07/16 14:33:12 ids_cm Exp $
+#
+# NOTICE: This file is maintained by Synopsys IT, but has been developed
+#         by many Synopsys employees over the years.  If you discover a
+#         problem with this file, please send an e-mail to:
+#
+#         unix-help@synopsys.com
+#
+# For those who have contributed to this file, THANK YOU.
+#
+# This file will contain three sections.  You may opt out of the last
+# section by creating a $HOME/.modulesonly file.
+#
+# SECTION 1: Define aliases for environment management.  More information
+#            can be found at: http://adc/unix/shell_init.html#smart_path
+#
+# SECTION 2: Define and load Modules environment for /global/apps.
+#
+# SECTION 3: Define additional features, such as programmable completion,
+#            shell prompts, and more aliases.
+#
+# BEGIN SECTION 1
+
+# Define a function that will turn on debugging of this file if the
+# environment variable VERBOSE is set.
+#
+echo_v () {
+  if [ -n "${VERBOSE+X}" ]; then
+    echo $*
+  fi
+}
+echo_v Source etc/bashrc ...
+
+# Define a function that determines if a file is readable, and if it is,
+# source it.
+#
+source_r () {
+  if [ -r $1 ]; then
+    . $1
+  fi
+}
+
+# Define a function that sets and exports a variable.
+#
+setenv () {
+  eval $1=$2
+  export $1
+}
+
+# The second argument to preenv or extenv may be literal path, multiple paths
+# with : delimited.  Extra args (3rd and above) are ignored.
+#
+# The preenv function will prepend a value to a variable.
+# The extenv function will append a value to a variable.
+# The subenv function will remove a value from a variable. The second argument
+#    for subenv can be a regexp for sed.  Sed must be in $PATH.
+
+preenv () {
+  if eval test -n \"\${$1+X}\"; then
+    case `eval echo :\\$$1:`: in
+      :: ) eval $1=$2 ;;
+      *:$2:* ) ;;
+      * ) eval $1=$2:\$$1 ;;
+    esac
+  else
+    eval $1=$2
+  fi
+  export $1
+}
+
+extenv () {
+  if eval test -n \"\${$1+X}\"; then
+    case `eval echo :\\$$1:` in
+      :: ) eval $1=$2 ;;
+      *:$2:* ) ;;
+      * ) eval $1=\$$1:$2 ;;
+    esac
+  else
+    eval $1=$2
+  fi
+  export $1
+}
+
+subenv () {
+  if eval test -n \"\${$1+X}\"; then
+    eval $1="\`echo :\$$1: | sed 's|:$2:|:|; s|^:||; s|:\$||'\`"
+  fi
+}
+
+# END SECTION 1
+
+# BEGIN SECTION 2
+
+# Install Modules Environment
+setenv MODULESHOME /global/etc/modules/default
+setenv MODULES_RC /global/etc/modules/modulesrc
+setenv MODULES_PLATFORM `$MODULESHOME/bin/platform`
+#setenv MODULES_DEBUG 1
+
+if [ -n "$BASH" ]
+then
+  . $MODULESHOME/init/bash
+else
+  case "$SHELL" in
+    */ksh)
+      . $MODULESHOME/init/ksh
+      ;;
+    */sh)
+      . $MODULESHOME/init/sh
+      ;;
+  esac
+fi
+
+if type module > /dev/null; then
+  :
+else
+  echo "ERROR: etc/bashrc: Can't load Modules."
+  echo ""
+  exit 1
+fi
+
+preenv MANPATH $MODULESHOME/man
+
+# END SECTION 2
+
+# BEGIN SECTION 3
+
+# With the addition of sh and ksh support, echo-v and source-r had to be
+# changed to echo_v and source_r.  The following will add backward 
+# compatibility.
+#
+    if [ -x /usr/ucb/whoami ]
+    then
+      extenv PATH /usr/ucb
+    fi
+
+if [ ! -f "$HOME/.modulesonly" ]
+then
+
+  if [ -n "$BASH" ]
+  then
+    alias source-r=source_r
+    alias echo-v=echo_v
+  fi
+
+# For customer specific additions, source this file if it exists.
+# /global/cust_apps is unique from site to site.  This file should
+# be maintained jointly by IT and the BU.  Each BU should have a
+# unique /global/cust_apps.
+#
+  if [ -r /global/cust_apps/etc/sh.bashrc ]
+  then
+    . /global/cust_apps/etc/sh.bashrc
+  else
+    if [ -x /usr/ucb/whoami ]
+    then
+      extenv PATH /usr/ucb
+    fi
+  fi
+
+  if [ -d /global/cust_apps/modulefiles ]; then
+    module use /global/cust_apps/modulefiles
+  fi
+  
+
+  if [ -d /global/cust_apps_sgip001/modulefiles ] ; then
+    module use /global/cust_apps_sgip001/modulefiles 
+  fi
+
+  # Checks for BU stub files and adds appropriate module use 
+
+  if [ -r "$HOME/.wwas-modulefiles" ]; then
+    if [ -d /global/cust_apps_wwas/modulefiles ]; then
+       module use /global/cust_apps_wwas/modulefiles
+    fi
+  fi
+
+  if [ -r "$HOME/.sg-modulefiles" ]; then
+    if [ -d /global/cust_apps_sg/modulefiles ]; then
+       module use /global/cust_apps_sg/modulefiles
+    fi
+  fi
+
+  if [ -r "$HOME/.amsg1-modulefiles" ]; then
+    if [ -d /global/cust_apps_amsg1/modulefiles/eda ]; then
+       module use /global/cust_apps_amsg1/modulefiles/eda
+    fi  
+  fi 
+
+  extenv PATH .
+
+# Read user's personalized .bashrc
+#source_r ~/.bashrc.`logname`	# Real user ID
+  source_r ~/.bashrc.`whoami`	# Effective user ID
+
+echo_v Done etc/bashrc
+
+# END SECTION 3
+
+# BEGIN SECTION 4
+# Undo previous shell setup if modulesonly exists.
+
+else [ -f "$HOME/.modulesonly" ]
+  unset echo_v
+  unset source_r
+  unset setenv
+  unset preenv
+  unset subenv
+  unset extenv
+fi
+
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
+
+# If not running interactively, don't do anything
+[ -z "$PS1" ] && return
+
+# don't put duplicate lines in the history. See bash(1) for more options
+# don't overwrite GNU Midnight Commander's setting of `ignorespace'.
+export HISTCONTROL=$HISTCONTROL${HISTCONTROL+,}ignoredups
+# ... or force ignoredups and ignorespace
+export HISTCONTROL=ignoreboth
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+#export HISTSIZE=10000
+#export HISTFILESIZE=10000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm-color) color_prompt=yes;;
+esac
+
+# uncomment for a colored prompt, if the terminal has the capability; turned
+# off by default to not distract the user: the focus in a terminal window
+# should be on the output of commands, not on the prompt
+force_color_prompt=yes
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+	# We have color support; assume it's compliant with Ecma-48
+	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+	# a case would tend to support setf rather than setaf.)
+	color_prompt=yes
+    else
+	color_prompt=
+    fi
+fi
+
+if [ "$color_prompt" = yes ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt force_color_prompt
+
+# If this is an xterm set the title to user@host:dir
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
+
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    eval "`dircolors -b`"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# some more ls aliases
+alias ll='ls -l'
+#alias la='ls -A'
+#alias l='ls -CF'
+#保证使用矢量字体
+#alias eps2eps='eps2eps -dNOCACHE'
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+fi
+#for Intel
+#source /opt/intel/bin/compilervars.sh intel64
+#source /opt/intel/vtune_amplifier_xe/amplxe-vars.sh
+#export PATH=$PATH:/opt/intel/inspector_xe_2011/bin64
+
+#alias for aspell
+alias aspell='aspell --lang=en_US'
+##alias for vim
+alias vi="vim --servername vim"
+
+
+export HISTSIZE=20000
+export HISTFILESIZE=500000
+
+
+#set core dump
+#ulimit -c unlimited 
+
+# colorful man page
+export PAGER="`which less` -s"
+export BROWSER="$PAGER"
+export LESS_TERMCAP_mb=$'\E[01;34m'
+export LESS_TERMCAP_md=$'\E[01;34m'
+export LESS_TERMCAP_me=$'\E[0m'
+export LESS_TERMCAP_se=$'\E[0m'
+export LESS_TERMCAP_so=$'\E[01;44;33m'
+export LESS_TERMCAP_ue=$'\E[0m'
+export LESS_TERMCAP_us=$'\E[01;33m'
+
+#把某include目录加到C语言系统目录
+#export C_INCLUDE_PATH=/usr/include/vtk-5.4/:$C_INCLUDE_PATH
+#export C_INCLUDE_PATH=/usr/local/include/:$C_INCLUDE_PATH
+##把某include目录加到C++语言系统目录
+#export CPLUS_INCLUDE_PATH=/usr/include/vtk-5.4/:$CPLUS_INCLUDE_PATH
+##添加某静态库目录
+#export LIBRARY_PATH=/usr/local/YourLibDir: $LIBRARY_PATH
+##添加某动态库目录
+#export LD_LIBRARY_PATH=/usr/local/YourLdLibDir: $LD_LIBRARY_PATH
+##GVIM中文菜单乱码的原因在于utf8设置错误，应该为UTF-8
+
+
+
+
+export P4PORT="p4p-`/usr/local/bin/siteid`:1900"
+#export P4CLIENT=linqi
+
+#for purecov
+#export PATH=$PATH:/depot/pure/purecov.i386_linux2.7.0.1.0-002.Z/
+#export RSU_LICENSE_MAP=/depot/pure/PurifyPlus_License_Map
+#export RSU_TEMPLATE2_INI=/depot/pure/templates2.ini
+#export PATH=/depot/git-1.7.0.5/bin:$PATH
+#export PATH=/SCRATCH/heli/cov-sa-linux64-5.5.3-hf/bin:$PATH
+
+#export ARCHITECT_ROOT=/slowfs/us01dwslow025/arc_test/ws/build/out
+#export latest_architect=/slowfs/us01dwslow025/arc_test/ws/build/out/bin/linux
+#export PATH=$PATH:$latest_architect
+#export PATH=/SCRATCH/heli/ARC/MetaWare/arc/bin:$PATH
+
+export SGE_ROOT=/remote/sge8/default
+
+export PATH=$PATH:${SGE_ROOT}/bin/sol-amd64:/slowfs/us01dwslow025/arc_test/linqi/archiver/node-v6.9.1-linux-x64/bin
+
+export IP_HOME=/slowfs/us01dwslow024/lewisd/iplibs
+export hs_p=$HOME/HS_project
+export perl_p=$HOME/perl_p
+#export MALLOC_TRACE=$HOME/mtrace.txt
+
+alias ARChitect600N='ARChitect2 -libraries $IP_HOME/ARC600_v4.9/*'
+alias ARChitect700='ARChitect2 -libraries $IP_HOME/ARC700_v4.10-SP1-1/*'
+alias ARChitectAV='ARChitect2 -libraries $IP_HOME/AV4xx_v4.10-SP1-1/*'
+alias ARChitectEM='ARChitect2 -libraries $IP_HOME/ARCv2EM_v1.1/*'
+alias ARChitectHS='ARChitect2 -libraries $IP_HOME/ARCv2HS_v1.0/*'
+#export hs_p=$HOME/linqi
+export my_p=$HOME/mide/workspace
+export home_p=/slowfs/us01dwslow025/arc_test/linqi
+export home_pp=/slowfs/us01dwt2p448/linqi
+export ia_p_bak=$home_p/ia_p
+export prepkg=/remote/arc/prepkg
+export  tmp=/slowfs/us01dwslow025/arc_test/linqi/tmp
+export DISPLAY_USE=$CITRIX_REMOTE_DISPLAY
+export marcusm=/remote/arctools/marcusm/Release
+export stagearea=/slowfs/us01dwt3p189/StagingArea
+export latest_mide=/slowfs/us01dwslow025/ide_builds/latest/Linux
+export latest_cc=/slowfs/us01dwslow025/mwdt_builds/latest/Linux/ARC
+export latest_mwdt=/slowfs/us01dwslow025/mwdt_builds/latest
+export tm_ide_ws=/slowfs/us01dwslow025/arc_test/linqi/ia_p4/tm_ide_ws
+export mqx_p=/slowfs/us01dwslow025/arc_test/linqi/ia_p4/mqx_src_p4_depot/mqx2016.03
+export P4CLIENT=linqi_tmp_
+export jenkins_arcdev4=/slowfs/us01dwt2p323/arcjenkinsdev/slaves/us01-custom-installer-gen-arcdev4/workspace
+export jenkins=/slowfs/us01dwt2p323/arcjenkinsdev/slaves/us01-custom-qftest-mide-arctest4/workspace/jenkins_arctest4_qft_mide/qft_mide/tmp/report/latest
+export jenkins_debug=/slowfs/us01dwt2p323/arcjenkinsdev/slaves/us01-custom-qftest-mide-arctest4/workspace/jenkins_arctest4_qft_mide_debug/qft_mide/script/tmp
+export relauto=/remote/us01home28/relauto/share 
+#export p4ws=/slowfs/us01dwslow025/arc_test/linqi/ia_p4/linqi_tmp_
+#export P4WS=/slowfs/us01dwslow025/arc_test/linqi/ia_p4/linqi_tmp_
+export qft_mide=/slowfs/us01dwslow025/arc_test/linqi/ia_p4/linqi_tmp_/IDE_QFTEST/qft_mide
+export q_=$qft_mide
+export r_=$qft_mide/tc/RCCA
+export m=$qft_mide/script/multi_thread_qft_mide
+export qft_mide_old=/slowfs/us01dwslow025/arc_test/linqi/ia_p4/linqi_tmp_/qf_test_pro/qft_mide
+#export QFT_MIDE_ROOT=/slowfs/us01dwslow025/arc_test/linqi/ia_p4/linqi_tmp_/qf_test_pro/qft_mide
+export qftest_root=/slowfs/us01dwt2p219/arcjenkinsdev/tools/ToolsCommon/QFTest/4.0.11/qftest-4.0.11/bin
+export ide_build_release=/slowfs/us01dwslow025/mide/IDE_BUILD_RELEASES
+export daily_mwdt=/slowfs/us01dwslow025/mwdt_builds/latest_daily/Linux/ARC
+export daily_mide=/slowfs/us01dwslow025/mide/mide_daily_builds/latest_daily/CDI_build/Linux/ide
+export IS=/slowfs/us01dwslow025/arc_test/linqi/ia_p/mqx_ia/ia_linux/arc_res/mqx_installer_script
+export tcf=$daily_mwdt/MetaWare/arc/tcf
+export cl=/slowfs/us01dwslow025/arc_test/linqi/ia_p4/linqi_tmp_/OpenCL_tests
+export ide_c=/slowfs/us01dwt2p323/arcjenkinsdev/slaves/us01-custom-qftest-mide-arctest4/workspace/ide_chglist_bld_arctest4
+export rmo=/slowfs/us01dwslow025/arc_test/linqi/tmp/mongodb-linux-x86_64-rhel62-3.2.11/bin
+#export ia_p=$p4ws/ia_p
+export ia_p=/slowfs/us01dwt2p448/linqi/ia_p4/linqi_tmp_/ia_p
+export mi=/slowfs/us01dwt2p323/arcjenkinsdev/slaves/us01-custom-installer-gen-arcdev4/workspace/mwdt_gen_installer_by_any_version
+export cov_root=/depot/coverity/cov-sa-linux64-8.0.0.2/bin
+export mw_s=/slowfs/us01dwslow025/mwdtauto/us01-custom-mwdtauto4-arcbuild2/workspace/CCAC_Daily_Build/Tools/qa/mwdt_sources
+export t=/slowfs/us01dwt2p448/linqi/t
+export rel=/slowfs/us01dwt2p448/linqi/installer_rel
+export p4ws=/slowfs/us01dwt2p448/linqi/ia_p4/linqi_tmp_
+
+#module purge
+#module load architect/2013.09-4-RC3
+#module load architect
+#module load acrobat
+module unload mwdt
+module load mwdt
+module load grd
+
+#module load mw
+#module load arcnsim
+#module load vcsmx
+#module load arc_vtoc
+###
+#module load arc_xcam
+#module load embedit
+#module load star_rcxt
+#module load syn
+#module load icc
+#module load pt
+#module load synplicity
+#module load xilinx/14.7
+###
+#module load systemc
+#module load syn
+#module load xilinx/14.4
+#module load synplicity
+#module load ct
+#module load dw
+#module load vera
+#module load verdi
+module unload java 
+module load java
+#module load vcs
+#module load arc_xiss
+#module load dw_tools
+#module load perl/5.14.0
+module load perl
+module unload gcc 
+module load  gcc/5.2.0
+#module load gcc/4.8.1
+#module switch perl/5.8.9 perl/5.14.0
+
+# export LM_LICENSE_FILE="26585@us01-lic6:26585@us01-lic15:3457@Us01_lic6"
+# export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE:26585@us01-lic6"
+
+ #export LM_LICENSE_FILE="$LM_LICENSE_FILE:26585@us01snpslmd4:26585@us01snpslmd5:26585@us01snpslmd1"
+ #export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE:26585@us01snpslmd4:26585@us01snpslmd5:26585@us01snpslmd1"
+#export SNPSLMD_LICENSE_FILE="26585@us01snpslmdneg2:26585@us01snpslmd5:26585@us01snpslmd4:26585@us01snpslmd1"
+
+export SNPSLMD_LICENSE_FILE=27000@arcdev3:26585@us01-dglic2:26585@us01-dglic3:26585@us01-dglic1
+export PATH=/slowfs/us01dwslow025/arc_test/linqi/tmp/node-v7.6.0-linux-x64/bin:$PATH
