@@ -1,6 +1,9 @@
 #!perl
 # depend on gs = git's ROOT
 my $gs = @ENV{gs};
+# perl_p
+$gs = @ENV{perl_p};
+
 my $filename = ""; 
 my $comment = "";
 
