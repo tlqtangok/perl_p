@@ -31,7 +31,7 @@ elsif (@ARGV >= 2){
 
 $filename = "@ARGV_MUST_BE_FILES";
 my $git_add_cmd = qq( git add  $filename );  # need first add 
-my $git_commit_cmd =  qq( git commit $filename -m) . qq(') . $comment . qq(' ) ; 
+my $git_commit_cmd =  qq( git commit $filename -m) . qq(') . $comment . qq('  ) ; 
 
 #print $git_commit_cmd , "\n"; 
 system( $git_add_cmd );
