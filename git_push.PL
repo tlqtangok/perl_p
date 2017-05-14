@@ -1,8 +1,7 @@
 #!perl
 # depend on gs = git's ROOT
-my $gs = @ENV{gs};
 # perl_p
-$gs = @ENV{perl_p};
+my $perl_p = @ENV{perl_p};
 
 my $filename = ""; 
 my $comment = "";
@@ -37,7 +36,7 @@ my $git_commit_cmd =  qq( git commit $filename -m) . qq(') . $comment . qq(') ;
 #print $git_commit_cmd , "\n"; 
 system( $git_add_cmd );
 system( $git_commit_cmd );
-system( " expect $gs/perl_p/git_push.exp "); 
+system( " expect $perl_p/git_push.exp "); 
 
 
 
