@@ -52,7 +52,7 @@ my $dirname=@options{A};
 }
 
 #say $cmd_templ; 
-#add chinese support 
+#add chinese support :
 my @cmd_result=`$cmd_templ|grep -v -i total | grep -v \'总用量 \' `; 
 map{
 @cmd_result[$_] =~ s/^.*\s(\d\d\:?\d\d)\s/ /g; 
