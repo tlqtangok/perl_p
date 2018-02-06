@@ -1,6 +1,8 @@
 #!perl
 # depend on gs = git's ROOT
 # perl_p
+use Cwd;
+
 my $perl_p = @ENV{perl_p};
 
 my $filename = ""; 
@@ -36,7 +38,17 @@ my $git_commit_cmd =  qq( git commit $filename -m) . qq(') . $comment . qq('  ) 
 #print $git_commit_cmd , "\n"; 
 system( $git_add_cmd );
 system( $git_commit_cmd );
-system( " expect $perl_p/git_push.exp "); 
+
+my $cwd = cwd; 
+
+if ($cwd =~ m/\/bgi_samtools/)
+{
+	system( " expect $perl_p/git_push_bgi_samtools.exp "); 
+}
+else
+{
+	system( " expect $perl_p/git_push.exp "); 
+}
 
 
 
