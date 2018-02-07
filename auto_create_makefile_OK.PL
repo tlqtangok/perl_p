@@ -16,10 +16,10 @@ $(patsubst %.cpp,%.o,${c_files}) $(patsubst %.c,%.o,${c_files})
 o_files = \
 $(filter %.o, $(o_files_mess))
 elf_file=  \
-jidor_ccac.elf
+mainapp.exe
 
 rm_files = \
-*.o *.dep *.elf  *.s
+*.o *.dep *.elf  *.s *.exe
 
 
 all:$(elf_file)
