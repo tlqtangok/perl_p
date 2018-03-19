@@ -43,7 +43,7 @@ my $cwd = cwd;
 
 if ($cwd =~ m/\/bgi_samtools/)
 {
-	system( " expect $perl_p/git_push_bgi_samtools.exp "); 
+	system( " expect $perl_p/git_push_bgi_samtools.exp ; git push"); 
 }
 else
 {
