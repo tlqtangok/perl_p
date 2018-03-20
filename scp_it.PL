@@ -9,7 +9,9 @@ $arg0=$pwd_;
 }
 
 my $hostaddr = `hostname -I`; 
-$hostaddr =~ s/ //g;
+my @host_arr_maybe = split m/\s+/, $hostaddr;
+@host_arr_maybe[0] =~ s/ //g;
+$hostaddr = @host_arr_maybe[0];
 chomp($hostaddr);
 my $user_name_host_name=`whoami`.'@'.$hostaddr;
 $user_name_host_name =~ s/\n//g;
