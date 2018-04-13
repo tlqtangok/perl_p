@@ -57,6 +57,19 @@ if has('syntax') && has('eval')
   packadd matchit
 endif
 
+
+" jd add
+
 set nu
+
 set guifont=Consolas:h14
 colorscheme darkblue
+
+if &diff
+  "diff mode
+  set diffopt+=iwhite
+endif
+
+set autoread
+
+" jd end 
