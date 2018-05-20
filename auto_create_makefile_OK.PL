@@ -1,11 +1,13 @@
 #!perl
+use strict;
 use feature qw(say); 
+
 
 
 my $CC_NAME = "g++";
 my $perl_p = @ENV{perl_p};
 ######## fc of auto_txt_str ###########
-my $auto_txt_str =q!CC = g++ -std=c++11 -Wno-format
+my $auto_txt_str =q{CC = g++ -std=c++11 -Wno-format
 c_flag = -g -o
 c_files =  \
 $(wildcard *.cpp) $(wildcard *.c)
@@ -34,32 +36,32 @@ $(elf_file):$(o_files)
 
 clean:
 	rm -rf $(rm_files)
-!;
+};
 
 ##### end fc of auto_txt_str ########
 
-@auto_txt=split m/\n/, $auto_txt_str;
+my @auto_txt=split m/\n/, $auto_txt_str;
 map{$_.="\n";}@auto_txt;
 
-$perc_no=21; 
-$per_c=@auto_txt[$perc_no++];# %.c  
-$CC= @auto_txt[$perc_no++];# \t$(CC)
-$per_cpp= @auto_txt[$perc_no++]; # %.cpp
+my $perc_no=21; 
+my $per_c=@auto_txt[$perc_no++];# %.c  
+my $CC= @auto_txt[$perc_no++];# \t$(CC)
+my $per_cpp= @auto_txt[$perc_no++]; # %.cpp
 
-@c_files = `ls *.c 2>/dev/null`; 
+my @c_files = `ls *.c 2>/dev/null`; 
 chomp(@c_files); 
-@cpp_files = `ls *.cpp 2>/dev/null`; 
+my @cpp_files = `ls *.cpp 2>/dev/null`; 
 chomp(@cpp_files);
-$len_cpp=@cpp_files; 
-$len_c=@c_files;
-
+my $len_cpp=@cpp_files; 
+my $len_c=@c_files;
+my @arr_deps = (); 
 
 if($len_c)
 {
 	@arr_deps=(); 
 	while($len_c--)
 	{
-		@arr=`$CC_NAME -MM @c_files[$len_c]`;
+		my @arr=`$CC_NAME -MM @c_files[$len_c]`;
 		@arr=grep ! m/(\(LLVM)|(\(c\))/  , @arr; 
 		map{chomp;s/\\/ /g;s/\s{2,}/ /g;}@arr; 
 
@@ -74,7 +76,7 @@ if($len_cpp)
 {
 	@arr_deps=(); 
 	while($len_cpp--){
-		@arr=`$CC_NAME -MM @cpp_files[$len_cpp]`; 
+		my @arr=`$CC_NAME -MM @cpp_files[$len_cpp]`; 
 
 		@arr=grep ! m/(\(LLVM)|(\(c\))/  , @arr; 
 		map{chomp;s/\\/ /g;}@arr; 
@@ -91,8 +93,8 @@ if ( !$len_c && !$len_cpp)
 }
 #say @arr_deps; 
 
-@arr_out=(); 
-$i=0; 
+my @arr_out=(); 
+my $i=0; 
 for($i=0;$i <21;$i++)
 {
 	push @arr_out , @auto_txt[$i]; 
