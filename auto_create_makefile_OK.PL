@@ -64,7 +64,7 @@ if($len_c)
 	@arr_deps=(); 
 	while($len_c--)
 	{
-		my @arr=`$CC_NAME -MM @c_files[$len_c]`;
+		my @arr=`$CC_NAME -std=c++11 -MM @c_files[$len_c]`;
 		@arr=grep ! m/(\(LLVM)|(\(c\))/  , @arr; 
 		map{chomp;s/\\/ /g;s/\s{2,}/ /g;}@arr; 
 
@@ -79,7 +79,7 @@ if($len_cpp)
 {
 	@arr_deps=(); 
 	while($len_cpp--){
-		my @arr=`$CC_NAME -MM @cpp_files[$len_cpp]`; 
+		my @arr=`$CC_NAME -std=c++11 -MM @cpp_files[$len_cpp]`; 
 
 		@arr=grep ! m/(\(LLVM)|(\(c\))/  , @arr; 
 		map{chomp;s/\\/ /g;}@arr; 
