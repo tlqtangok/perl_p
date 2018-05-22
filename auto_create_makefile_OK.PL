@@ -7,6 +7,9 @@ use feature qw(say);
 my $CC_NAME = "g++";
 my $perl_p = @ENV{perl_p};
 ######## fc of auto_txt_str ###########
+##### NEVER EDIT FOLLOWING STRING #####
+#######################################
+
 my $auto_txt_str =q{CC = g++ -std=c++11 -Wno-format
 c_flag = -g -o
 c_files =  \
