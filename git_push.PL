@@ -41,7 +41,7 @@ system( $git_commit_cmd );
 
 my $cwd = cwd; 
 
-if ($cwd =~ m/\/bgi_samtools/)
+if ($cwd =~ m/\/bgi_samtools/ || $cwd=~ m/\/bgi_bqsr/)
 {
 	system( " expect $perl_p/git_push_bgi_samtools.exp ; git push"); 
 }
