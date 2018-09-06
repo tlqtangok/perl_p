@@ -117,6 +117,7 @@ if ! shopt -oq posix; then
 fi
 
 ### export list ###
+
 export perl_p=$HOME/perl_p
 export t=/media/sf_et
 # cd /mnt && sudo mount -t vboxsf t t
