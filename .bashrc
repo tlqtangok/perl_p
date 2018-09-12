@@ -117,17 +117,18 @@ if ! shopt -oq posix; then
 fi
 
 ### export list ###
-
 export perl_p=$HOME/perl_p
-export t=/media/sf_et
 # cd /mnt && sudo mount -t vboxsf t t
 export sf_t=/media/sf_t
-export sf_et=/media/sf_et
+export sf_et=/mnt/hgfs/et
+export t=$sf_et
 export et=$sf_et
-export gs=/media/sf_et/git/s/t
-export gss=/media/sf_et/git/bgi_samtools/bqsr
-export gss_=/media/sf_et/git/bgi_bqsr
+export gs=$et/git/s/t
+export gss=$et/git/bgi_samtools/bqsr
+export gss_=$et/git/bgi_bqsr
 export et_git=$et/git
-export db=$t/db
+export db=$et/db
+export bwa=$et/bwa/bwa-0.7.17
+export PATH=$PATH:$et/eclipse
 
 ###################
