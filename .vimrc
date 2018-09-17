@@ -104,6 +104,7 @@ highlight MatchParen ctermbg=blue ctermfg=yellow
 set tabstop=4
 set shiftwidth=4
 set cindent
+set hlsearch 
 
 if &diff
   "diff mode
