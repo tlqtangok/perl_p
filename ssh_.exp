@@ -8,7 +8,7 @@ set password [lindex $argv 2]
 set port [lindex $argv 3]
 #####################
 
-spawn -noecho ssh  $userid@$mname -p $port
+spawn -noecho ssh -X  $userid@$mname -p $port
 
 expect {
         -re "^.*.assword.*$" { send "$password\n";}
