@@ -1,5 +1,9 @@
 #perl
 
-
-map{sleep 10; print $_, "\n";}(0..99999);
+$| = 1;
+map
+{
+        print "$_";
+        sleep(222);
+}(0..1e6);
 
