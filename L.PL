@@ -1,4 +1,4 @@
-#perl
+#!perl
 
 $| = 1;
 map
