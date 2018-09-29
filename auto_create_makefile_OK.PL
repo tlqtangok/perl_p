@@ -39,6 +39,9 @@ $(elf_file):$(o_files)
 
 clean:
 	rm -rf $(rm_files)
+
+run:$(elf_file)
+	./$(elf_file)
 };
 
 ##### end fc of auto_txt_str ########
