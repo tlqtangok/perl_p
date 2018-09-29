@@ -1,4 +1,3 @@
-
 #!perl
 # written by jd
 use strict;
@@ -12,34 +11,39 @@ if ("__main__" eq "__main__")
 
         my %hash_listen_port_start_cml =
         (
-			 "4443 + 10240, ssh",           " ./ngrok  -config=ngrok.yml start ssh ",
-			"4443 + 10242, http",           " ./ngrok  -config=ngrok.yml start http ",
-			     "0 + 10242, nb",           " jupyter-notebook  ",
-		   "samba, mount aliyun",			" sudo mount -t cifs -o username=root,password=jd //119.23.8.57/t /home/pi/jd/t/nb/lnk ",
+			 "4443 + 10240, ssh",           " ./ngrok  -config=ngrok.yml start ssh & ",
+			"4443 + 10242, http",           " ./ngrok  -config=ngrok.yml start http & ",
+			     "0 + 10242, nb",           " jupyter-notebook & ",
+		   "samba, mount aliyun",			" sudo mount -t cifs -o username=root,password=jd,uid=1000,gid=1000 //119.23.8.57/t /home/pi/jd/t/nb/lnk & ",
+	  "rsync yun nb to local pi",			" rsync -avz /home/pi/jd/t/nb/lnk/nb /home/pi/jd/t/nb/yun ",
         );
 
         my %hash_port_status_check_cml =
         (
-			"4443 + 10240, ssh",			" pgrep ngrok -al | grep ssh  ",
+			"4443 + 10240, ssh",			" pgrep ngrok -al | grep ssh ",
 		   "4443 + 10242, http",			" pgrep ngrok -al | grep http ",
 	   			"0 + 10242, nb",			" pgrep jupyter -al ",
 		  "samba, mount aliyun",			" sudo df -k |grep 119 ",
+	 "rsync yun nb to local pi",			" pgrep rsync ",
         );
 
-		my @td_pool = ();
-
-		for my $port (keys %hash_listen_port_start_cml)
-		{
-			&td_push(\@td_pool, \%hash_listen_port_start_cml, \%hash_port_status_check_cml, $port);
-		}
-		
-		&td_detach(\@td_pool);
-
+		my $cnt_loop = 0; 
 
         while(1)
-        {
-                sleep(20 * 60 * 60);
-        }
+		{
+			my @td_pool = ();
+
+			for my $port (keys %hash_listen_port_start_cml)
+			{
+				&td_push(\@td_pool, \%hash_listen_port_start_cml, \%hash_port_status_check_cml, $port);
+			}
+
+			say "- loop $cnt_loop"; 
+			&td_join(\@td_pool);
+			$cnt_loop++; 
+
+			sleep(20 * 60);
+		}
 
 }
 
@@ -66,6 +70,7 @@ sub td_join($td_pool_)
                 $e->join();
         }
 
+		sleep 4;
 }
 
 
@@ -96,9 +101,9 @@ sub td_push()
                 {
                         if (&chk_ngrok_running_status($hash_listen_port_start_cml_, $hash_port_status_check_cml_, $port) != 0)
 						{
-							sleep  int(rand(3));
-							say "- no procedure, now start $cml on $port ...";
-							# system("$cml");
+							sleep  int(rand(5 * 4));
+							say "- now start $cml on $port ...";
+							system("$cml");
 						}
                 }
         );
@@ -130,7 +135,5 @@ sub chk_ngrok_running_status()
 
         return $rc;
 }
-
-### end sub list ###
 
 
