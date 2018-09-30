@@ -22,7 +22,7 @@ if ("__main__" eq "__main__")
         (
 			"4443 + 10240, ssh",			" pgrep ngrok -al | grep ssh ",
 		   "4443 + 10242, http",			" pgrep ngrok -al | grep http ",
-	   			"0 + 10242, nb",			" pgrep jupyter -al ",
+	   			"0 + 10242, nb",			" pgrep -f jupyter -al ",
 		  "samba, mount aliyun",			" sudo df -k |grep 119 ",
 	 "rsync yun nb to local pi",			" pgrep rsync ",
         );
@@ -31,6 +31,9 @@ if ("__main__" eq "__main__")
 
         while(1)
 		{
+			my $time_stamp = `date "+%Y%m%d_%H%M"`;
+			
+			print "- loop $cnt_loop at $time_stamp"; 
 			my @td_pool = ();
 
 			for my $port (keys %hash_listen_port_start_cml)
@@ -38,11 +41,10 @@ if ("__main__" eq "__main__")
 				&td_push(\@td_pool, \%hash_listen_port_start_cml, \%hash_port_status_check_cml, $port);
 			}
 
-			say "- loop $cnt_loop"; 
 			&td_join(\@td_pool);
-			$cnt_loop++; 
 
 			sleep(20 * 60);
+			$cnt_loop++; 
 		}
 
 }

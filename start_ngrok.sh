@@ -20,11 +20,11 @@ if [ "$1" = "" ]; then
 fi 
 
 if [ "$1" = "list" ]; then
-	pgrep -al ngrok ; pgrep jupyter -al ; sudo df -k| grep 119
+	pgrep -al ngrok ; pgrep -f jupyter -al ; sudo df -k| grep 119
 fi
 
 if [ "$1" = "kill" ]; then
 	pgrep perl -al |grep _start_ngrok  &&  pgrep perl -al |grep _start_ngrok | perl $ff 0 | xargs kill -9
-	(pgrep -al ngrok &&  pgrep jupyter -al) && (pgrep -al ngrok ; pgrep jupyter -al) | perl $ff 0 | xargs kill -9 
+	(pgrep -al ngrok &&  pgrep -f jupyter -al) && (pgrep -al ngrok ; pgrep -f jupyter -al) | perl $ff 0 | xargs kill -9 
 fi
 
