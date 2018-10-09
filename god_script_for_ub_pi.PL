@@ -194,6 +194,10 @@ else
 
 &chk_cmd_rc( qq{ perl  -i.bak -pe 's|(c.NotebookApp.notebook_dir.*u.)(.*)(.)|\\1$nb\\3|; s|(c.NotebookApp.port.*)( \\d.*)|\\1 $jupyter_nb_port|'  $HOME/.jupyter/jupyter_notebook_config.py } );
 
+# install nbconvert
+say( qq{$sudo pip install nbconvert} );
+&chk_cmd_rc( qq{$sudo pip install nbconvert} );
+
 
 ### sub list ###
 sub chk_fn($fn_path)
