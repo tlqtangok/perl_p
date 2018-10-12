@@ -32,11 +32,13 @@ if ("__main__" eq "__main__")
 {
 
 
-        find(\&print_it ,  "$watched_folder");
+        find(\&print_it ,  "$watched_folder"); 
+		assert($fn_list ne ""); 
 
         while(1)
         {
                 find(\&print_it_new ,  $watched_folder);
+				assert($fn_list_new ne ""); 
 
                 if ($fn_list_new ne $fn_list)
                 {
