@@ -10,79 +10,187 @@ use Scalar::Util qw/reftype/;
 use File::Copy;
 use File::Find;
 use Cwd qw(abs_path);
+use POSIX qw(assert);
 use strict;
 use threads;
+use IO::Handle;
+
 
 ### global var ###
-my $watched_folder = $ENV{nb};
-my $fn_list = "";
-my $fn_list_new = "";
-my $html_folder = q(/root/jd/t/html);
-my $g_cnt = 0;
+        my $watched_folder = "/root/jd/t/nb";
+        my $edit_log = $watched_folder."/"."bak_script/ipynb_to_html_log.txt";
+        my $fn_list = "";
+        my $fn_list_new = "";
+        my $html_folder = "/root/jd/t/html";
+        my $g_cnt = 0;
 ###
 
+`rm -rf $edit_log; touch $edit_log`;
 
 
-find(\&print_it ,  "$watched_folder");
-
-while(1)
+if ("__main__" eq "__main__")
 {
-        find(\&print_it_new ,  $watched_folder);
+
+
+        find(\&print_it ,  "$watched_folder");
+
+        while(1)
+        {
+                find(\&print_it_new ,  $watched_folder);
 
                 if ($fn_list_new ne $fn_list)
-        {
-                say "- meet diff";
-                my @fn_modify = &analysis_fn_list_get_last_modify($fn_list_new);
-                my $cmd_copy_proc = &gen_copy_cmd(\@fn_modify);
+                {
+                        my ($new_state, $on_fn) = &analysis_fn_list_get_last_modify($fn_list, $fn_list_new);
+                        my ($cmd_copy_proc, $html_url) = &gen_copy_cmd($new_state, $on_fn);
 
-                                my @td_pool = ();
-                                &td_push(\@td_pool, $cmd_copy_proc);
-                                &td_join(\@td_pool);
+                        my @td_pool = ();
+                        &td_push(\@td_pool, $cmd_copy_proc);
+                        &td_join(\@td_pool);
+                        my $timestamp = &get_timestamp();
+                        say "- $timestamp\t$html_url";
 
+                        my $cmd_append_log =  qq{echo "- $timestamp\t$html_url" >> $edit_log};
+                        system($cmd_append_log);
+
+                }
+
+                $fn_list = $fn_list_new;
+                $fn_list_new = "";
+                sleep 6;
         }
-
-        $fn_list = $fn_list_new;
-        $fn_list_new = "";
-        sleep 60;
 }
-
 
 ### sub list ###
-sub gen_copy_cmd(\@fn_modify)
+sub gen_copy_cmd($new_state, $on_fn)
 {
-        my $fn_modified_ = shift;
+        my ($new_state, $on_fn) = (@_[0], @_[1]);
+
         my @arr_cmd = ();
+        my $port = 10241;
+        my $html_url = "algoers.com:$port/";
+        my $html_fn = "NULL";
 
-        for my $fn_ipynb (@$fn_modified_)
+
+        if ($new_state ne 'delete')
         {
-                my $basename_ipynb = basename $fn_ipynb;
-                my $e_cmd = qq
-                {
-                        rm -rf $html_folder/$basename_ipynb
-                        ln -s  $fn_ipynb $html_folder/$basename_ipynb
-                        jupyter-nbconvert $html_folder/$basename_ipynb
-                };
 
-                push @arr_cmd , $e_cmd;
-                                last;  # we only proc one !
+                for my $fn_ipynb ( ($on_fn,) )
+                {
+                        my $basename_ipynb = basename $fn_ipynb;
+
+                        $html_fn = $basename_ipynb;
+                        $html_fn =~ s/.ipynb/.html/;
+
+
+                        my $e_cmd = qq
+                        {
+                                # $new_state $on_fn
+                                rm -rf $html_folder/$basename_ipynb
+                                ln -s  $fn_ipynb $html_folder/$basename_ipynb
+                                jupyter-nbconvert $html_folder/$basename_ipynb
+                        };
+
+                        push @arr_cmd , $e_cmd;
+                        last;  # we only proc one !
+                }
+
+
+        }
+        else
+        {
+                assert($new_state eq "delete");
+
+                for my $fn_ipynb ( ($on_fn,) )
+                {
+                        my $basename_ipynb = basename $fn_ipynb;
+                        $html_fn = $basename_ipynb;
+                        $html_fn =~ s/.ipynb/.html/;
+
+                        my $e_cmd = qq
+                        {
+                                # $new_state $on_fn
+                                rm -rf $html_folder/$basename_ipynb
+                                rm -rf $html_folder/$html_fn
+                        };
+
+                        push @arr_cmd , $e_cmd;
+                        last;  # we only proc one !
+                }
         }
 
-        #say ( "@arr_cmd" );
-        #system( "@arr_cmd" );
-        return "@arr_cmd";
-
-
+        $html_url = $html_url . $html_fn;
+        return "@arr_cmd", $html_url;
 }
-sub analysis_fn_list_get_last_modify($fn_list)
+
+sub analysis_fn_list_get_last_modify($fn_list, $fn_list_new)
 {
         my $fn_list = shift;
+        my $fn_list_new = shift;
+
+        my $new_state = "modify";   #add,delete
+        my $on_fn = "NULL";
+
         my %hash_fn_ts = ();
         my $cmd_create_hash = q(%hash_fn_ts). qq( = qw($fn_list); );
         eval($cmd_create_hash);
-        #say %hash_fn_ts;
-        my @fn_modified =  sort {-M "$a" <=> -M "$b"} keys %hash_fn_ts;
-        return @fn_modified[0..1];
+
+
+        my %hash_fn_ts_new = ();
+        my $cmd_create_hash_new = q(%hash_fn_ts_new). qq( = qw($fn_list_new); );
+        eval($cmd_create_hash_new);
+
+        my $len_hash_fn = keys %hash_fn_ts;
+        my $len_hash_fn_new = keys %hash_fn_ts_new;
+
+
+        if ($len_hash_fn_new > $len_hash_fn)
+        {
+                my $small_ = \%hash_fn_ts;
+                my $big_ = \%hash_fn_ts_new;
+
+                $on_fn = &substract_two_hash($big_, $small_);
+                $new_state = "add";
+        }
+        elsif ($len_hash_fn_new < $len_hash_fn)
+        {
+                my $big_ = \%hash_fn_ts;
+                my $small_ = \%hash_fn_ts_new;
+                $on_fn = &substract_two_hash($big_, $small_);
+                $new_state = "delete";
+
+        }
+        else
+        {
+                assert($len_hash_fn_new == $len_hash_fn);
+                my @fn_modified =  sort {-M "$a" <=> -M "$b"} keys %hash_fn_ts_new;
+                $on_fn = $fn_modified[0];
+                $new_state = "modify";
+
+        }
+
+        assert($new_state eq "add" ||
+                $new_state eq "delete" ||
+                $new_state eq "modify");
+
+        assert($on_fn ne "NULL");
+        return ($new_state, $on_fn);
 }
+
+sub substract_two_hash(\%hash_big, \%hash_small)
+{
+        my ($hash_big_ , $hash_small_) = (@_[0], @_[1]);
+        my $ret_del_add_ele = "NULL";
+        for my $e (keys (%$hash_big_))
+        {
+                if (not $e ~~ %$hash_small_)
+                {
+                        $ret_del_add_ele = $e;
+                        last;
+                }
+        }
+        return $ret_del_add_ele;
+}
+
 sub if_fn_match_ipynb($fn)
 {
         my $fn = shift;
@@ -117,34 +225,18 @@ sub print_it()
 
 
 
-
-#------ no need -------
-=pod
-sub gen_copy_cmd($fn, $dst_folder)
+sub add_zero_if_lt_10($num)
 {
-        my $fn = shift;
-        my $dst_folder = shift;
-        my $fn_r0 = $fn;
-        $fn =~ s/.*bgi_gpu_server/$dst_folder/;
-        return $fn_r0, $fn;
-}
-
-sub gen_size($)
-{
-        my $fn = shift;
-        my $mtime = (stat($fn))[9];
-        return $mtime;
-}
-
-### perl timestamp ###
-sub add_zero_if_lt_10($){
         my $num = shift @_;
         if ($num >=10 ){
                 return "$num"
         }
         return "0$num";
 }
+
 sub get_timestamp(){
+
+
 
 # perl get time, for second:
  #perl -e 'print $^T '
@@ -171,6 +263,28 @@ my $if_windows = "True";
     return $time_stamp;
 
 }
+
+
+#------ no need -------
+=pod
+sub gen_copy_cmd($fn, $dst_folder)
+{
+        my $fn = shift;
+        my $dst_folder = shift;
+        my $fn_r0 = $fn;
+        $fn =~ s/.*bgi_gpu_server/$dst_folder/;
+        return $fn_r0, $fn;
+}
+
+sub gen_size($)
+{
+        my $fn = shift;
+        my $mtime = (stat($fn))[9];
+        return $mtime;
+}
+
+### perl timestamp ###
+
 =cut
 
 #################
@@ -208,12 +322,13 @@ sub td_push()
         (
                 sub
                 {
-                                        say $cml;
-                                        system("$cml");
+                                        #say $cml;
+                                        system($cml);
                 }
         );
 
         my $len = @$td_pool_;
         $td_pool_->[$len] = $td;
 }
+
 
