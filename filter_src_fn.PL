@@ -1,23 +1,54 @@
-#!perl 
+#!perl
+use File::Basename qw(dirname basename);
+use feature qw(say); 
+use Data::Dumper; 
 
-#my @fn = `cat 1.txt`; 
-my @fn = `cat win.txt`; 
+### global var ###
+my @fn = `cat txt.txt`;
+my %hash_suffix = (); 
+my $DEBUG = 0; 
+
+### 
 
 for my $e (@fn)
 {
-	chomp($e); 
-	if (-T $e && $e !~ m|\.git[\/\\]| 
-		&& $e !~ m/CMakeFiles[\/\\]/ 
-		&& $e !~ m/\.cmake/
-		&& $e !~ m/\.txt$/ 
-		&& $e !~ m/\.a$/ 
-		&& $e !~ m/\.gitignore$/ 
+        chomp($e);
+        if (-T $e && $e !~ m|\.git[\/\\]|
+                && $e !~ m/CMakeFiles[\/\\]/
+                && $e !~ m/\.cmake/
+                && $e !~ m/\.txt$/i
+                && $e !~ m/\.a$/
+                && $e !~ m/\.pgm$/
+                && $e !~ m/\.xml$/
+                && $e !~ m/Makefile$/
+                && $e !~ m/\.mk$/
+                && $e !~ m/\.ptx$/
+                && $e !~ m/\.pdf$/
+                && $e !~ m/\.glsl$/
+                && $e !~ m/\.ppm$/
+                && $e !~ m/\.mtx$/
+                && $e !~ m/\.csv$/
+                && $e !~ m/\.cpj$/
+				&& $e !~ m/\.vert$/
+				&& $e !~ m/\.frag$/
+				&& $e !~ m/\.dat$/
+				&& $e !~ m/\.nvlink$/
+				&& $e !~ m/build_readme$/
+        )
 
-	)
-	{
-		print ($e, "\n"); 	
-	}
+        {
+			(!$DEBUG) && say $e;
+
+			if ($DEBUG)
+			{
+				$e =~ s/^.*\.//;
+				$hash_suffix{$e}++; 
+			}
+        }
+
 
 }
+
+($DEBUG) && say Dumper(\%hash_suffix); 
 
 
