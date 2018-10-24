@@ -9,7 +9,7 @@ my $fn_of_file_list = @ARGV[0] if @ARGV != 0;
 
 my @fn = `cat $fn_of_file_list`;
 my %hash_suffix = (); 
-my $DEBUG = 0; 
+my $DEBUG = 1; 
 
 ### 
 
