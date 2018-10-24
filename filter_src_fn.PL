@@ -4,7 +4,10 @@ use feature qw(say);
 use Data::Dumper; 
 
 ### global var ###
-my @fn = `cat txt.txt`;
+my $fn_of_file_list = 'txt.txt' if @ARGV == 0;
+my $fn_of_file_list = @ARGV[0] if @ARGV != 0;
+
+my @fn = `cat $fn_of_file_list`;
 my %hash_suffix = (); 
 my $DEBUG = 0; 
 
@@ -13,6 +16,7 @@ my $DEBUG = 0;
 for my $e (@fn)
 {
         chomp($e);
+=pod
         if (-T $e && $e !~ m|\.git[\/\\]|
                 && $e !~ m/CMakeFiles[\/\\]/
                 && $e !~ m/\.cmake/
@@ -35,7 +39,7 @@ for my $e (@fn)
 				&& $e !~ m/\.nvlink$/
 				&& $e !~ m/build_readme$/
         )
-
+=cut
         {
 			(!$DEBUG) && say $e;
 
