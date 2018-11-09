@@ -25,6 +25,7 @@ my $b_num = 200;
 
 my $redis_prefix = qq{redis-cli -h $host_name}; 
 my $redis_get_all_keys = qq{$redis_prefix keys '*'}; 
+my $redis_get_jd_incr = qq{$redis_prefix get $jd_incr}; 
 my $redis_incr_jd_incr = qq{$redis_prefix incr $jd_incr}; 
 my $redis_del_key_jd_xx = qq{$redis_prefix del $jd_xx}; 
 my $redis_del_jd_incr = qq{$redis_prefix del $jd_incr}; 
@@ -38,46 +39,17 @@ my $max_jd_incr = 4;
 
 sub main()
 {
-	&ck_argv(\@ARGV); 
-
-
-	my @fc = <>;
-	$jd_xx = "jd_" . &get_incr_jd_incr(); 
-	say $jd_xx; 
-
 	
-
-	assert(@fc <= $max_len); 
-	#say "___". $fc[0]."___";  
-	if ($fc[0] =~ m/[^[:print:][:space:]]/ || $fc[-1] =~ m/[^[:print:][:space:]]/)
-	{
-		$b_sz = int $b_sz / 10;
-		$b_num = $b_num * 10;
-	}
-
-	&del_redis_key($jd_xx);
-
-	for(my $start = 0; $start <= $max_len; $start += $b_sz)
-	{
-		my $end = $start + $b_sz -1;
-		if ($end >= @fc - 1)
-		{
-			$end = @fc - 1;
-		}; 
-		my @e_fc = @fc[$start .. $end]; 
-		
-		my $e_str_fc = join "", @e_fc; 
-		my $cmd_params = &gen_rpush_cmd_params($e_str_fc); 
-		&gen_rpush_cmd_and_run($cmd_params); 
-
-		if ($end >= @fc-1)
-		{
-			last;
-		}; 
-
-	}
+	$jd_xx = &get_jd_xx(); 
+	return $jd_xx; 
 }
 ### sub list ###
+sub get_jd_xx()
+{
+	my $e_jd_xx = qx{$redis_get_jd_incr}; 
+	chomp($e_jd_xx); 
+	return $e_jd_xx; 
+}
 sub ck_argv(\@)
 {
 	my $argv_ = shift; 
