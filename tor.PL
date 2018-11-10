@@ -1,4 +1,5 @@
 #!perl
+# written by jidor at 2018-11-10
 use strict ;
 use feature qw(say);
 #use List::Util qw(first sum max shuffle maxstr);
@@ -78,7 +79,7 @@ sub main()
 
 	}
 
-	&td_join(\@td_pool) if @td_pool > 0;
+	#&td_detach(\@td_pool) if @td_pool > 0;
 }
 ### sub list ###
 sub ck_argv(\@)
