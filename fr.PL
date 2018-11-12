@@ -13,12 +13,11 @@ use feature qw(say);
 #use Cwd qw(abs_path);
 use strict;
 use threads;
-use POSIX qw(assert); 
+#use POSIX qw(assert); 
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 ### global ### 
-
-my $host_name = "algoers.com"; 
+my $host_name = join "", reverse qw(m o c . s r e o g l a);
 my $jd_incr = "jd_incr"; 
 my $redis_prefix = qq{redis-cli -h $host_name}; 
 ##############
@@ -86,7 +85,7 @@ sub decode_b64_fc($b64_fc)
 {
 	my $b64_fc = shift;
 	my $raw_text = decode_base64($b64_fc); 
-	print $raw_text; 
+	#print $raw_text; 
 }
 
 sub print_raw_text_or_binary($raw_text)

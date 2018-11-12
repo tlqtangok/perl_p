@@ -12,13 +12,13 @@ use feature qw(say);
 #use File::Find;
 #use Cwd qw(abs_path);
 use strict;
-use threads;
-use POSIX qw(assert); 
+#use threads;
+#use POSIX qw(assert); 
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 ### global ### 
+my $host_name = join "", reverse qw(m o c . s r e o g l a);
 
-my $host_name = "algoers.com"; 
 my $jd_xx = "NULL"; 
 my $jd_incr = "jd_incr"; 
 my $b_sz = 1024; # never change !!!
@@ -50,7 +50,7 @@ sub main()
 	$jd_xx = "jd_$ret_num"; 
 	say $jd_xx; 
 
-	assert(@fc <= $max_len); 
+	die if (@fc > $max_len); 
 
 	if ($fc[0] =~ m/[^[:print:][:space:]]/ || $fc[-1] =~ m/[^[:print:][:space:]]/)
 	{
@@ -80,6 +80,7 @@ sub main()
 	}
 
 	#&td_detach(\@td_pool) if @td_pool > 0;
+	&td_join(\@td_pool) if @td_pool > 0;
 }
 ### sub list ###
 sub ck_argv(\@)
@@ -91,7 +92,7 @@ sub ck_argv(\@)
 sub gen_rpush_cmd_params(\@e_str_fc)
 {#
 	my $e_str_fc = shift; 
-	assert($e_str_fc ne ""); 
+	#die if ($e_str_fc eq ""); 
 	return 	encode_base64 $e_str_fc;  
 }
 
@@ -157,6 +158,7 @@ sub del_all_jd_xx_restore_jd_incr($max)
 		my @e_fc = @fc[$start .. $end]; 
 		
 		my $e_cml = join "; ", @e_fc; 
+		$e_cml = qq{( $e_cml ) &}; 
 
 		&td_push(\@td_pool, $e_cml); 
 
@@ -174,30 +176,18 @@ sub del_all_jd_xx_restore_jd_incr($max)
 
 sub td_push($td_pool_, $cml)
 {#
-        my $td_pool_ = shift;
+	my $td_pool_ = shift;
 
-        my $cml = shift;
-        my $td =  threads->create
-        (
-                sub
-                {
-			#say (	qq{run : $cml}  ); 
-			qx($cml); 
-                }
-        );
-
-        my $len = @$td_pool_;
-        $td_pool_->[$len] = $td;
+	my $cml = shift;
+	my $td = $cml; 
+	my $len = @$td_pool_;
+	$td_pool_->[$len] = $td;
 }
 sub td_join($td_pool_)
 {#
-        my $td_pool_ = shift;
-
-        for my $e (@$td_pool_)
-        {
-                $e->join();
-        }
-
+	my $td_pool_ = shift;
+	my $cmd_all = join "\n", @$td_pool_;  
+	qx{$cmd_all}; 
 }
 
 
@@ -218,7 +208,7 @@ sub del_redis_key($jd_xx)
 {
 	my $jd_xx = shift;
 	chomp($jd_xx); 
-	assert($jd_xx ne ""); 
+	die if ($jd_xx eq ""); 
 
 	my @redis_keys = qx{$redis_get_all_keys};
 
@@ -234,37 +224,6 @@ sub del_redis_key($jd_xx)
 	}
 }
 =cut
-sub test_all_cases()
-{
-=pod 
-change :
-	set my $cml_b_sz = 3;
-*********************
-1.sh
-*********************
-sh sh.sh 1.txt
-sh sh.sh 2.txt
-sh sh.sh 3.txt
-sh sh.sh 4.txt
-sh sh.sh 5.txt
-
-EOF
 
 
-*********************
-sh.sh
-*********************
-export fn=$1
-cat $fn | perl tor.PL
-#sleep 1
-#exit 0
-#cksum  $fn
-echo "---"
-#sleep 1
-perl fr.PL
 
-EOF
-
-=cut
-
-}
