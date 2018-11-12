@@ -43,9 +43,10 @@ my $DEBUG = 0;
 ### sub list ###
 sub main()
 {#
-	&ck_argv(\@ARGV); 
+	my @fc = &ck_argv(\@ARGV); 
+	
 
-	my @fc = <>;
+	#my @fc = <>;
 	my $ret_num = &get_incr_jd_incr(); 
 	$jd_xx = "jd_$ret_num"; 
 	say $jd_xx; 
@@ -86,7 +87,31 @@ sub main()
 sub ck_argv(\@)
 {#
 	my $argv_ = shift; 
-	die "- no need args\n" if @$argv_ > 0;
+	my $ret_filename = "NULL"; 
+	my @ret_fc = (); 
+	if (@$argv_ > 0)
+	{
+
+		die "- only 1 param needed !\n" if @$argv_ != 1;
+
+		if (-e $argv_->[0])
+		{
+			open my $FP, "<", $argv_->[0]; 
+			@ret_fc = <$FP>; 
+			close $FP; 
+		}
+		else 
+		{
+			@ret_fc = ($argv_->[0]); 
+		}
+	}
+	else
+	{
+		@ret_fc = <STDIN>; 	
+	}
+
+	die "- content is empty\n" if @ret_fc == 0; 
+	return @ret_fc;
 }
 
 sub gen_rpush_cmd_params(\@e_str_fc)
