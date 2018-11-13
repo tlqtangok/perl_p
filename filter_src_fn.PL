@@ -9,7 +9,7 @@ my $fn_of_file_list = @ARGV[0] if @ARGV != 0;
 
 my @fn = `cat $fn_of_file_list`;
 my %hash_suffix = ();
-my $DEBUG = 0;
+my $DEBUG = 1;  $DEBUG = $ARGV[1] if @ARGV == 2; 
 
 ###
 
@@ -19,7 +19,7 @@ for my $e (@fn)
 
 	if (-T $e)
 	{
-		(!$DEBUG) && say $e;
+		#(!$DEBUG) && say $e;
 
 		if ($DEBUG)
 		{
@@ -29,6 +29,7 @@ for my $e (@fn)
 		}
 		if (!$DEBUG)
 		{
+			chomp($e);
 
 			if ($e =~ m{\.c$|\.cpp$|\.cuh$|\.hpp$|\.cu$|\.h$} )
 			{
@@ -43,5 +44,6 @@ for my $e (@fn)
 
 }
 
-($DEBUG) && say Dumper(\%hash_suffix);
+#say Dumper(\%hash_suffix);
+($DEBUG) && say ("--------\n",(join "\n",  (sort (keys %hash_suffix))), "\n-----\n");
 
