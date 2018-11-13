@@ -27,8 +27,8 @@ elsif (@ARGV >= 2 && $ARGV[1] ne "DEBUG")
 }
 else
 {
-	say "- perl filter_src_fn.PL fn_all.txt h c cu"
-	say "- perl filter_src_fn.PL DEBUG"
+	say "- perl filter_src_fn.PL fn_all.txt h c cu";
+	say "- perl filter_src_fn.PL DEBUG";
 	die;
 }
 ###
@@ -59,12 +59,6 @@ for my $e (@fn)
 					last;
 				}
 			}
-=pod
-			if ($e =~ m{\.c$|\.cpp$|\.cuh$|\.hpp$|\.cu$|\.h$} )
-			{
-				say $e; 
-			} 
-=cut
 		}
 	}
 
