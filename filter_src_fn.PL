@@ -13,58 +13,70 @@ my %hash_suffix = ();
 my @filter_param_list = qw(c cpp cuh hpp cu h); 
 
 my $DEBUG = 0;  
-if (@ARGV == 2 && $ARGV[1] eq "DEBUG")
-{
-	$DEBUG = 1;
-} 
-elsif (@ARGV == 1)
-{
-	@filter_param_list = qw(c cpp cuh hpp cu h); 
-}
-elsif (@ARGV >= 2 && $ARGV[1] ne "DEBUG")
-{
-	@filter_param_list = @ARGV[1..@ARGV-1];	
-}
-else
-{
-	say "- perl filter_src_fn.PL fn_all.txt h c cu";
-	say "- perl filter_src_fn.PL DEBUG";
-	die;
-}
 ###
 
-for my $e (@fn)
+&main();
+
+### sub list ###
+
+sub main()
 {
-	chomp($e);
 
-	if (-T $e)
+	if (@ARGV == 2 && $ARGV[1] eq "DEBUG")
 	{
-		#(!$DEBUG) && say $e;
+		$DEBUG = 1;
+	} 
+	elsif (@ARGV == 1)
+	{
+		@filter_param_list = qw(c cpp cuh hpp cu h); 
+	}
+	elsif (@ARGV >= 2 && $ARGV[1] ne "DEBUG")
+	{
+		@filter_param_list = @ARGV[1..@ARGV-1];	
+	}
+	else
+	{
+		say "- perl filter_src_fn.PL fn_all.txt h c cu";
+		say "- perl filter_src_fn.PL DEBUG";
+		die;
+	}
+	###
 
-		if ($DEBUG)
-		{
-			$e = basename $e;
-			$e =~ s/^.*\.//;
-			$hash_suffix{$e}++;
-		}
-		if (!$DEBUG)
-		{
-			chomp($e);
+	for my $e (@fn)
+	{
+		chomp($e);
 
-			for my $e_filter (@filter_param_list)
+		if (-T $e)
+		{
+			#(!$DEBUG) && say $e;
+
+			if ($DEBUG)
 			{
-				if ($e =~ m/\.$e_filter$/)
+				$e = basename $e;
+				$e =~ s/^.*\.//;
+				$hash_suffix{$e}++;
+			}
+			if (!$DEBUG)
+			{
+				chomp($e);
+
+				for my $e_filter (@filter_param_list)
 				{
-					say $e;
-					last;
+					if ($e =~ m/\.$e_filter$/)
+					{
+						say $e;
+						last;
+					}
 				}
 			}
 		}
+
+
 	}
+
+	#say Dumper(\%hash_suffix);
+	($DEBUG) && say ("--------\n",(join "\n",  (sort (keys %hash_suffix))), "\n-----\n");
 
 
 }
-
-#say Dumper(\%hash_suffix);
-($DEBUG) && say ("--------\n",(join "\n",  (sort (keys %hash_suffix))), "\n-----\n");
 
