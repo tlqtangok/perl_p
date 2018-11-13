@@ -18,6 +18,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 
 ### global ### 
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
+#my $host_name = join "", reverse qw(m o c . b a l e w e l);
 my $jd_incr = "jd_incr"; 
 my $redis_prefix = qq{redis-cli -h $host_name}; 
 ##############
@@ -39,6 +40,9 @@ sub main()
 sub ck_arg_and_ret_jd_xx(\@)
 {
 	my $arg_ = shift; 
+
+	die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
+
 	my $jd_xx = "NULL"; 
 	if (@$arg_ > 0)
 	{

@@ -17,12 +17,15 @@ use strict;
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 ### global ### 
+
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
+#my $host_name = join "", reverse qw(m o c . b a l e w e l);
 
 my $jd_xx = "NULL"; 
 my $jd_incr = "jd_incr"; 
 my $b_sz = 1024; # never change !!!
 my $b_num = 200; 
+my $MAX_file_in_bytes = 5 * 1024 * 1024;
 
 my $redis_prefix = qq{redis-cli -h $host_name}; 
 my $redis_get_all_keys = qq{$redis_prefix keys '*'}; 
@@ -87,6 +90,7 @@ sub main()
 sub ck_argv(\@)
 {#
 	my $argv_ = shift; 
+	die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
 	my $ret_filename = "NULL"; 
 	my @ret_fc = (); 
 	if (@$argv_ > 0)
@@ -102,7 +106,7 @@ sub ck_argv(\@)
 		}
 		else 
 		{
-			@ret_fc = ($argv_->[0]); 
+			@ret_fc = ($argv_->[0]) ."\n" if $^O eq "linux"; 
 		}
 	}
 	else
