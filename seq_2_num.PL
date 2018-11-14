@@ -45,16 +45,17 @@ my $C_seq_to_rseq =
 sub main()
 {
 
-	
+
 
 	### main var ###
 	my ($seq, $rseq, $seq_raw_in_fq, $seq_to_0_3, $rseq_to_0_3);
 	################
-	
+
 	my $fq = $ARGV[0]; 
 	if ($fq eq "")
 	{
-		my $error_msg = "- perl test.PL 02233332010001102201000100000001000130020100011310".
+		my $error_msg = "".
+		"- perl test.PL 02233332010001102201000100000001000130020100011310".
 		"\n".
 		"- perl test.PL ACTCCAAACAGAATCAAACAAAAAAACAAACAGGACCAAACAGTTTTGGA".
 		"\n";
