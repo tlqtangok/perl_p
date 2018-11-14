@@ -55,9 +55,9 @@ sub main()
 	if ($fq eq "")
 	{
 		my $error_msg = "".
-		"- perl test.PL 02233332010001102201000100000001000130020100011310".
+		"- perl test.PL [seq_num]:	perl test.PL 02233332010001102201000100000001000130020100011310".  # 
 		"\n".
-		"- perl test.PL ACTCCAAACAGAATCAAACAAAAAAACAAACAGGACCAAACAGTTTTGGA".
+		"- perl test.PL [fq_seq]:	perl test.PL ACTCCAAACAGAATCAAACAAAAAAACAAACAGGACCAAACAGTTTTGGA".
 		"\n";
 
 		die $error_msg; 	
