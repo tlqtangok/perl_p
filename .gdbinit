@@ -1,3 +1,8 @@
+set print repeats 0
+set print elements 0
+set history filename ~/.gdb_history
+set history save on
+
 define tc
 	python import time
 	python starttime=time.time()
