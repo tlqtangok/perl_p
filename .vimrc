@@ -104,10 +104,13 @@ highlight MatchParen ctermbg=blue ctermfg=yellow
 set tabstop=4
 set shiftwidth=4
 set cindent
-set hlsearch 
+set hlsearch
 
 if &diff
   "diff mode
   set diffopt+=iwhite
 endif
 
+" let @D='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##€ý,€ý.'
+" let @G='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##€ý,€ý.'
+" let @S='yiw:vim /\<0\>/##'
