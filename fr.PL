@@ -15,12 +15,15 @@ use strict;
 use threads;
 #use POSIX qw(assert); 
 use MIME::Base64 qw( encode_base64 decode_base64);
+use Redis; 
 
 ### global ### 
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
 #my $host_name = join "", reverse qw(m o c . b a l e w e l);
 my $jd_incr = "jd_incr"; 
 my $redis_prefix = qq{redis-cli -h $host_name}; 
+
+my $r = "NULL"; 
 ##############
 &main();
 
@@ -29,19 +32,21 @@ my $redis_prefix = qq{redis-cli -h $host_name};
 # main_
 sub main()
 {
-	
+
+	$r = Redis->new( server => "$host_name:6379", debug => 0 );
+
 	my $jd_xx = &ck_arg_and_ret_jd_xx(\@ARGV); 
-	my $b64_fc = &get_jd_xx_content_in_b64($jd_xx);
-	my $raw_text = &decode_b64_fc($b64_fc); 
+	my $raw_text = &get_jd_xx_content($jd_xx);
 	&print_raw_text_or_binary($raw_text);
+
+	$r->quit;
 }
 
 ### sub list ###
 sub ck_arg_and_ret_jd_xx(\@)
 {
 	my $arg_ = shift; 
-
-	die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
+	#die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
 
 	my $jd_xx = "NULL"; 
 	if (@$arg_ > 0)
@@ -58,9 +63,7 @@ sub ck_arg_and_ret_jd_xx(\@)
 		$jd_xx = &get_jd_xx_from_incr(); 
 	}
 
-	my $cml_redis_exist_jd_xx = qq{$redis_prefix exists $jd_xx}; 
-	#say $cml_redis_exist_jd_xx; 
-	my $res_exist = qx{$cml_redis_exist_jd_xx};
+	my $res_exist = $r->exists($jd_xx);
 
 	die "- not exist $jd_xx in redis\n" if $res_exist !~ m/1/; 
 	return $jd_xx;
@@ -68,28 +71,15 @@ sub ck_arg_and_ret_jd_xx(\@)
 sub get_jd_xx_from_incr()
 {
 	my $res_num = 0;
+	$res_num = $r->get($jd_incr);  
 	my $jd_xx = "jd_$res_num"; 
-	my $cml_redis_incr_jd_incr = qq{$redis_prefix get $jd_incr}; 
-	$res_num = qx{$cml_redis_incr_jd_incr};
-	chomp($res_num);
-	my $jd_xx = "jd_$res_num"; 
-
 	return $jd_xx;
 }
-sub get_jd_xx_content_in_b64($jd_xx)
+sub get_jd_xx_content($jd_xx)
 {
 	my $jd_xx = shift; 
-	my $res_b64 = "NULL"; 
-	my $cml_redis_get_jd_xx = qq{$redis_prefix lrange $jd_xx 0 -1}; 
-	$res_b64 = qx{$cml_redis_get_jd_xx};
-	#say $res_b64;
-	return $res_b64; 
-}
-sub decode_b64_fc($b64_fc)
-{
-	my $b64_fc = shift;
-	my $raw_text = decode_base64($b64_fc); 
-	#print $raw_text; 
+	my $res_raw_text = $r->get($jd_xx); 
+	return $res_raw_text; 
 }
 
 sub print_raw_text_or_binary($raw_text)
