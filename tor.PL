@@ -41,7 +41,7 @@ my $r = "NULL";  #redis connection
 sub main()
 {
 	my $fc_str_all = &ck_argv_get_fc_str(\@ARGV, $max_file_sz_in_bytes); 
-	say scalar length $fc_str_all; 
+	#say scalar length $fc_str_all; 
 
 	$r = Redis->new( server => "$host_name:6379", debug => 0 );
 	my $jd_xx = &incr_jd_incr($jd_incr, $max_jd_incr); 
