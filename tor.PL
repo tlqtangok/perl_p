@@ -96,7 +96,7 @@ sub ck_argv_get_fc_str(\@,$)
 	my $argv_ = shift; 
 	my $max_file_sz_in_bytes = shift;
 
-	die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
+	#die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
 
 	my $ret_filename = "NULL"; 
 	my @ret_fc = (); 
