@@ -7,22 +7,33 @@ sub main()
 {
 	my @fn = (@ARGV); 
 
-	die if @fn == 0; 
+	die "- please input args, filename or commit_msg\n" if @fn == 0; 
 
+	my $commit_msg = ""; 
 	for my $e_fn (@fn)
 	{
-		system(qq{
-			git add $e_fn
-			}); 
+		if (-e $e_fn)
+		{
+			system(qq{
+				git add $e_fn
+				}); 
+		}
+		else
+		{
+			$commit_msg = $e_fn; 
+		}
 	}
 
 	my $commit = join " " , @fn ;
 	$commit .= " at " . &get_timestamp(); 	
 
-   system(qq{
-	   git commit  -m'add or edit : $commit' 
-	   git push
-	   }); 
+	$commit_msg = qq{add or edit: $commit} if $commit_msg eq "";
+
+
+	system(qq{
+		git commit  -m'$commit_msg' 
+		git push
+		}); 
 }
 
 
