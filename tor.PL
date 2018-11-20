@@ -19,6 +19,9 @@ use strict;
 #use POSIX qw(assert); 
 use MIME::Base64 qw(encode_base64 decode_base64);
 use Redis; 
+use IO::Compress::Gzip qw(gzip $GzipError); 
+
+#use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
 
 ### global ### 
@@ -30,6 +33,8 @@ my $max_file_sz_in_bytes = 10 * 1024 * 1024; # 10M in max
 
 my $max_jd_incr = 256; 
 my $r = "NULL";  #redis connection
+my $GZIP_PREFIX = "GZIP_"; 
+my $gzip_board_sz = 50 * 1024; # big than 200k, gzip it!
 ##############
 
 
@@ -41,6 +46,7 @@ my $r = "NULL";  #redis connection
 sub main()
 {
 	my $fc_str_all = &ck_argv_get_fc_str(\@ARGV, $max_file_sz_in_bytes); 
+	my $gzip_ret_code = &gzip_data_if_needed(\$fc_str_all); 
 	#say scalar length $fc_str_all; 
 
 	$r = Redis->new( server => "$host_name:6379", debug => 0 );
@@ -67,6 +73,22 @@ sub clear_all_jd_xx($)
 				$r->del($e_key); 
 			}	
 		}
+}
+
+sub gzip_data_if_needed(\$)
+{
+	my $data_src = shift;
+	my $data_dst;
+
+	if (length scalar $$data_src >= $gzip_board_sz)
+	{
+		my $die_msg =  "- gzip data failure\n"; 
+
+		my $ret_code = gzip $data_src => \$data_dst or die "$die_msg"; 
+		$$data_src = "$GZIP_PREFIX".$data_dst;
+		return $ret_code; 
+	}
+	return 1; 
 }
 
 sub ck_argv_get_fc_str(\@,$)

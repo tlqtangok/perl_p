@@ -16,6 +16,8 @@ use threads;
 #use POSIX qw(assert); 
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Redis; 
+#use IO::Compress::Gzip qw(gzip $GzipError); 
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 
 ### global ### 
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
@@ -24,6 +26,7 @@ my $jd_incr = "jd_incr";
 my $redis_prefix = qq{redis-cli -h $host_name}; 
 
 my $r = "NULL"; 
+my $GZIP_PREFIX = "GZIP_"; 
 ##############
 &main();
 
@@ -37,12 +40,33 @@ sub main()
 
 	my $jd_xx = &ck_arg_and_ret_jd_xx(\@ARGV); 
 	my $raw_text = &get_jd_xx_content($jd_xx);
+	
+	my $gunzip_ret_code = &gunzip_data_if_needed(\$raw_text);
+
 	&print_raw_text_or_binary($raw_text);
 
 	$r->quit;
 }
 
 ### sub list ###
+sub gunzip_data_if_needed(\$)
+{
+	my $data_src = shift;
+	my $data_dst = "";
+	my $die_msg =  "- gunzip data failure\n"; 
+	my $len_of_gzip_ = length scalar $GZIP_PREFIX;  # 5
+
+	if (substr ($$data_src, 0, $len_of_gzip_) eq $GZIP_PREFIX)
+	{
+		$$data_src = substr($$data_src, $len_of_gzip_);  
+		my $ret_code = gunzip $data_src => \$data_dst or die "$die_msg"; 
+		$$data_src = $data_dst;
+		return $ret_code; 
+	}
+
+	return 1;
+}
+
 sub ck_arg_and_ret_jd_xx(\@)
 {
 	my $arg_ = shift; 
