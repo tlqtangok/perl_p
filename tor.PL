@@ -47,8 +47,26 @@ sub main()
 	my $jd_xx = &incr_jd_incr($jd_incr, $max_jd_incr); 
 	say $jd_xx; 
 
+
+	&clear_all_jd_xx() if $jd_xx eq "jd_0"; 
+
 	$r->set($jd_xx, $fc_str_all);
 	$r->quit; 
+}
+
+sub clear_all_jd_xx($)
+{
+		my @keys_r = $r->keys("jd_*");
+		my $len_of_keys = @keys_r; 
+		say "- delete $len_of_keys jd_xx keys ... "; 	
+
+		for my $e_key (@keys_r)
+		{
+			if ($e_key =~ m/^jd_\d/)
+			{
+				$r->del($e_key); 
+			}	
+		}
 }
 
 sub ck_argv_get_fc_str(\@,$)
@@ -105,6 +123,7 @@ sub incr_jd_incr($,$)
 
 	my $jd_incr = shift;
 	my $max_num = shift;
+
 	my $ret_num = $r->incr($jd_incr);
 	if ($ret_num >= $max_num)
 	{
