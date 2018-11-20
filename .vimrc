@@ -111,6 +111,6 @@ if &diff
   set diffopt+=iwhite
 endif
 
-let @d='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##€ý,€ý.'
-let @g='yiw:vim /\<0\>(.*\n\{0,1\}{/##€ý,€ý.'
+let @d='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##'
+let @g='yiw:vim /\<0\>(.*\n\{0,1\}{/##'
 let @s='yiw:vim /\<0\>/##'
