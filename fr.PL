@@ -23,7 +23,6 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
 #my $host_name = join "", reverse qw(m o c . b a l e w e l);
 my $jd_incr = "jd_incr"; 
-my $redis_prefix = qq{redis-cli -h $host_name}; 
 
 my $r = "NULL"; 
 my $GZIP_PREFIX = "GZIP_"; 

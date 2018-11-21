@@ -34,7 +34,7 @@ my $max_file_sz_in_bytes = 10 * 1024 * 1024; # 10M in max
 my $max_jd_incr = 256; 
 my $r = "NULL";  #redis connection
 my $GZIP_PREFIX = "GZIP_"; 
-my $gzip_board_sz = 50 * 1024; # big than 200k, gzip it!
+my $gzip_board_sz = 2 * 1024; # big than 2k, gzip it!
 ##############
 
 
