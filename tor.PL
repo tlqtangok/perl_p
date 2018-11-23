@@ -29,7 +29,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
 #my $host_name = join "", reverse qw(m o c . b a l e w e l);
 my $jd_incr = "jd_incr"; 
-my $max_file_sz_in_bytes = 20 * 1024 * 1024 + 1024; # 20M in max
+my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 
 my $max_jd_incr = 256; 
 my $r = "NULL";  #redis connection
