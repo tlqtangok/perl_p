@@ -46,6 +46,7 @@ my $gzip_board_sz = 2 * 1024; # big than 2k, gzip it!
 sub main()
 {
 	my $fc_str_all = &ck_argv_get_fc_str(\@ARGV, $max_file_sz_in_bytes); 
+
 	my $gzip_ret_code = &gzip_data_if_needed(\$fc_str_all); 
 	#say scalar length $fc_str_all; 
 
@@ -108,6 +109,7 @@ sub ck_argv_get_fc_str(\@,$)
 		if (-e $argv_->[0])
 		{
 			open my $FP, "<", $argv_->[0]; 
+			binmode $FP;
 			@ret_fc = <$FP>; 
 			close $FP; 
 		}
@@ -136,6 +138,15 @@ sub ck_argv_get_fc_str(\@,$)
 	{
 		die "- file size too big\n"; 	
 	}
+
+=pod
+	my $fn_fc_str_all = "fn_fc_str_all"; 
+
+	open my $fp_fc_str_all, ">",$fn_fc_str_all;  
+	binmode $fp_fc_str_all; 
+	print $fp_fc_str_all $fc_str_all;
+	close $fp_fc_str_all; 
+=cut
 
 	return $fc_str_all;
 }
