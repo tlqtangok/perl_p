@@ -171,7 +171,7 @@ sub do_gunzip($,$)
 {
 	my $fn = shift;
 	my $ref_raw_text = shift;
-	say "- do_gunzip on raw_text and output to $fn"; 
+	#say "- do_gunzip on raw_text and output to $fn"; 
 
 	my $data_dst = "NULL"; 
 	my $die_msg =  "- gunzip data failure\n";
