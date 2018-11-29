@@ -118,7 +118,7 @@ sub echo_simplified_fc($)
 		if (@fc > $max_num_to_echo)
 		{
 			my $half_line_num = $max_num_to_echo >> 1; 
-			@fc = (@fc[0..$half_line_num], "\n ...\n" x 1, @fc[-1*$half_line_num..-1]); 
+			@fc = (@fc[0..$half_line_num], " ...\n" x 1, @fc[-1*$half_line_num..-1]); 
 
 		}
 		say @fc; 
