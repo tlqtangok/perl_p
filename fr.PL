@@ -40,33 +40,31 @@ sub main()
 
 	my $jd_xx = &ck_arg_and_ret_jd_xx(\@ARGV); 
 	my $raw_text = &get_jd_xx_content($jd_xx);
-	
-	my $gunzip_ret_code = &gunzip_data_if_needed(\$raw_text);
-
-	&print_raw_text_or_binary($raw_text);
-
 	$r->quit;
+
+	my ($flag_gzip_, $fn_, $left_raw_text) = &parse_prefix_get_gzip_fn($raw_text);
+
+	&prompt_overwrite_if_filename_exists($fn_);
+	&gunzip_if_needed($flag_gzip_, $fn_, \$left_raw_text); 
+	&print_fc_to_fn($fn_, \$left_raw_text);
+
+	&echo_simplified_fc($fn_); 
+
+
 }
 
 ### sub list ###
-sub gunzip_data_if_needed(\$)
+sub print_fc_to_fn($fn, \$left_raw_text)
 {
-	my $data_src = shift;
-	my $data_dst = "";
-	my $die_msg =  "- gunzip data failure\n"; 
-	my $len_of_gzip_ = length scalar $GZIP_PREFIX;  # 5
+	my $fn = shift;
+	my $ref_left_raw_text = shift;
+	open my $FP , ">", $fn or die; 
+	binmode $FP;
+	print $FP $$ref_left_raw_text; 
+	close $FP; 
 
-	if (substr ($$data_src, 0, $len_of_gzip_) eq $GZIP_PREFIX)
-	{
-		$$data_src = substr($$data_src, $len_of_gzip_);  
-		my $ret_code = gunzip $data_src => \$data_dst or die "$die_msg"; 
-		$$data_src = $data_dst;
-		return $ret_code; 
-	}
 
-	return 1;
 }
-
 sub ck_arg_and_ret_jd_xx(\@)
 {
 	my $arg_ = shift; 
@@ -106,10 +104,105 @@ sub get_jd_xx_content($jd_xx)
 	return $res_raw_text; 
 }
 
-sub print_raw_text_or_binary($raw_text)
+
+# -----------
+
+sub echo_simplified_fc($)
 {
-	my $raw_text = shift; 
-	binmode STDOUT;
-	print $raw_text; 
+	my $fn = shift;
+	if (-T $fn)
+	{
+		open my $FP, "<", $fn; 
+		my @fc = <$FP>;	
+		my $max_num_to_echo = 14; 
+		if (@fc > $max_num_to_echo)
+		{
+			my $half_line_num = $max_num_to_echo >> 1; 
+			@fc = (@fc[0..$half_line_num], "\n ...\n" x 1, @fc[-1*$half_line_num..-1]); 
+
+		}
+		say @fc; 
+		close $FP; 
+	}
+
+	say "- file content save to $fn"; 
+}
+
+sub gunzip_if_needed($,$,$)
+{
+	my $flag_gzip_ = shift; 
+	my $fn_ = shift;
+	my $ref_raw_text = shift;
+
+	if ($flag_gzip_ == 1)
+	{
+		&do_gunzip($fn_, $ref_raw_text); 
+	}
+	else
+	{
+   	
+	}
+}
+
+sub prompt_overwrite_if_filename_exists($)
+{
+	my $fn_ = shift;
+	my $tmp_file = "txt.txt"; 
+	if ($fn_ eq $tmp_file)
+	{
+	}
+	elsif (-f $fn_)
+	{
+		say "- exists $fn_, would you like to overwrite? (yes | no)"; 	
+		my $ensure_ = <>;
+		chomp($ensure_);
+		if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
+		{
+		}
+		else
+		{
+			die "- exist fn_ !";
+		}
+		say "";
+	}
+}
+
+sub do_gunzip($,$)
+{
+	my $fn = shift;
+	my $ref_raw_text = shift;
+	say "- do_gunzip on raw_text and output to $fn"; 
+
+	my $data_dst = "NULL"; 
+	my $die_msg =  "- gunzip data failure\n";
+	my $ret_code = gunzip $ref_raw_text => \$data_dst or die "$die_msg"; 
+	$$ref_raw_text = $data_dst;
+
+	return $ret_code; 
+}
+
+sub parse_prefix_get_gzip_fn($)
+{
+	my $raw_text = shift;
+	my $prefix_ = substr($raw_text, 0, 128);
+	my @lines = split m/\n/, $prefix_;
+	my $e_0 = $lines[0]; 
+	my $e_1 = $lines[1]; 
+
+	my $L_0 = length scalar $e_0; 
+	my $L_1 = length scalar $e_1; 
+
+	my $start_offset = $L_0 + $L_1 + 2; 
+	my $left_raw_str = substr($raw_text, $start_offset); 
+	return (&parse_right_colon($e_0), &parse_right_colon($e_1), $left_raw_str); 
+}
+
+
+sub parse_right_colon($e_str)
+{
+	my $e_str = shift;
+	my @arr_t = split m/\:/, $e_str;
+	die if @arr_t < 2;
+	return $arr_t[1]; 
 }
 

@@ -16,7 +16,7 @@ use feature qw(say);
 #use Cwd qw(abs_path);
 use strict;
 #use threads;
-#use POSIX qw(assert); 
+use POSIX qw(assert); 
 use MIME::Base64 qw(encode_base64 decode_base64);
 use Redis; 
 use IO::Compress::Gzip qw(gzip $GzipError); 
@@ -34,6 +34,7 @@ my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 my $r = "NULL";  #redis connection
 my $GZIP_PREFIX = "GZIP_"; 
+my $FILENAME_PREFIX = "FILENAME_"; 
 my $gzip_board_sz = 2 * 1024; # big than 2k, gzip it!
 ##############
 
@@ -45,9 +46,9 @@ my $gzip_board_sz = 2 * 1024; # big than 2k, gzip it!
 ### sub list ###
 sub main()
 {
-	my $fc_str_all = &ck_argv_get_fc_str(\@ARGV, $max_file_sz_in_bytes); 
+	my ($fn, $fc_str_all) = &ck_argv_get_fc_str(\@ARGV, $max_file_sz_in_bytes); 
 
-	my $gzip_ret_code = &gzip_data_if_needed(\$fc_str_all); 
+	my $gzip_ret_code = &gzip_data_if_needed(\$fc_str_all, $fn); 
 	#say scalar length $fc_str_all; 
 
 	$r = Redis->new( server => "$host_name:6379", debug => 0 );
@@ -76,19 +77,29 @@ sub clear_all_jd_xx($)
 		}
 }
 
-sub gzip_data_if_needed(\$)
+sub gzip_data_if_needed(\$,$)
 {
 	my $data_src = shift;
+	my $fn = shift;
+	assert(-f $fn); 
+
 	my $data_dst;
+	my $prefix_info = "NULL"; 
 
 	if (length scalar $$data_src >= $gzip_board_sz)
 	{
 		my $die_msg =  "- gzip data failure\n"; 
 
 		my $ret_code = gzip $data_src => \$data_dst or die "$die_msg"; 
-		$$data_src = "$GZIP_PREFIX".$data_dst;
-		return $ret_code; 
+		$$data_src = $data_dst;
+		$prefix_info = "$GZIP_PREFIX:1\n$FILENAME_PREFIX:$fn\n";
 	}
+	else
+	{
+		$prefix_info = "$GZIP_PREFIX:0\n$FILENAME_PREFIX:$fn\n";
+	}
+
+	$$data_src = $prefix_info . $$data_src;
 	return 1; 
 }
 
@@ -101,6 +112,7 @@ sub ck_argv_get_fc_str(\@,$)
 
 	my $ret_filename = "NULL"; 
 	my @ret_fc = (); 
+	my $ret_fn = "txt.txt"; 
 	if (@$argv_ > 0)
 	{
 
@@ -108,6 +120,8 @@ sub ck_argv_get_fc_str(\@,$)
 
 		if (-e $argv_->[0])
 		{
+			$ret_fn = $argv_->[0]; 
+
 			open my $FP, "<", $argv_->[0]; 
 			binmode $FP;
 			@ret_fc = <$FP>; 
@@ -115,6 +129,8 @@ sub ck_argv_get_fc_str(\@,$)
 		}
 		else  # an echo string
 		{
+			$ret_fn = "txt.txt"; 
+
 			if ($^O eq "MSWin32") 
 			{
 				@ret_fc = ($argv_->[0]); 
@@ -148,7 +164,7 @@ sub ck_argv_get_fc_str(\@,$)
 	close $fp_fc_str_all; 
 =cut
 
-	return $fc_str_all;
+	return ($ret_fn, $fc_str_all);
 }
 
 sub incr_jd_incr($,$)
@@ -168,3 +184,4 @@ sub incr_jd_incr($,$)
 	return $jd_xx;
 }
 
+use POSIX qw(assert);
