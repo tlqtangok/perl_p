@@ -89,3 +89,11 @@ end
 define brestore
 	source ~/.breakpoints
 end
+define all_bt 
+	thread apply all bt
+end
+
+define tlock
+	set scheduler-locking on
+end
+
