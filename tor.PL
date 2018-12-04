@@ -81,7 +81,8 @@ sub gzip_data_if_needed(\$,$)
 {
 	my $data_src = shift;
 	my $fn = shift;
-	assert(-f $fn); 
+	my $ret_fn_r0 = "txt.txt"; 
+	assert(-f $fn) if $fn ne $ret_fn_r0; 
 
 	my $data_dst;
 	my $prefix_info = "NULL"; 
@@ -129,8 +130,6 @@ sub ck_argv_get_fc_str(\@,$)
 		}
 		else  # an echo string
 		{
-			$ret_fn = "txt.txt"; 
-
 			if ($^O eq "MSWin32") 
 			{
 				@ret_fc = ($argv_->[0]); 
