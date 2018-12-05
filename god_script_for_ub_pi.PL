@@ -9,10 +9,10 @@ use File::Path qw(make_path remove_tree);
 
 ### global var ###
 my $HOME = $ENV{HOME};
-my $jupyter_nb_port = 10249; 
+my $jupyter_nb_port = 10242; 
 
 my $fn_run_history = "$HOME/god_script_for_boot.sh";
-`rm $fn_run_history ; touch $fn_run_history`;
+`rm -rf $fn_run_history ; touch $fn_run_history`;
 
 my $flag_ub = 0;
 $flag_ub =  1 if `cat /etc/issue` =~ m/ubuntu/i;
@@ -20,7 +20,7 @@ $flag_ub =  1 if `cat /etc/issue` =~ m/ubuntu/i;
 
 my $whoami = scalar getpwuid $<;
 my $jd = "$HOME/jd";
-system( qq{ rm -rf $jd } );
+#system( qq{ rm -rf $jd } );
 
 &chk_cmd_rc( qq{mkdir -p $jd} );
 my $t = "$jd/t";
@@ -28,7 +28,7 @@ my $t = "$jd/t";
 &chk_dir($t);
 
 my $sudo = "";
-$sudo = "sudo" if $whoami != "root";
+$sudo = "sudo" if $whoami ne "root";
 
 my $perl_p="$jd/perl_p";
 &chk_cmd_rc( qq{ cd $jd && git clone https://github.com/tlqtangok/perl_p.git } );
@@ -40,7 +40,7 @@ my $nb = "$t/nb";
 
 # ngrok files
 my $ngrok = "$t/ngrok";
-&chk_cmd_rc( qq{ cd $t &&  wget http://jidort.gz01.bdysite.com/ngrok.tar.gz && tar xzf ngrok.tar.gz && rm ngrok.tar.gz  } );
+&chk_cmd_rc( qq{ #cd $t &&  wget http://jidort.gz01.bdysite.com/ngrok.tar.gz && tar xzf ngrok.tar.gz && rm ngrok.tar.gz  } );
 &chk_dir($ngrok);
 
 # nb/lnk , nb/yun
@@ -74,7 +74,7 @@ s_b
 EOF_bashrc
 };
 
-say( q{$cmd_append_bashrc} );
+#say( q{$cmd_append_bashrc} );
 &chk_cmd_rc($cmd_append_bashrc);
 
 &chk_fn( "$HOME/.bashrc" );
@@ -106,6 +106,7 @@ $sudo chmod 0777 /etc/apt/sources.list.d/raspi.list
 
 $sudo cp $perl_p/pi_sources.list /etc/apt/sources.list
 $sudo cp $perl_p/pi_raspi.list /etc/apt/sources.list.d/raspi.list
+$sudo rm /etc/apt/sources.list.d/raspi.list
 
 };
 
@@ -129,7 +130,7 @@ $sudo cp $perl_p/aliyun_ub_16.04_sources.list /etc/apt/sources.list
 }  # end if flag_ub
 
 say( q{$cmd_edit_sources_list} );
-&chk_cmd_rc( qq{$cmd_edit_sources_list} );
+#&chk_cmd_rc( qq{$cmd_edit_sources_list} );
 
 
 # apt-get update
@@ -143,6 +144,15 @@ say( qq{$sudo apt install samba} );
 
 # edit samba daemon config
 my $cmd_set_smb_pw = "$sudo smbpasswd -a $whoami";
+if ($flag_ub)
+{
+	$cmd_set_smb_pw = qq{$sudo printf 'jd\\njd\\n' | $sudo smbpasswd -a $whoami};
+}
+else
+{
+	$cmd_set_smb_pw = qq{$sudo printf 'pi\\npi\\n' | $sudo smbpasswd -a $whoami};
+}
+
 say $cmd_set_smb_pw;
 &chk_cmd_rc( qq{$cmd_set_smb_pw}  );
 
@@ -181,22 +191,29 @@ say( qq{$sudo apt install jupyter-notebook} );
 &chk_cmd_rc( qq{$sudo apt install jupyter-notebook} );
 
 # config jupyter-notebook 
-say( qq{ $sudo jupyter-notebook --generate-config } );
-&chk_cmd_rc( qq{ $sudo yes | $sudo jupyter-notebook --generate-config } );
+say( qq{ jupyter-notebook --generate-config } );
+&chk_cmd_rc( qq{ yes | jupyter-notebook --generate-config } );
+
+my $fn_jupyter_config = ""; 
 if ($flag_ub)
 {
 &chk_cmd_rc( qq{ $sudo cp $perl_p/ub_pw_jd_jupyter_notebook_config.py $HOME/.jupyter/jupyter_notebook_config.py } );
+$fn_jupyter_config = "$HOME/.jupyter/jupyter_notebook_config.py"; 
 }
 else
 {
 &chk_cmd_rc( qq{ $sudo cp $perl_p/pi_pw_pi_jupyter_notebook_config.py $HOME/.jupyter/jupyter_notebook_config.py } );
+$fn_jupyter_config = "$HOME/.jupyter/jupyter_notebook_config.py"; 
 }
 
-&chk_cmd_rc( qq{ perl  -i.bak -pe 's|(c.NotebookApp.notebook_dir.*u.)(.*)(.)|\\1$nb\\3|; s|(c.NotebookApp.port.*)( \\d.*)|\\1 $jupyter_nb_port|'  $HOME/.jupyter/jupyter_notebook_config.py } );
+&chk_cmd_rc( qq{ sudo perl  -i.bak -pe 's|(c.NotebookApp.notebook_dir.*u.)(.*)(.)|\\1$nb\\3|; s|(c.NotebookApp.port.*)( \\d.*)|\\1 $jupyter_nb_port|'  $HOME/.jupyter/jupyter_notebook_config.py } );
 
 # install nbconvert
-say( qq{$sudo pip install nbconvert} );
-&chk_cmd_rc( qq{$sudo pip install nbconvert} );
+if ($HOME =~ m/root/)
+{
+	say( qq{$sudo pip install nbconvert} );
+	&chk_cmd_rc( qq{$sudo pip install nbconvert} );
+}
 
 
 ### sub list ###
@@ -204,14 +221,18 @@ sub chk_fn($fn_path)
 {
         my $fn_path = shift;
         chomp($fn_path);
+=pod
         die "- not exist $fn_path\n" if ! -f $fn_path;
+=cut
 }
 
 sub chk_dir($dir_path)
 {
         my $dir_path = shift;
         chomp($dir_path);
-        die "- not exist $dir_path\n" if ! -e $dir_path;
+=pod
+	die "- not exist $dir_path\n" if ! -e $dir_path;
+=cut
 }
 
 sub chk_cmd_rc($cmd)
@@ -222,13 +243,14 @@ sub chk_cmd_rc($cmd)
 
         # chomp($cmd);
         &append_content_to_fn($fn_run_history_, $cmd);
-
+=pod
         my $rc = system( $cmd );
         if ($rc != 0)
         {
                 say $cmd;
         }
         assert( $rc == 0 );
+=cut
 }
 
 sub append_content_to_fn($fn, $content)
