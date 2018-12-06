@@ -28,12 +28,14 @@ my $__FILELIST__ = "@argv";
 $templ_ =~ s/__FILELIST__/$__FILELIST__/; 
 $templ_ =~ s/__MAPSTATEMENT__/$__MAPSTATEMENT__/; 
 
+=pod
 print '- run:',"\n";
 print '===================', ""; 
 print $templ_ ; 
 print '===================', "\n\n"; 
+=cut
 
 system(  $templ_ ); 
 
-print "EOF\n";
+#print "EOF\n";
 
