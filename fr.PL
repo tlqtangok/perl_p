@@ -42,16 +42,57 @@ sub main()
 	my $raw_text = &get_jd_xx_content($jd_xx);
 	$r->quit;
 
-	my ($flag_gzip_, $fn_, $left_raw_text) = &parse_prefix_get_gzip_fn($raw_text);
+	my ($flag_gzip_, $fn_, $crc32,  $left_raw_text) = &parse_prefix_get_gzip_fn($raw_text);
 
 	&prompt_overwrite_if_filename_exists($fn_);
-	&gunzip_if_needed($flag_gzip_, $fn_, \$left_raw_text); 
-	&print_fc_to_fn($fn_, \$left_raw_text);
 
+	&gunzip_if_needed($flag_gzip_, $fn_, \$left_raw_text);
+
+	&ensure_crc32_test($crc32, \$left_raw_text); 
+	&print_fc_to_fn($fn_, \$left_raw_text);
 	&echo_simplified_fc($fn_); 
 
-
 }
+
+sub ensure_crc32_test($,\$)
+{
+	my $crc32 = shift; 
+	my $ref_left_raw_text = shift; 
+	die "- crc32 check failure !\n" if $crc32 != &mycrc32($$ref_left_raw_text);
+}
+
+sub mycrc32 
+{
+	my ($input, $init_value, $polynomial) = @_;
+
+	$init_value = 0 unless (defined $init_value);
+	$polynomial = 0xedb88320 unless (defined $polynomial);
+
+	my @lookup_table;
+
+	for (my $i=0; $i<256; $i++) {
+		my $x = $i;
+		for (my $j=0; $j<8; $j++) {
+			if ($x & 1) {
+				$x = ($x >> 1) ^ $polynomial;
+			} else {
+				$x = $x >> 1;
+			}
+		}
+		push @lookup_table, $x;
+	}
+
+	my $crc = $init_value ^ 0xffffffff;
+
+	foreach my $x (unpack ('C*', $input)) {
+		$crc = (($crc >> 8) & 0xffffff) ^ $lookup_table[ ($crc ^ $x) & 0xff ];
+	}
+
+	$crc = $crc ^ 0xffffffff;
+
+	return $crc;
+}
+
 
 ### sub list ###
 sub print_fc_to_fn($fn, \$left_raw_text)
@@ -161,7 +202,7 @@ sub prompt_overwrite_if_filename_exists($)
 		}
 		else
 		{
-			die "- exist fn_ !";
+			die "- exist $fn_ !";
 		}
 		say "";
 	}
@@ -184,17 +225,20 @@ sub do_gunzip($,$)
 sub parse_prefix_get_gzip_fn($)
 {
 	my $raw_text = shift;
-	my $prefix_ = substr($raw_text, 0, 128);
+	my $prefix_ = substr($raw_text, 0, 256);
 	my @lines = split m/\n/, $prefix_;
 	my $e_0 = $lines[0]; 
 	my $e_1 = $lines[1]; 
+	my $e_2 = $lines[2]; 
 
 	my $L_0 = length scalar $e_0; 
 	my $L_1 = length scalar $e_1; 
+	my $L_2 = length scalar $e_2; 
 
-	my $start_offset = $L_0 + $L_1 + 2; 
+
+	my $start_offset = $L_0 + $L_1 + $L_2 + 3; 
 	my $left_raw_str = substr($raw_text, $start_offset); 
-	return (&parse_right_colon($e_0), &parse_right_colon($e_1), $left_raw_str); 
+	return (&parse_right_colon($e_0), &parse_right_colon($e_1), &parse_right_colon($e_2), $left_raw_str); 
 }
 
 

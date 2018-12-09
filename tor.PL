@@ -35,6 +35,7 @@ my $max_jd_incr = 256;
 my $r = "NULL";  #redis connection
 my $GZIP_PREFIX = "GZIP_"; 
 my $FILENAME_PREFIX = "FILENAME_"; 
+my $CRC32_PREFIX = "CRC32_"; 
 my $gzip_board_sz = 2 * 1024; # big than 2k, gzip it!
 ##############
 
@@ -62,6 +63,39 @@ sub main()
 	$r->quit; 
 }
 
+sub mycrc32 
+{
+	my ($input, $init_value, $polynomial) = @_;
+
+	$init_value = 0 unless (defined $init_value);
+	$polynomial = 0xedb88320 unless (defined $polynomial);
+
+	my @lookup_table;
+
+	for (my $i=0; $i<256; $i++) {
+		my $x = $i;
+		for (my $j=0; $j<8; $j++) {
+			if ($x & 1) {
+				$x = ($x >> 1) ^ $polynomial;
+			} else {
+				$x = $x >> 1;
+			}
+		}
+		push @lookup_table, $x;
+	}
+
+	my $crc = $init_value ^ 0xffffffff;
+
+	foreach my $x (unpack ('C*', $input)) {
+		$crc = (($crc >> 8) & 0xffffff) ^ $lookup_table[ ($crc ^ $x) & 0xff ];
+	}
+
+	$crc = $crc ^ 0xffffffff;
+
+	return $crc;
+}
+
+
 sub clear_all_jd_xx($)
 {
 		my @keys_r = $r->keys("jd_*");
@@ -87,17 +121,19 @@ sub gzip_data_if_needed(\$,$)
 	my $data_dst;
 	my $prefix_info = "NULL"; 
 
+	my $CRC32 = &mycrc32($$data_src); 
+
 	if (length scalar $$data_src >= $gzip_board_sz)
 	{
 		my $die_msg =  "- gzip data failure\n"; 
 
 		my $ret_code = gzip $data_src => \$data_dst or die "$die_msg"; 
 		$$data_src = $data_dst;
-		$prefix_info = "$GZIP_PREFIX:1\n$FILENAME_PREFIX:$fn\n";
+		$prefix_info = "$GZIP_PREFIX:1\n$FILENAME_PREFIX:$fn\n$CRC32_PREFIX:$CRC32\n";
 	}
 	else
 	{
-		$prefix_info = "$GZIP_PREFIX:0\n$FILENAME_PREFIX:$fn\n";
+		$prefix_info = "$GZIP_PREFIX:0\n$FILENAME_PREFIX:$fn\n$CRC32_PREFIX:$CRC32\n";
 	}
 
 	$$data_src = $prefix_info . $$data_src;
