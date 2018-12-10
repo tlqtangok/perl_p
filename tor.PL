@@ -5,10 +5,10 @@
 
 use strict ;
 use feature qw(say);
+use File::Basename qw(dirname basename);
 #use List::Util qw(first sum max shuffle maxstr);
 #use List::MoreUtils qw(uniq);
 #use File::Spec::Functions;
-#use File::Basename qw(dirname basename);
 #use Data::Dumper;
 #use Scalar::Util qw/reftype/;
 #use File::Copy;
@@ -63,7 +63,7 @@ sub main()
 	$r->quit; 
 }
 
-sub mycrc32 
+sub mycrc32()
 {
 	my ($input, $init_value, $polynomial) = @_;
 
@@ -199,7 +199,7 @@ sub ck_argv_get_fc_str(\@,$)
 	close $fp_fc_str_all; 
 =cut
 
-	return ($ret_fn, $fc_str_all);
+	return (basename($ret_fn), $fc_str_all);
 }
 
 sub incr_jd_incr($,$)
@@ -219,4 +219,3 @@ sub incr_jd_incr($,$)
 	return $jd_xx;
 }
 
-use POSIX qw(assert);

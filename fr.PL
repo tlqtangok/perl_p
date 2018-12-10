@@ -61,7 +61,7 @@ sub ensure_crc32_test($,\$)
 	die "- crc32 check failure !\n" if $crc32 != &mycrc32($$ref_left_raw_text);
 }
 
-sub mycrc32 
+sub mycrc32() 
 {
 	my ($input, $init_value, $polynomial) = @_;
 
