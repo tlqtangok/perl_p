@@ -30,9 +30,11 @@ use IO::Handle;
 	my $fn_list = "";
 	my $fn_list_new = "";
 	my $html_folder = "/root/jd/t/html";
+	my $dst_folder = "/y/git/bwa4cuda"; 
 	my $g_cnt = 0;
 ###
 
+assert(-d $dst_folder); 
 `rm -rf $edit_log; touch $edit_log`;
 
 
@@ -43,6 +45,9 @@ if ("__main__" eq "__main__")
 	find(\&save_fn_list ,  "$watched_folder"); 
 	assert($fn_list ne ""); 
 
+	$| = 1; 
+	open my $FP_log , ">>$edit_log" or die; 
+
         while(1)
         {
                 find(\&save_fn_list_new ,  $watched_folder);
@@ -51,17 +56,19 @@ if ("__main__" eq "__main__")
                 if ($fn_list_new ne $fn_list)
                 {
 			my ($new_state, $on_fn) = &analysis_fn_list_get_last_modify($fn_list, $fn_list_new);
-			my ($cmd_copy_proc, $html_url) = &gen_copy_cmd($new_state, $on_fn);
 			my $timestamp = &get_timestamp();
-			say $timestamp, " ", $new_state, " " , $on_fn; 
+			
+			say $timestamp, "\t", $new_state, "\t" , $on_fn; 
+
+			my $cmd_copy_proc = &gen_process_cmd($new_state, $on_fn);
+			say $cmd_copy_proc; 
+
 
 			my @td_pool = ();
-			#&td_push(\@td_pool, $cmd_copy_proc);
-			#&td_join(\@td_pool);
-			#say "- $timestamp\t$html_url";
+			&td_push(\@td_pool, $cmd_copy_proc);
+			&td_join(\@td_pool);
 
-			#my $cmd_append_log =  qq{echo "- $timestamp\t$html_url" >> $edit_log};
-			#system($cmd_append_log);
+			print $FP_log "$timestamp\t$cmd_copy_proc";
 
                 }
 
@@ -69,10 +76,11 @@ if ("__main__" eq "__main__")
                 $fn_list_new = "";
                 sleep 6;
         }
+	close $FP_log;
 }
 
 ### sub list ###
-sub gen_copy_cmd($new_state, $on_fn)
+sub gen_process_cmd($new_state, $on_fn)
 {
         my ($new_state, $on_fn) = (@_[0], @_[1]);
 
@@ -82,55 +90,31 @@ sub gen_copy_cmd($new_state, $on_fn)
         my $html_fn = "NULL";
 
 
+	my $full_fn = $on_fn; 
+	my $basename_fn = basename $full_fn;
+
         if ($new_state ne 'delete')
         {
-
-                for my $fn_ipynb ( ($on_fn,) )
-                {
-                        my $basename_ipynb = basename $fn_ipynb;
-
-                        $html_fn = $basename_ipynb;
-                        $html_fn =~ s/.ipynb/.html/;
-
-
                         my $e_cmd = qq
                         {
-                                # $new_state $on_fn
-                                rm -rf $html_folder/$basename_ipynb
-                                ln -s  $fn_ipynb $html_folder/$basename_ipynb
-                                jupyter-nbconvert $html_folder/$basename_ipynb
+				rm -rf $dst_folder/$basename_fn ;  cp $full_fn $dst_folder/$basename_fn
                         };
 
                         push @arr_cmd , $e_cmd;
-                        last;  # we only proc one !
-                }
-
-
         }
         else
-        {
-                assert($new_state eq "delete");
+	{
+		assert($new_state eq "delete");
 
-                for my $fn_ipynb ( ($on_fn,) )
-                {
-                        my $basename_ipynb = basename $fn_ipynb;
-                        $html_fn = $basename_ipynb;
-                        $html_fn =~ s/.ipynb/.html/;
+		my $e_cmd = qq
+		{
+			rm -rf $dst_folder/$basename_fn
+		};
 
-                        my $e_cmd = qq
-                        {
-                                # $new_state $on_fn
-                                rm -rf $html_folder/$basename_ipynb
-                                rm -rf $html_folder/$html_fn
-                        };
+		push @arr_cmd , $e_cmd;
+	}
 
-                        push @arr_cmd , $e_cmd;
-                        last;  # we only proc one !
-                }
-        }
-
-        $html_url = $html_url . $html_fn;
-        return "@arr_cmd", $html_url;
+        return "@arr_cmd";
 }
 
 sub analysis_fn_list_get_last_modify($fn_list, $fn_list_new)
@@ -283,29 +267,6 @@ my $if_windows = "True";
 }
 
 
-#------ no need -------
-=pod
-sub gen_copy_cmd($fn, $dst_folder)
-{
-        my $fn = shift;
-        my $dst_folder = shift;
-        my $fn_r0 = $fn;
-        $fn =~ s/.*bgi_gpu_server/$dst_folder/;
-        return $fn_r0, $fn;
-}
-
-sub gen_size($)
-{
-        my $fn = shift;
-        my $mtime = (stat($fn))[9];
-        return $mtime;
-}
-
-### perl timestamp ###
-
-=cut
-
-#################
 
 sub td_join($td_pool_)
 {
