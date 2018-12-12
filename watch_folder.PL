@@ -18,8 +18,9 @@ use IO::Handle;
 
 ### global var ###
 	my $watched_folder = "/root/jd/t/nb";
-	$watched_folder = $ARGV[0] if @ARGV > 0; 
+	$watched_folder = abs_path($ARGV[0]) if @ARGV > 0 && -d $ARGV[0]; 
 	$watched_folder = abs_path("./") if @ARGV == 0; 
+
 	my @filter_param_list = qw(h hpp cpp cxx c cc cxx cu cuh); 
 
 
