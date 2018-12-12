@@ -17,12 +17,19 @@ use IO::Handle;
 
 
 ### global var ###
-        my $watched_folder = "/root/jd/t/nb";
-        my $edit_log = $watched_folder."/"."bak_script/ipynb_to_html_log.txt";
-        my $fn_list = "";
-        my $fn_list_new = "";
-        my $html_folder = "/root/jd/t/html";
-        my $g_cnt = 0;
+	my $watched_folder = "/root/jd/t/nb";
+	$watched_folder = $ARGV[0] if @ARGV > 0; 
+	$watched_folder = abs_path("./") if @ARGV == 0; 
+	my @filter_param_list = qw(h hpp cpp cxx c cc cxx cu cuh); 
+
+
+	say "- watch folder: $watched_folder"; 
+
+	my $edit_log = $watched_folder."/"."bak_script/watch_folder_log.txt";
+	my $fn_list = "";
+	my $fn_list_new = "";
+	my $html_folder = "/root/jd/t/html";
+	my $g_cnt = 0;
 ###
 
 `rm -rf $edit_log; touch $edit_log`;
@@ -32,27 +39,28 @@ if ("__main__" eq "__main__")
 {
 
 
-        find(\&print_it ,  "$watched_folder"); 
-		assert($fn_list ne ""); 
+	find(\&save_fn_list ,  "$watched_folder"); 
+	assert($fn_list ne ""); 
 
         while(1)
         {
-                find(\&print_it_new ,  $watched_folder);
-				assert($fn_list_new ne ""); 
+                find(\&save_fn_list_new ,  $watched_folder);
+		assert($fn_list_new ne ""); 
 
                 if ($fn_list_new ne $fn_list)
                 {
-                        my ($new_state, $on_fn) = &analysis_fn_list_get_last_modify($fn_list, $fn_list_new);
-                        my ($cmd_copy_proc, $html_url) = &gen_copy_cmd($new_state, $on_fn);
+			my ($new_state, $on_fn) = &analysis_fn_list_get_last_modify($fn_list, $fn_list_new);
+			my ($cmd_copy_proc, $html_url) = &gen_copy_cmd($new_state, $on_fn);
+			my $timestamp = &get_timestamp();
+			say $timestamp, " ", $new_state, " " , $on_fn; 
 
-                        my @td_pool = ();
-                        &td_push(\@td_pool, $cmd_copy_proc);
-                        &td_join(\@td_pool);
-                        my $timestamp = &get_timestamp();
-                        say "- $timestamp\t$html_url";
+			my @td_pool = ();
+			#&td_push(\@td_pool, $cmd_copy_proc);
+			#&td_join(\@td_pool);
+			#say "- $timestamp\t$html_url";
 
-                        my $cmd_append_log =  qq{echo "- $timestamp\t$html_url" >> $edit_log};
-                        system($cmd_append_log);
+			#my $cmd_append_log =  qq{echo "- $timestamp\t$html_url" >> $edit_log};
+			#system($cmd_append_log);
 
                 }
 
@@ -193,33 +201,41 @@ sub substract_two_hash(\%hash_big, \%hash_small)
         return $ret_del_add_ele;
 }
 
-sub if_fn_match_ipynb($fn)
+sub if_fn_match_pattern($fn, $ref_filter_param_list)
 {
-        my $fn = shift;
-        my $ret_code = 0;
+	my $fn = shift;
+	my $ref_filter_param_list = shift; 
+	my $ret_code = 0;
+	# c cc h hpp cu cuh cpp cxx
+	
+	for my $e_filter (@$ref_filter_param_list)
+	{
+		if ($fn =~ m/\.$e_filter$/)
+		{
+			if(-f $fn && $fn !~ m/bak_script/)
+			{
+				$ret_code = 1; 
+			}
 
-        if (-f $fn
-                && $fn =~ m|\.ipynb$|
-                && $fn !~ m|\/.ipynb_checkpoints\/|
-                && $fn !~ m|\/bak_script\/| )
-        {
-                $ret_code = 1;
-        }
-        return $ret_code;
+			last;
+		}
+	}
+
+	return $ret_code;
 }
-sub print_it_new()
+sub save_fn_list_new()
 {
         my $fn = $File::Find::name;
-        if( &if_fn_match_ipynb($fn))
+        if( &if_fn_match_pattern($fn, \@filter_param_list))
         {
                 $fn_list_new .= $fn. " " . (stat($fn))[9]."\n";
         }
 }
 
-sub print_it()
+sub save_fn_list()
 {
         my $fn = $File::Find::name;
-        if( &if_fn_match_ipynb($fn))
+        if( &if_fn_match_pattern($fn, \@filter_param_list))
         {
                 $fn_list .= $fn. " " . (stat($fn))[9]."\n";
         }
@@ -236,9 +252,8 @@ sub add_zero_if_lt_10($num)
         return "0$num";
 }
 
-sub get_timestamp(){
-
-
+sub get_timestamp()
+{
 
 # perl get time, for second:
  #perl -e 'print $^T '
