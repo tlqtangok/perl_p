@@ -24,17 +24,18 @@ use IO::Handle;
 	my @filter_param_list = qw(h hpp cpp cxx c cc cxx cu cuh); 
 
 
-	say "- watch folder: $watched_folder"; 
 
 	my $edit_log = $watched_folder."/"."bak_script/watch_folder_log.txt";
 	my $fn_list = "";
 	my $fn_list_new = "";
-	my $html_folder = "/root/jd/t/html";
 	my $dst_folder = "/y/git/bwa4cuda"; 
 	my $g_cnt = 0;
 ###
 
 assert(-d $dst_folder); 
+assert(-d $watched_folder); 
+say "- watch folder: $watched_folder"; 
+
 `rm -rf $edit_log; touch $edit_log`;
 
 
