@@ -114,9 +114,9 @@ sub clear_all_jd_xx($)
 sub gzip_data_if_needed(\$,$)
 {
 	my $data_src = shift;
-	my $fn = shift;
+	my $fn = shift;  # fn is basename
 	my $ret_fn_r0 = "txt.txt"; 
-	assert(-f $fn) if $fn ne $ret_fn_r0; 
+	assert(-f $fn) if $fn ne $ret_fn_r0 && $fn =~ m{\/|\\}; 
 
 	my $data_dst;
 	my $prefix_info = "NULL"; 

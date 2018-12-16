@@ -195,7 +195,7 @@ sub prompt_overwrite_if_filename_exists($)
 	elsif (-f $fn_)
 	{
 		say "- exists $fn_, would you like to overwrite? (yes | no)"; 	
-		my $ensure_ = <>;
+		my $ensure_ = <STDIN>;
 		chomp($ensure_);
 		if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
 		{
