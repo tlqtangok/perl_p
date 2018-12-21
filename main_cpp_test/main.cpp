@@ -30,7 +30,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-//#include <thread>
+#include <thread>
 //#include <mutex>
 
 #if __linux__
@@ -76,9 +76,18 @@ using namespace std;
 #endif
 
 #define DEL_ARR_MEM(P) if(NULL != (P)){delete [] (P); (P) = NULL;}
+
+void td_exec(int &args)
+{
+	cout << args << endl; 
+}
 // st__
 int main(int argc, char **argv)
 {
+	int int_args = 9; 
+	auto td_0 = std::thread(td_exec, std::ref(int_args)); 
+	td_0.join();
+	
 	cout << 1111 << endl ;
 	return 0; 
 }
