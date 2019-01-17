@@ -89,3 +89,32 @@ to 700 No.=9:
 
 
 
+# perl_p
+
+when transform to another machine 
+
+need :
+
+ . run cml:
+	mkdir -p  ~/t
+	git clone https://github.com/tlqtangok/perl_p.git
+	cd perl_p
+	base64 -d b64.bashrc > .bashrc
+	base64 -d b64.bash_aliases |grep -v expect > .bash_aliases
+
+  . edit ~/.bashrc
+	### jd add ###
+	export t=$HOME/t
+	export perl_p=$t/perl_p
+	alias s_b='source $perl_p/.bashrc && source $perl_p/.bash_aliases'
+	s_b
+	export PATH=$t:$PATH
+	### jd end ###
+
+  . edit .bashrc
+    delete all .bashrc content after "jd"
+
+  . edit .bash_aliases
+	uncomment alias tor , and alias fr 
+  
+
