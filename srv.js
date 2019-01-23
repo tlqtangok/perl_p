@@ -84,20 +84,8 @@ app.use(bodyParser.raw({ type: 'audio_/jd_', limit: '4gb' }));
 
 app.post ('/*',function (req, res) 
 	{
-		`
-			*********************
-			flag.txt
-			*********************
-			-F
-			-json
-			-T or --data-binary
-		`;
 
-
-		var flag = fs.readFileSync("flag.txt").toString().split("\n")
-			.filter(($_) => {
-				return $_[0]!="" && $_[0] != '#';
-			})[0];
+		var flag = get_option_of_curl_F_T_JSON(); 
 
 		print ("___" + flag + "___");
 
@@ -281,6 +269,28 @@ function get_fn_fc(buf)
 	return {fn_rename: fn_rename, fn: fn, buf_fc: buf_fc};
 
 }
+
+function get_option_of_curl_F_T_JSON()
+{
+
+	`
+		*********************
+		flag.txt
+		*********************
+		-F
+		-json
+		-T or --data-binary
+		`;
+
+	var this_fn = __filename; 	
+	var flag = fs.readFileSync(this_fn).toString();
+	flag = flag.split("*********************\n")[2].split("\n")[0].replace(/^.*?\-/m,"-");
+	//print("___"+flag+"___"); 
+
+	return flag; 
+}
+
+
 `
 # OK, json 
 curl -X POST -H "Content-Type: application/json" --data '{"username":"xyz","password":"xyz"}' "http://localhost:10203/___path___" 
@@ -308,3 +318,5 @@ export localhost_port="172.16.29.10:10203"
 cksum $fn
 curl -X POST -H "Content-Type: audio_/jd_" -T $fn $localhost_port/sfksdfjs
 `;
+
+
