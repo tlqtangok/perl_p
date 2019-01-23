@@ -297,3 +297,14 @@ curl -X POST -H "Content-Type: audio_/jd_" -T '1.tar.gz' localhost:10203/api/tes
 # OK, binary file , also can use $t/bin.bin
 curl -v -# -X POST -H "Content-Type: audio_/jd_" --data-binary @"$t/1.tar.gz" "localhost:10203/___path___"
 `;
+
+`
+#!sh
+# sh.sh , run : sh sh.sh file_path.txt
+export fn=$1
+
+export localhost_port="172.16.29.10:10203"
+
+cksum $fn
+curl -X POST -H "Content-Type: audio_/jd_" -T $fn $localhost_port/sfksdfjs
+`;
