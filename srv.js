@@ -281,3 +281,19 @@ function get_fn_fc(buf)
 	return {fn_rename: fn_rename, fn: fn, buf_fc: buf_fc};
 
 }
+`
+# OK, json 
+curl -X POST -H "Content-Type: application/json" --data '{"username":"xyz","password":"xyz"}' "http://localhost:10203/___path___" 
+
+
+curl -v -X POST -H "Content-Type: audio_/jd_"   -F "1.txt.rename=@1.txt"  "http://localhost:10203/api/login"
+
+
+# -T filename , and usage progress -#
+curl -X POST -H "Content-Type: audio_/jd_" -T "{$t/1.tar.gz,$t/1.tar.gz}" localhost:10203/api/test
+curl -X POST -H "Content-Type: audio_/jd_" -T '[1-2].tar.gz' localhost:10203/api/test
+curl -X POST -H "Content-Type: audio_/jd_" -T '1.tar.gz' localhost:10203/api/test
+
+# OK, binary file , also can use $t/bin.bin
+curl -v -# -X POST -H "Content-Type: audio_/jd_" --data-binary @"$t/1.tar.gz" "localhost:10203/___path___"
+`;
