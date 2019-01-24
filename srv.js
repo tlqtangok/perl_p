@@ -32,10 +32,16 @@ var m_=( id_text, re )=>{
 
 // respond with "hello world" when a GET request is made to the homepage
 app.get('/*', function (req, res) 
-	{
+		   {
 
-		console.log("___req___"); 
-		//console.log(req); 
+		   var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+		   print("___ip___" + ip); 		
+
+
+		   console.log("___req___"); 
+
+
+		console.log(req); 
 
 		console.log(req.method); 
 		console.log(req.headers.host); 
@@ -49,32 +55,32 @@ app.get('/*', function (req, res)
 
 		if(m_(req.url, /test_long/gi))
 		{	
-			test_PL = "test_long.PL"; 
+		test_PL = "test_long.PL"; 
 		}
 		else
 		{
-			test_PL = "test.PL"; 
+		test_PL = "test.PL"; 
 
 		}
 
 		exec_(`perl ${test_PL} `+ b64_url, (error, stdout, stderr) => {
-			if (error) {
-				console.error(`exec error: ${error}`);
-				return;
-			}
-			console.log(`stdout: ${stdout}`);
-			//console.log(`stderr: ${stderr}`);
-			//res.status(404).json({error: "Error msg"}); 
-			console.log("___res___"); 
-			//console.log(res); 
-			console.log(res.statusCode); 
-			res.send('get method, hello world' );
-			//res.send('' + cmd_out);
-		});
+		if (error) {
+		console.error(`exec error: ${error}`);
+		return;
+		}
+		console.log(`stdout: ${stdout}`);
+//console.log(`stderr: ${stderr}`);
+//res.status(404).json({error: "Error msg"}); 
+console.log("___res___"); 
+//console.log(res); 
+console.log(res.statusCode); 
+res.send('get method, hello world' );
+//res.send('' + cmd_out);
+});
 
 
 
-	});
+});
 
 // POST method route
 //var bodyParser = require("body-parser");
@@ -88,6 +94,9 @@ app.post ('/*',function (req, res)
 		var flag = get_option_of_curl_F_T_JSON(); 
 
 		print ("___" + flag + "___");
+
+		var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+		print("___ip___" + ip); 		
 
 
 
@@ -146,7 +155,9 @@ app.post ('/*',function (req, res)
 
 		//fs.writeFileSync("txt.txt", Buffer.from(req.body)); 
 
-		//console.log("___req___"); 
+		console.log("___req___"); 
+		console.log(req); 
+
 		//console.log(req.body); 
 		//console.log(req.body.length); 
 
@@ -277,9 +288,9 @@ function get_option_of_curl_F_T_JSON()
 		*********************
 		flag.txt
 		*********************
+		-T or --data-binary
 		-F
 		-json
-		-T or --data-binary
 		`;
 
 	var this_fn = __filename; 	
