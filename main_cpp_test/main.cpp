@@ -4838,27 +4838,27 @@ string baqtools::calcBAQFromHMM(sam_record& e_sam_record, string & refSeq)
 				break;
 			case bgitools::OPT::S: refI += l; // move the reference too, in addition to I
 			case bgitools::OPT::I:
-					       // GATK:todo -- is it really the case that we want to treat I and S the same?
-					       for (int i = readI; i < readI + l; i++)
-					       {
-						       baqResult->bq[i] = baqResult->rawQuals[i] - 33;
-					       }
-					       readI += l;
-					       break;
+								   // GATK:todo -- is it really the case that we want to treat I and S the same?
+								   for (int i = readI; i < readI + l; i++)
+								   {
+									   baqResult->bq[i] = baqResult->rawQuals[i] - 33;
+								   }
+								   readI += l;
+								   break;
 			case bgitools::OPT::D: refI += l; break;
 			case bgitools::OPT::M:
-					       for (uint32_t i = readI; i < readI + l; i++) {
-						       int expectedPos = refI - refOffset + (i - readI);
-						       char oq = (baqResult->rawQuals[i] - 33);
-						       char bq = baqResult->bq[i];
-						       int state = (baqResult->state[i]);
-						       baqResult->bq[i] = baqtools::capBaseByBAQ(oq, bq, state, expectedPos);
-					       }
-					       readI += l; refI += l;
-					       break;
+								   for (uint32_t i = readI; i < readI + l; i++) {
+									   int expectedPos = refI - refOffset + (i - readI);
+									   char oq = (baqResult->rawQuals[i] - 33);
+									   char bq = baqResult->bq[i];
+									   int state = (baqResult->state[i]);
+									   baqResult->bq[i] = baqtools::capBaseByBAQ(oq, bq, state, expectedPos);
+								   }
+								   readI += l; refI += l;
+								   break;
 			default:
-					       cout << "BUG: Unexpected CIGAR element in read " << e_sam_record.qname << endl;
-					       assert(0 == 1);
+								   cout << "BUG: Unexpected CIGAR element in read " << e_sam_record.qname << endl;
+								   assert(0 == 1);
 		}
 	}
 
@@ -4965,7 +4965,7 @@ string sam_record::to_string()
 			qname.c_str(), flag, rname.c_str(), pos, mapq,  // 5 items
 			cigar.c_str(), rnext.c_str(), pnext, tlen, seq.c_str(), //5 items
 			qual.c_str(), ex_str_to_string().c_str() // 2 items
-		);
+			);
 
 	return e_line;
 }
@@ -5950,8 +5950,8 @@ void r_d::td_br_exec(r_d::td_br_arg &e_td_arg)
 	static int chr_cnt = 0;
 	static int read_cnt = 0;
 	volatile clock_t brBeginT, filterPreprocessT, aggregateReadDataT, forloopT,
-		 forloopBeginT, baqT, knownSitesT, isSNPT, skipT, snpErrorsT,
-		 computeCovariatesT, updateDataForReadT;
+			 forloopBeginT, baqT, knownSitesT, isSNPT, skipT, snpErrorsT,
+			 computeCovariatesT, updateDataForReadT;
 	chr_cnt++;
 	static vector<float> chr_time(4, 0);
 	static vector<float> read_time(6, 0);
@@ -6108,9 +6108,9 @@ void r_d::td_pr_exec(r_d::td_pr_arg &e_td_arg)
 					}
 
 				default: {
-						 cout << "unknown error!" << endl;
-						 assert(0 == 1);
-					 }
+							 cout << "unknown error!" << endl;
+							 assert(0 == 1);
+						 }
 			}
 
 			break;
@@ -6721,55 +6721,55 @@ char from_hex(char ch) {
 /* Converts an integer value to its hex character*/
 char to_hex(char code) {
 	static char hex[] = "0123456789ABCDEF";
-		return hex[code & 15];
+	return hex[code & 15];
 }
 
 /* Returns a url-encoded version of str */
 /* IMPORTANT: be sure to free() the returned string after use */
 unsigned char *url_encode(unsigned char *str, unsigned int & len) {
 	unsigned char *pstr = str, *buf = (unsigned char*)malloc(len * 3 + 1), *pbuf = buf;
-		for (int i = 0; i < len; i++)
-		{
-			
-				if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~')
-					*pbuf++ = *pstr;
-				else if (*pstr == ' ')
-					*pbuf++ = '+';
-				else
-					*pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
-						pstr++;    
-		}
-	
-		*pbuf = '\0';
-		cout << len * 3 + 1 << endl; 
-		cout << pbuf - buf << endl;
-		//assert(len * 3 + 1 == pbuf - buf);
-		len = pbuf - buf;
-		
-		return buf;
+	for (int i = 0; i < len; i++)
+	{
+
+		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~')
+			*pbuf++ = *pstr;
+		else if (*pstr == ' ')
+			*pbuf++ = '+';
+		else
+			*pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
+		pstr++;    
+	}
+
+	*pbuf = '\0';
+	cout << len * 3 + 1 << endl; 
+	cout << pbuf - buf << endl;
+	//assert(len * 3 + 1 == pbuf - buf);
+	len = pbuf - buf;
+
+	return buf;
 }
 
 /* Returns a url-decoded version of str */
 /* IMPORTANT: be sure to free() the returned string after use */
 char *url_decode(char *str, int len) {
 	char *pstr = str, *buf = (char*)malloc(strlen(str) + 1), *pbuf = buf;
-		while (*pstr) {
-			if (*pstr == '%') {
-				if (pstr[1] && pstr[2]) {
-					*pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
-						pstr += 2;
-				}
+	while (*pstr) {
+		if (*pstr == '%') {
+			if (pstr[1] && pstr[2]) {
+				*pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
+				pstr += 2;
 			}
-			else if (*pstr == '+') {
-				*pbuf++ = ' ';
-			}
-			else {
-				*pbuf++ = *pstr;
-			}
-			pstr++;
 		}
+		else if (*pstr == '+') {
+			*pbuf++ = ' ';
+		}
+		else {
+			*pbuf++ = *pstr;
+		}
+		pstr++;
+	}
 	*pbuf = '\0';
-		return buf;
+	return buf;
 }
 
 #endif
@@ -6777,16 +6777,17 @@ char *url_decode(char *str, int len) {
 
 template<typename T> string tools_to_string(const T &t)
 {
-    ostringstream ss;
-    ss << t;
-    return ss.str();
+	ostringstream ss;
+	ss << t;
+	return ss.str();
 }
 
 
 void exec_e(float &e)
 {
-    //cout << e << " ";
-    e *= 10.0f;
+	cout << e << " ";
+	e *= 10.0f;
+	e += 0.1f;
 }
 
 
@@ -6794,82 +6795,97 @@ void exec_e(float &e)
 void exec_multi_threads_on_data(vector<float>& arr_src, const int& N, const int& td_num, void (*cb)(float &e))
 {
 
-#define FLAG_USE_MULTIPLE_THREAD 1 
+#define FLAG_USE_MULTIPLE_THREAD_ 0 
 
-#define FLAG_USE_SINGLE_THREAD !FLAG_USE_MULTIPLE_THREAD
+#define FLAG_USE_SINGLE_THREAD_ (!FLAG_USE_MULTIPLE_THREAD_) 
 
+
+	//typedef  pair<int, std::thread> i_td;
+	//int td_num_real = td_num - 1; 
+	int mod_num = ceil (N * 1.0f / td_num );
+	vector< pair<int, std::thread> > arr_pair_i_td{};
+
+	arr_pair_i_td.resize(td_num);
+
+	//arr_pair_i_td.resize(N % mod_num == 0 ? N / mod_num : N / mod_num + 1);
+
+	int cnt = 0;
+	int cnt_arr = 0;
+
+	cnt = 0;
+	int flag_break_at_pad = 0;
+	int cnt_threads = 0; 
+	for(int i=0;i<td_num;i++)
+	{
+		auto id_td = i; 
+		int start ; 
+		int end; 
+		if(i*mod_num + mod_num <= N)
+		{
+			end = i * mod_num + mod_num; 
+		}
+		else
+		{
+			int pad_num = N % mod_num; 
+			end = i * mod_num + pad_num; 
+			flag_break_at_pad = 1; 
+		}
+		start = i * mod_num; 
+
+
+		cnt_threads++; 
+		auto pair_i_i = make_pair(start, end);
+		//auto pair_i_i = make_pair(cnt, cnt + mod_num > N ? N : cnt + mod_num);
+
+
+		arr_pair_i_td[id_td].first = id_td;
+		arr_pair_i_td[id_td].second = thread([&cb](int id_td, vector<float>& arr_src, pair<int, int> pair_i_i) {
 
 #if 1
-    //typedef  pair<int, std::thread> i_td;
-    //int td_num_real = td_num - 1; 
-    int mod_num = (int)(N / td_num);
-    vector< pair<int, std::thread> > arr_pair_i_td{};
-
-    arr_pair_i_td.resize(td_num);
-    //arr_pair_i_td.resize(N % mod_num == 0 ? N / mod_num : N / mod_num + 1);
-
-    int cnt = 0;
-    int cnt_arr = 0;
-
-    cnt = 0;
-    while (cnt < N)
-    {
-
-        //cout << cnt << endl;
-
-        int id_td = (int)(cnt / mod_num);
-        cout << id_td << endl;
-        auto pair_i_i = make_pair(cnt, cnt + mod_num > N ? N : cnt + mod_num);
-
-
-        arr_pair_i_td[id_td].first = id_td;
-        arr_pair_i_td[id_td].second = thread([&cb](int id_td, vector<float>& arr_src, pair<int, int> pair_i_i) {
-
-#if 1
-            float sleep_time_seconds = id_td * 0.02f;
-            string cmd_sleep = string("sleep ") + tools_to_string(sleep_time_seconds) + "s";
-            system(cmd_sleep.c_str());
-            //cout << cmd_sleep << endl; 
+				float sleep_time_seconds = id_td * 0.02f;
+				string cmd_sleep = string("sleep ") + tools_to_string(sleep_time_seconds) + "s";
+				system(cmd_sleep.c_str());
+				//cout << cmd_sleep << endl; 
 #endif 
-            cout << "- id_td: " << id_td << endl;
-            
-            for (auto i = pair_i_i.first; i < pair_i_i.second; i++)
-            {
-                //cout << arr_src[i] << " ";
-                cb(arr_src[i]);
-            }
-            cout << endl << "--------------------" << endl;
+				cout << "- id_td: " << id_td << endl;
 
-        },
-            id_td, std::ref(arr_src), pair_i_i
-            );
+				for (auto i = pair_i_i.first; i < pair_i_i.second; i++)
+				{
+				//cout << arr_src[i] << " ";
+				cb(arr_src[i]);
+				}
+				cout << endl << "--------------------" << endl;
+
+				},
+				id_td, std::ref(arr_src), pair_i_i
+				);
 
 
 
-#if FLAG_USE_SINGLE_THREAD
-		cout << "- FLAG_USE_SINGLE_THREAD " << endl; 
-        arr_pair_i_td[id_td].second.join();
+
+
+#if FLAG_USE_SINGLE_THREAD_
+		cout << "- FLAG_USE_SINGLE_THREAD_ " << endl; 
+		arr_pair_i_td[id_td].second.join();
 #endif 
 
+		if (flag_break_at_pad) break; 
+	}
 
-        //cnt_arr++;
-        cnt += mod_num;
-    }
+	cout << "- cnt_threads : " << cnt_threads << endl; 
 
-
-#if FLAG_USE_MULTIPLE_THREAD 
-    for (auto& e_pair : arr_pair_i_td)
-    {
-        //cout << e_pair.first << endl; 
-        e_pair.second.join();
-    }
+#if FLAG_USE_MULTIPLE_THREAD_  
+	for (auto& e_pair : arr_pair_i_td)
+	{
+		e_pair.second.join();
+	}
 
 #endif
 
-    arr_pair_i_td.clear();
+
+	arr_pair_i_td.clear();
 
 
-#endif
 
 
 
@@ -6880,24 +6896,23 @@ void exec_multi_threads_on_data(vector<float>& arr_src, const int& N, const int&
 // st__ main_
 int main(int argc, char **argv)
 {
+	const int N = (const int)(1e4 + 0);
+	const int td_num = 30; 
 
 
-    const int N = (const int)(1e8 + 0);
-    const int td_num = 4;
-    
-    vector<float> arr_src{};
-    arr_src.resize(N);
-    int  cnt = 0;
-    for (auto &e : arr_src)
-    {
-        e = (cnt++) * 1.0f;
-    }
+	vector<float> arr_src{};
+	arr_src.resize(N);
+	int  cnt = 0;
+	for (auto &e : arr_src)
+	{
+		e = (cnt++) * 1.0f;
+	}
 
-    exec_multi_threads_on_data(arr_src, N, td_num, exec_e);
+	exec_multi_threads_on_data(arr_src, N, td_num, exec_e);
 
-    cout << arr_src[1] << endl; 
-    cout << arr_src[N - 1] << endl; 
-	
+	cout << arr_src[1] << endl; 
+	cout << arr_src[N - 1] << endl; 
+
 	arr_src.clear(); 
 
 
