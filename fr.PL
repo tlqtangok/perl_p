@@ -233,14 +233,14 @@ sub gzip_data_if_needed(\$,$)
 	my $CRC32 = &mycrc32($$data_src);
 
 
-	my $FLAG_IS_COMP_BY_Archiver_Tar_IN_TOR = 0; 
+	my $FLAG_NEED_GZIP_DATA = 0; 
 
 	if ($fn !~ m/\.tar.gz$/ && length scalar $$data_src >=  $gzip_board_sz)
 	{
-		$FLAG_IS_COMP_BY_Archiver_Tar_IN_TOR = 1; 
+		$FLAG_NEED_GZIP_DATA = 1; 
 	}
 
-	if ($FLAG_IS_COMP_BY_Archiver_Tar_IN_TOR)
+	if ($FLAG_NEED_GZIP_DATA)
 	{
 		my $die_msg =  "- gzip data failure\n"; 
 
@@ -248,7 +248,7 @@ sub gzip_data_if_needed(\$,$)
 		$$data_src = $data_dst;
 	}
 
-	$prefix_info = qq($GZIP_PREFIX:${FLAG_IS_COMP_BY_Archiver_Tar_IN_TOR}\n$FILENAME_PREFIX:$fn\n$CRC32_PREFIX:$CRC32\n);
+	$prefix_info = qq($GZIP_PREFIX:${FLAG_NEED_GZIP_DATA}\n$FILENAME_PREFIX:$fn\n$CRC32_PREFIX:$CRC32\n);
 
 	$$data_src = $prefix_info . $$data_src;
 
@@ -575,7 +575,7 @@ sub untar_tgz_file_to_cwd($)
 
 	my @props = ("name"); 
 	my $prefix_of_folder = ($tar->list_files(\@props))[0];
-	$prefix_of_folder =~ s/\W.*$//g;
+	$prefix_of_folder =~ s/\/.*$//g;
 
 	my $fn_basename = basename $full_fn_tar_tgz; 
 	#say $fn_basename; 
