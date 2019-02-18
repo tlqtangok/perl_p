@@ -55,6 +55,12 @@ our @arr_fn_list = ();
 our $tar = "NULL"; 
 our $FOLDER_PREFIX = "FOLDER_"; 
 
+# global var 
+
+my $PW_ARG_PREFIX = "-pw";
+my $STDIN_PREFIX = "STDIN_";
+my $NO_PW_PREFIX = "NO_PW_";
+my $KEY_OF_PW_PREFIX = "PW_OF_"; 
 ##############
 
 
@@ -103,15 +109,68 @@ sub exec_tor_process()
 	say $jd_xx; 
 
 	my @argv = (@ARGV); 
-	my ($fn, $fc_str_all) = &ck_argv_get_fc_str(\@argv, $max_file_sz_in_bytes); 
+	my ($fn, $fc_str_all, $pw_if_has) = &ck_argv_get_fc_str(\@argv, $max_file_sz_in_bytes); 
 
 	my $gzip_ret_code = &gzip_data_if_needed(\$fc_str_all, $fn); 
 	#say scalar length $fc_str_all; 
 
-	&clear_all_jd_xx() if $jd_xx eq "${JD_PREFIX}0"; 
+	&clear_all_jd_xx_and_pw_prefix() if $jd_xx eq "${JD_PREFIX}0"; 
 
 	$R_->set($jd_xx, $fc_str_all);
+
+	&create_pw_k_v_if_needed($pw_if_has, $jd_xx); 	
+
 	$R_->quit; 
+}
+
+sub create_pw_k_v_if_needed($,$)
+{
+	my $pw_if_has = shift;
+	my $jd_xx = shift; 
+	if ($pw_if_has ne $NO_PW_PREFIX)
+	{
+		$R_->set("$KEY_OF_PW_PREFIX:$jd_xx", &mycrc32($pw_if_has)); 
+	}
+}
+
+sub ck_pw_if_needed_in_fr($)
+{
+	my $jd_xx = shift;
+
+	my $key_of_pw = "$KEY_OF_PW_PREFIX:$jd_xx"; 
+	my $res_exist = $R_->exists($key_of_pw);
+
+	my $cnt_ck_pw_max = 3;
+
+	if ($res_exist)
+	{
+		my $crc_pw_on_redis = $R_->get($key_of_pw);
+		
+		while ($cnt_ck_pw_max)
+		{
+			print "- need password, please input :"; 	
+			my $pw_input = <STDIN>;
+			chomp($pw_input);
+
+			if (&mycrc32($pw_input) == $crc_pw_on_redis)
+			{
+				last;
+			}
+			else
+			{
+				say "  incorrect password, try again\n"; 
+			}
+
+			$cnt_ck_pw_max--;
+		}
+
+		if ($cnt_ck_pw_max == 0)
+		{
+			die "- incorrect password. you have input password too many times!\n"
+		}
+
+	}
+		# continue if we got right pw
 }
 
 sub exec_fr_process()
@@ -121,6 +180,9 @@ sub exec_fr_process()
 	die "- error in redis driver\n" if Dumper($R_) !~ m/\:$redis_port/; 
 
 	my $jd_xx = &ck_arg_and_ret_jd_xx(\@ARGV); 
+
+	&ck_pw_if_needed_in_fr($jd_xx);
+
 	my $raw_text = &get_jd_xx_content($jd_xx);
 	$R_->quit;
 
@@ -205,19 +267,36 @@ sub mycrc32()
 }
 
 
-sub clear_all_jd_xx($)
+sub clear_all_jd_xx_and_pw_prefix($)
 {
-		my @keys_r = $R_->keys("${JD_PREFIX}*");
-		my $len_of_keys = @keys_r; 
-		say "- delete $len_of_keys ${JD_PREFIX}xx keys ... "; 	
+		my @keys_jd_xx = $R_->keys("${JD_PREFIX}*");
+		my $len_of_keys_jd_xx = @keys_jd_xx; 
+		say "- delete $len_of_keys_jd_xx ${JD_PREFIX}xx keys ... "; 	
 
-		for my $e_key (@keys_r)
+		for my $e_key (@keys_jd_xx)
 		{
 			if ($e_key =~ m/^${JD_PREFIX}\d/)
 			{
 				$R_->del($e_key); 
+
 			}	
 		}
+
+
+		# clear all pw
+		my @keys_of_pw = $R_->keys("${KEY_OF_PW_PREFIX}:*");
+		my $len_of_pw = @keys_of_pw; 
+
+		say "- delete $len_of_pw ${KEY_OF_PW_PREFIX}:${JD_PREFIX}xx keys ... "; 	
+
+		for my $e_key (@keys_of_pw)
+		{
+			if ($e_key =~ m/^${KEY_OF_PW_PREFIX}\:${JD_PREFIX}\d/)
+			{
+				$R_->del($e_key); 
+			}	
+		}
+
 }
 
 sub gzip_data_if_needed(\$,$)
@@ -276,30 +355,36 @@ sub ck_argv_get_fc_str(\@,$)
 	my $argv_ = shift; 
 	my $max_file_sz_in_bytes = shift;
 
-	#die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
+	my $fn_if_not_stdin = "NULL"; 
+	my $pw_if_has = "NULL"; 
+
+	($fn_if_not_stdin, $pw_if_has)  = &parse_argv_to_arr_fn_pw($argv_); 
+	
 
 	my $ret_filename = "NULL"; 
 	my @ret_fc = (); 
 	my $ret_fn = "txt.txt"; 
-	if (@$argv_ > 0)
+
+
+	if ($fn_if_not_stdin ne $STDIN_PREFIX)
 	{
 
-		die "- only 1 param needed !\n" if @$argv_ != 1;
+		my $fn_from_arg = $fn_if_not_stdin; 
 
 		#jd_0
-		if (-d $argv_->[0])
+		if (-d $fn_from_arg)
 		{
 			# set argv_->[0] to *.tar.gz
-			$argv_->[0] = &tar_folder_to_file_tgz( abs_path($argv_->[0]) ); 
-			assert(-f $argv_->[0]); 
+			$fn_from_arg = &tar_folder_to_file_tgz( abs_path($fn_from_arg) ); 
+			assert(-f $fn_from_arg); 
 		}
 
 		# now, all are file, not folder 
-		if (-f $argv_->[0])
+		if (-f $fn_from_arg)
 		{
-			$ret_fn = $argv_->[0]; 
+			$ret_fn = $fn_from_arg; 
 
-			open my $FP, "<", $argv_->[0]; 
+			open my $FP, "<", $fn_from_arg; 
 			binmode $FP;
 			@ret_fc = <$FP>; 
 			close $FP; 
@@ -308,11 +393,11 @@ sub ck_argv_get_fc_str(\@,$)
 		{
 			if ($^O eq "MSWin32") 
 			{
-				@ret_fc = ($argv_->[0]); 
+				@ret_fc = ($fn_from_arg); 
 			}
 			else
 			{
-				@ret_fc = ($argv_->[0], "\n"); 
+				@ret_fc = ($fn_from_arg, "\n"); 
 			}
 		}
 	}
@@ -337,7 +422,7 @@ sub ck_argv_get_fc_str(\@,$)
 		unlink($ret_fn); 	
 	}
 
-	return (basename($ret_fn), $fc_str_all);
+	return (basename($ret_fn), $fc_str_all, $pw_if_has);
 }
 
 sub incr_jd_incr($,$)
@@ -623,3 +708,77 @@ sub test_all()
 		}
 	}
 }
+
+sub parse_argv_to_arr_fn_pw(\@argv)
+{
+
+        my $argv = shift;
+
+        my @ret_fn_pw = ();
+
+        if (@$argv == 0)
+        {
+			#say " # 1 stdin + no_pw";
+                @ret_fn_pw = ($STDIN_PREFIX, $NO_PW_PREFIX);
+
+        }
+        elsif (@$argv == 1)
+        {
+			#say "# 4 fn + no_pw";
+                my $fn = $argv->[0];
+                @ret_fn_pw = ($fn, $NO_PW_PREFIX);
+        }
+        elsif (@$argv == 2)
+        {
+			#say " # 2 stdin + pw";
+                assert($argv->[0] eq $PW_ARG_PREFIX);
+                my $pw = $argv->[1];
+                @ret_fn_pw = ($STDIN_PREFIX, $pw);
+        }
+        elsif (@$argv == 3)
+        {
+			#say "# 3 fn + pw";
+
+                my $flag_match_pw_arg = 0;
+
+                my $fn = "NULL";
+                my $pw = "NULL";
+                my $loc_of_pw_arg_prefix = 0;
+
+                for(my $i=0; $i<@$argv; $i++)
+                {
+                        my $e_arg = $argv->[$i];
+                        if ($e_arg eq $PW_ARG_PREFIX)
+                        {
+                                $flag_match_pw_arg = 1;
+                                $loc_of_pw_arg_prefix = $i;
+                                last;
+                        }
+                }
+                assert($flag_match_pw_arg ==  1);
+
+                if ($loc_of_pw_arg_prefix == 1)
+                {
+                        $fn = $argv->[0];
+                }
+                elsif ($loc_of_pw_arg_prefix == 0)
+                {
+                        $fn = $argv->[2];
+                }
+                else
+                {
+                        die "- error of loc pw arg prefix !\n";
+                }
+                $pw = $argv->[$loc_of_pw_arg_prefix + 1];
+
+
+                @ret_fn_pw = ($fn, $pw);
+        }
+        else
+        {
+                die "- argv is not correct : @$argv\n";
+        }
+        return @ret_fn_pw;
+}
+
+
