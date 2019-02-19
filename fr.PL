@@ -32,36 +32,37 @@ use Cwd qw(abs_path cwd);
 use File::Spec;
 
 ### global var ### 
+my $VERSION_ = "2019.02.19";
+my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
+my $max_jd_incr = 256; 
 
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
+#
+
+my $R_ = "NULL";  #redis connection
+my $tar = "NULL"; 
+my @arr_fn_list = (); 
 
 my $JD_PREFIX = "jd_"; 
 my $jd_incr = "${JD_PREFIX}incr"; 
 
-my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
-
-my $max_jd_incr = 256; 
-my $R_ = "NULL";  #redis connection
 my $GZIP_PREFIX = "GZIP_"; 
 my $FILENAME_PREFIX = "FILENAME_"; 
 my $CRC32_PREFIX = "CRC32_"; 
-my $gzip_board_sz = 2 * 1024; # big than 2k, gzip it!
+my $gzip_board_sz = 2 * 1024; # if big than 2k, then gzip it!
 
 my $redis_port = 6379;
 my $FR_PREFIX = "fr"; 
 my $TOR_PREFIX = "tor"; 
 
-our @arr_fn_list = (); 
-our $tar = "NULL"; 
-our $FOLDER_PREFIX = "FOLDER_"; 
-
-# global var 
+my $FOLDER_PREFIX = "FOLDER_"; 
 
 my $PW_ARG_PREFIX = "-pw";
 my $STDIN_PREFIX = "STDIN_";
 my $NO_PW_PREFIX = "NO_PW_";
 my $KEY_OF_PW_PREFIX = "PW_OF_"; 
-my $VERSION_ = "2019.02.18";
+my $VERSION_KEY_OF_TOR_FR="TOR_FR_VERSION_KEY"; 
+my $HOMEPAGE = "http://algoers.com:10241/tor_fr_readme.html"; 
 ##############
 
 
@@ -73,11 +74,9 @@ my $VERSION_ = "2019.02.18";
 sub main()
 {
 
-	&show_version_and_help_if_needed(); 
-
 	my $FN =  __FILE__;  
 
-	if($FN =~ m/\b$TOR_PREFIX\b/)
+	if ($FN =~ m/\b$TOR_PREFIX\b/)
 	{
 		&exec_tor_process(); 
 	}	
@@ -87,20 +86,48 @@ sub main()
 	}
 	else
 	{
-		die "- $FN should match $TOR_PREFIX or $FR_PREFIX\n";
+		&clean_R_and_die_with_msg( "- $FN should match $TOR_PREFIX or $FR_PREFIX\n");
 	}
+}
+
+sub verify_must_be_latest_version($)
+{
+	my $need_exit_str = shift;
+	if (not $R_->exists($VERSION_KEY_OF_TOR_FR))
+	{
+		&clean_R_and_die_with_msg("- please set up VERSION_KEY_OF_TOR_FR on server!\n");
+	}
+
+	if ($R_->get($VERSION_KEY_OF_TOR_FR) ne $VERSION_)
+	{
+		&clean_R_and_die_with_msg("- your tor-fr version is not latest version! please download latest tor-fr from homepage: $HOMEPAGE\n" );
+	} 
+
+	if ($need_exit_str eq "exit")
+	{
+		exit(1);
+	}
+}
+
+sub clean_R_and_die_with_msg()
+{
+	my $error_msg = shift;
+	$R_->quit();
+	die $error_msg;
 }
 
 sub show_version_and_help_if_needed()
 {
 	my $arg_version_ = "-v";
-	my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok@126.com>\n  homepage: http://algoers.com:10241/tor_fr_readme.html\n\n  description:\n    tor-fr is a tool that sync-up and share your file instantly, efficently and elegantly\n"; 
+	my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n\n  description:\n    tor-fr is a tool that sync-up and share your file instantly, efficently and elegantly\n"; 
 
+	my $need_exit_str = "no_exit"; 
 	if(@ARGV == 1 && @ARGV[0] eq $arg_version_)
 	{
 		say $version_string; 
-		exit(0); 
+		$need_exit_str = "exit"; 
 	}
+	return $need_exit_str; 
 }
 
 sub save_all_folder_fn_2_arr_fn_list()
@@ -115,8 +142,14 @@ sub save_all_folder_fn_2_arr_fn_list()
 sub exec_tor_process()
 {
 	# script/tor.PL
+	my $need_exit_str = &show_version_and_help_if_needed(); 
+
 	$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0 );
-	die "- error in redis driver\n" if Dumper($R_) !~ m/\:$redis_port/; 
+	#die "- error in redis driver\n" if Dumper($R_) !~ m/\:$redis_port/; 
+	&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
+
+	&verify_must_be_latest_version($need_exit_str);
+	
 
 	my $jd_xx = &incr_jd_incr($jd_incr, $max_jd_incr); 
 	say $jd_xx; 
@@ -181,7 +214,7 @@ sub ck_pw_if_needed_in_fr($)
 
 		if ($cnt_ck_pw_max == 0)
 		{
-			die "- incorrect password. you have input password too many times!\n"
+			&clean_R_and_die_with_msg( "- incorrect password. you have input password too many times!\n");
 		}
 
 	}
@@ -191,8 +224,12 @@ sub ck_pw_if_needed_in_fr($)
 sub exec_fr_process()
 {
 	# script/fr.PL
+	my $need_exit_str = &show_version_and_help_if_needed(); 
+
 	$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0 );
-	die "- error in redis driver\n" if Dumper($R_) !~ m/\:$redis_port/; 
+	&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
+
+	&verify_must_be_latest_version($need_exit_str);
 
 	my $jd_xx = &ck_arg_and_ret_jd_xx(\@ARGV); 
 
@@ -238,7 +275,7 @@ sub do_untar_to_folder_if_needed($fn_)
 			else
 			{
 				say "\n- tarball file file save to $fn_\n"; 
-				die "- exist folder $prefix_folder_name !\n";
+				&clean_R_and_die_with_msg( "- exist folder $prefix_folder_name !\n");
 			}
 			say "";
 		}
@@ -338,7 +375,7 @@ sub gzip_data_if_needed(\$,$)
 	{
 		my $die_msg =  "- gzip data failure\n"; 
 
-		my $ret_code = gzip $data_src => \$data_dst or die "$die_msg"; 
+		my $ret_code = gzip $data_src => \$data_dst or &clean_R_and_die_with_msg("$die_msg"); 
 		$$data_src = $data_dst;
 	}
 
@@ -346,22 +383,6 @@ sub gzip_data_if_needed(\$,$)
 
 	$$data_src = $prefix_info . $$data_src;
 
-=pod
-	if (length scalar $$data_src >= $gzip_board_sz)
-	{
-		my $die_msg =  "- gzip data failure\n"; 
-
-		my $ret_code = gzip $data_src => \$data_dst or die "$die_msg"; 
-		$$data_src = $data_dst;
-		$prefix_info = "$GZIP_PREFIX:1\n$FILENAME_PREFIX:$fn\n$CRC32_PREFIX:$CRC32\n";
-	}
-	else
-	{
-		$prefix_info = "$GZIP_PREFIX:0\n$FILENAME_PREFIX:$fn\n$CRC32_PREFIX:$CRC32\n";
-	}
-
-	$$data_src = $prefix_info . $$data_src;
-=cut 
 	return 1; 
 }
 
@@ -422,13 +443,13 @@ sub ck_argv_get_fc_str(\@,$)
 	}
 
 
-	die "- file content or stdin is empty\n" if @ret_fc == 0; 
+	&clean_R_and_die_with_msg( "- file content or stdin is empty\n" ) if @ret_fc == 0; 
 
 	my $fc_str_all = join "", @ret_fc;
 
 	if (scalar length $fc_str_all > $max_file_sz_in_bytes)
 	{
-		die "- file size too big, bigger than $max_file_sz_in_bytes ! \n"; 	
+		&clean_R_and_die_with_msg( "- file size too big, bigger than $max_file_sz_in_bytes ! \n"); 	
 	}
 
 
@@ -482,7 +503,7 @@ sub ck_arg_and_ret_jd_xx(\@)
 		if ($jd_xx !~ m/${JD_PREFIX}\d{1,3}$/)
 		{
 			my $jd_incr_val = &get_jd_xx_from_incr();
-			die "- argv should be jd_xx, less than $jd_incr_val\n"; 
+			&clean_R_and_die_with_msg( "- argv should be jd_xx, less than $jd_incr_val\n"); 
 		}
 	}
 	else
@@ -492,7 +513,7 @@ sub ck_arg_and_ret_jd_xx(\@)
 
 	my $res_exist = $R_->exists($jd_xx);
 
-	die "- not exist $jd_xx in redis\n" if $res_exist !~ m/1/; 
+	&clean_R_and_die_with_msg( "- not exist $jd_xx in redis\n" ) if $res_exist !~ m/1/; 
 	return $jd_xx;
 }
 sub get_jd_xx_from_incr()
@@ -573,7 +594,7 @@ sub prompt_overwrite_if_filename_exists($)
 		}
 		else
 		{
-			die "- exist $fn_ !\n";
+			&clean_R_and_die_with_msg( "- exist $fn_ !\n");
 		}
 		say "";
 	}
@@ -587,7 +608,7 @@ sub do_gunzip($,$)
 
 	my $data_dst = "NULL"; 
 	my $die_msg =  "- gunzip data failure\n";
-	my $ret_code = gunzip $ref_raw_text => \$data_dst or die "$die_msg"; 
+	my $ret_code = gunzip $ref_raw_text => \$data_dst or &clean_R_and_die_with_msg( "$die_msg"); 
 	$$ref_raw_text = $data_dst;
 
 	return $ret_code; 
@@ -625,7 +646,7 @@ sub ensure_crc32_test($,\$)
 {
 	my $crc32 = shift; 
 	my $ref_left_raw_text = shift; 
-	die "- crc32 check failure !\n" if $crc32 != &mycrc32($$ref_left_raw_text);
+	&clean_R_and_die_with_msg( "- crc32 check failure !\n") if $crc32 != &mycrc32($$ref_left_raw_text);
 }
 
 sub tar_folder_to_file_tgz($)
@@ -636,7 +657,7 @@ sub tar_folder_to_file_tgz($)
 	my $fn_basename =  basename ($full_path_of_dir);
 	my $fn_out_tar_tgz = "${FOLDER_PREFIX}${fn_basename}.tar.gz";
 
-	die "- error , $fn_out_tar_tgz must match FOLDER_ suffix !\n" if $fn_out_tar_tgz !~ m/FOLDER_/; 
+	&clean_R_and_die_with_msg( "- error , $fn_out_tar_tgz must match FOLDER_ suffix !\n" ) if $fn_out_tar_tgz !~ m/FOLDER_/; 
 
 	assert(-d $full_path_of_dir);
 	my $current_dir = cwd(); 
@@ -783,7 +804,7 @@ sub parse_argv_to_arr_fn_pw(\@argv)
                 }
                 else
                 {
-                        die "- error of loc pw arg prefix !\n";
+                        &clean_R_and_die_with_msg( "- error of loc pw arg prefix !\n");
                 }
                 $pw = $argv->[$loc_of_pw_arg_prefix + 1];
 
@@ -792,7 +813,7 @@ sub parse_argv_to_arr_fn_pw(\@argv)
         }
         else
         {
-                die "- argv is not correct : @$argv\n";
+                &clean_R_and_die_with_msg( "- argv is not correct : @$argv\n");
         }
         return @ret_fn_pw;
 }
