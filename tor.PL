@@ -119,7 +119,7 @@ sub clean_R_and_die_with_msg()
 sub show_version_and_help_if_needed()
 {
 	my $arg_version_ = "-v";
-	my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n\n  description:\n    tor-fr is a tool that sync-up and share your file instantly, efficently and elegantly\n"; 
+	my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n\n  description:\n    tor-fr is a productive tool that sync-up and share your files or directories instantly, efficently and elegantly\n"; 
 
 	my $need_exit_str = "no_exit"; 
 	if(@ARGV == 1 && @ARGV[0] eq $arg_version_)
