@@ -31,6 +31,7 @@ use File::Path;
 use Cwd qw(abs_path cwd);
 use File::Spec;
 
+
 ### global var ### 
 my $VERSION_ = "2019.02.19";
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
@@ -74,6 +75,8 @@ my $HOMEPAGE = "http://algoers.com:10241/tor_fr_readme.html";
 sub main()
 {
 
+	&chk_internet_connection();
+
 	my $FN =  __FILE__;  
 
 	if ($FN =~ m/\b$TOR_PREFIX\b/)
@@ -88,6 +91,17 @@ sub main()
 	{
 		&clean_R_and_die_with_msg( "- $FN should match $TOR_PREFIX or $FR_PREFIX\n");
 	}
+}
+
+sub chk_internet_connection()
+{
+	use LWP::Simple;
+
+	my $query = "http://www.baidu.com";
+	my $browser = LWP::UserAgent->new;
+	my $response = $browser->get( $query );
+
+	die "- please check your internet connection!\n"  if not  $response->code == 200;
 }
 
 sub verify_must_be_latest_version($)
