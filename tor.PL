@@ -30,6 +30,7 @@ use File::Find;
 use File::Path;
 use Cwd qw(abs_path cwd);
 use File::Spec;
+use Try::Tiny;
 
 
 ### global var ### 
@@ -75,8 +76,6 @@ my $HOMEPAGE = "http://algoers.com:10241/tor_fr_readme.html";
 sub main()
 {
 
-	&chk_internet_connection();
-
 	my $FN =  __FILE__;  
 
 	if ($FN =~ m/\b$TOR_PREFIX\b/)
@@ -93,16 +92,6 @@ sub main()
 	}
 }
 
-sub chk_internet_connection()
-{
-	use LWP::Simple;
-
-	my $query = "http://www.baidu.com";
-	my $browser = LWP::UserAgent->new;
-	my $response = $browser->get( $query );
-
-	die "- please check your internet connection!\n"  if not  $response->code == 200;
-}
 
 sub verify_must_be_latest_version($)
 {
@@ -153,12 +142,25 @@ sub save_all_folder_fn_2_arr_fn_list()
         }
 }
 
+sub connect_to_redis_server($,$)
+{
+	my ($host_name, $redis_port) = ($_[0], $_[1]); 
+	try 
+	{
+		$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0, cnx_timeout => 1.1,  sentinels_cnx_timeout => 1.1);
+	}
+	catch
+	{
+		die("- error, cannot connect algoer.com's redis server, please check your internet connection\n"); 
+	}
+}
 sub exec_tor_process()
 {
 	# script/tor.PL
 	my $need_exit_str = &show_version_and_help_if_needed(); 
 
-	$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0 );
+	#$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0 );
+	&connect_to_redis_server($host_name, $redis_port);  	
 	#die "- error in redis driver\n" if Dumper($R_) !~ m/\:$redis_port/; 
 	&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
 
@@ -240,7 +242,9 @@ sub exec_fr_process()
 	# script/fr.PL
 	my $need_exit_str = &show_version_and_help_if_needed(); 
 
-	$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0 );
+	#$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0 );
+	&connect_to_redis_server($host_name, $redis_port);  	
+
 	&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
 
 	&verify_must_be_latest_version($need_exit_str);
