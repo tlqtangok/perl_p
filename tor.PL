@@ -5,6 +5,8 @@
 #
 # need cpanm:  sudo apt install cpanminus
 # 	Redis : cpanm Redis
+# 	sudo cpan -i Term::ReadKey
+
 # cp $t/tor.PL $perl_p/tor.PL   &&   cp $t/tor.PL $perl_p/fr.PL
 use strict ;
 use feature qw(say);
