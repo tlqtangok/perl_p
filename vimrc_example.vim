@@ -102,6 +102,7 @@ endif
 if maparg('<leader>*', 'v') == ''
   vmap <leader>* :<C-u>call <SID>VSetSearch()<CR>:execute 'noautocmd vimgrep /' . @/ . '/ **'<CR>
 endif
+" gvim ctags : https://nchc.dl.sourceforge.net/project/ctags/ctags/5.8/ctags58.zip
 
 " jd end 
 
