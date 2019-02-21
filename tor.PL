@@ -4,8 +4,9 @@
 # last modified by Jidor Tang <tlqtangok@126.com> at 2019-02-01
 #
 # need cpanm:  sudo apt install cpanminus
-# 	Redis : cpanm Redis
+# 	sudo cpan -i  Redis
 # 	sudo cpan -i Term::ReadKey
+#	sudo cpan -i Term::ProgressBar;
 
 # cp $t/tor.PL $perl_p/tor.PL   &&   cp $t/tor.PL $perl_p/fr.PL
 use strict ;
@@ -20,7 +21,10 @@ use Data::Dumper;
 #use File::Find;
 #use Cwd qw(abs_path);
 use strict;
-#use threads;
+
+use threads;
+use threads::shared;
+
 use POSIX qw(assert); 
 use MIME::Base64 qw(encode_base64 decode_base64);
 use Redis; 
@@ -34,12 +38,14 @@ use Cwd qw(abs_path cwd);
 use File::Spec;
 use Try::Tiny;
 use Term::ReadKey;
+use Term::ProgressBar;
 
 
 ### global var ### 
 my $VERSION_ = "2019.02.19";
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
+my $net_speed = 222;  # kb/s
 
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
 #
@@ -68,6 +74,9 @@ my $NO_PW_PREFIX = "NO_PW_";
 my $KEY_OF_PW_PREFIX = "PW_OF_"; 
 my $VERSION_KEY_OF_TOR_FR="TOR_FR_VERSION_KEY"; 
 my $HOMEPAGE = "http://algoers.com:10241/tor_fr_readme.html"; 
+my $FLAG_END_REDIS_SET_OR_GET :shared = 0; 
+my $show_p_if_time_big_than = 10; 
+
 ##############
 
 
@@ -182,11 +191,71 @@ sub exec_tor_process()
 
 	&clear_all_jd_xx_and_pw_prefix() if $jd_xx eq "${JD_PREFIX}0"; 
 
-	$R_->set($jd_xx, $fc_str_all);
+
+	&redis_set_with_progress_if_needed($jd_xx, $fc_str_all);
 
 	&create_pw_k_v_if_needed($pw_if_has, $jd_xx); 	
 
 	$R_->quit; 
+}
+
+sub redis_set_with_progress_if_needed($, $)
+{
+	my ($jd_xx, $fc_str_all) = ($_[0], $_[1]);
+
+	my $len_of_byte = length scalar $fc_str_all; 
+	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed);
+	
+
+	if ($time_second_assume < $show_p_if_time_big_than)
+	{
+		$R_->set($jd_xx, $fc_str_all);
+	}
+	else
+	{
+		say "";
+		my $td_redis_set = threads->create(
+			\&progress_interface
+			,
+			$FLAG_END_REDIS_SET_OR_GET, 
+			$time_second_assume); 
+
+		my $td_progress_bar = threads->create(
+			sub
+			{
+				my  ($flag_end_redis_set_or_get_) = ($_[0]); 
+				$R_->set($jd_xx, $fc_str_all);
+				$$flag_end_redis_set_or_get_ = 1;  
+			}
+			,
+			\$FLAG_END_REDIS_SET_OR_GET); 
+
+		$td_redis_set->join(); 
+		$td_progress_bar->join(); 
+
+	}
+
+}
+
+sub progress_interface($,$)
+{
+	my ($flag_end_redis_set_or_get_, $time_second_assume)  = ($_[0], $_[1]); 
+
+	my $progress = Term::ProgressBar->new ({count => $time_second_assume ,name => 'Progress',ETA=>'linear'});
+
+	for (0..$time_second_assume)
+	{
+		my $status =  $_; 
+
+		$progress->update($status);
+		if ($flag_end_redis_set_or_get_)
+		{
+			$status = $time_second_assume; 
+			$progress->update($status);
+			last;
+		}
+		sleep 1; 
+	}
 }
 
 sub create_pw_k_v_if_needed($,$)
@@ -261,7 +330,9 @@ sub exec_fr_process()
 
 	&ck_pw_if_needed_in_fr($jd_xx);
 
-	my $raw_text = &get_jd_xx_content($jd_xx);
+	#my $raw_text = &get_jd_xx_content($jd_xx);
+	my $raw_text = &redis_get_with_progress_if_needed($jd_xx);
+	
 	$R_->quit;
 
 	my ($flag_gzip_, $fn_, $crc32,  $left_raw_text) = &parse_prefix_get_gzip_fn($raw_text);
@@ -549,6 +620,55 @@ sub get_jd_xx_from_incr()
 	my $jd_xx = "${JD_PREFIX}$res_num"; 
 	return $jd_xx;
 }
+
+sub redis_get_with_progress_if_needed($)
+{
+	my $jd_xx = shift; 
+
+	my $res_raw_text :shared = "NULL";  
+
+	my $len_of_byte = $R_->strlen($jd_xx);
+	my $net_speed_dl = $net_speed * 1.0 / 6.0; 
+	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed_dl);
+
+
+
+	if ($time_second_assume < $show_p_if_time_big_than)
+	{
+		$res_raw_text =  $R_->get($jd_xx);
+	}
+	else
+	{
+		say "";
+		my $td_redis_get = threads->create(
+			\&progress_interface
+			,
+			$FLAG_END_REDIS_SET_OR_GET, 
+			$time_second_assume); 
+
+		my $td_progress_bar = threads->create(
+			sub
+			{
+				my  ($flag_end_redis_set_or_get_, $res_raw_text_) = ($_[0], $_[1]); 
+
+				$$res_raw_text_ = $R_->get($jd_xx); 
+				assert($$res_raw_text_ ne "NULL"); 
+				$$flag_end_redis_set_or_get_ = 1;  
+			}
+			,
+			\$FLAG_END_REDIS_SET_OR_GET, 
+			\$res_raw_text); 
+
+		$td_redis_get->join(); 
+		$td_progress_bar->join(); 
+	}
+
+	assert($res_raw_text ne "NULL"); 
+
+
+	return $res_raw_text; 
+}
+
 sub get_jd_xx_content($jd_xx)
 {
 	my $jd_xx = shift; 
