@@ -31,6 +31,7 @@ use File::Path;
 use Cwd qw(abs_path cwd);
 use File::Spec;
 use Try::Tiny;
+use Term::ReadKey;
 
 
 ### global var ### 
@@ -122,7 +123,8 @@ sub clean_R_and_die_with_msg()
 sub show_version_and_help_if_needed()
 {
 	my $arg_version_ = "-v";
-	my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n\n  description:\n    tor-fr is a productive tool that sync-up and share your files or directories instantly, efficently and elegantly\n"; 
+
+	my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n  usage: tor <filename> -pw <your_password>\n\n  description:\n    tor-fr is a productive tool that sync-up and share your \n    files,directories instantly, efficently and elegantly\n"; 
 
 	my $need_exit_str = "no_exit"; 
 	if(@ARGV == 1 && @ARGV[0] eq $arg_version_)
@@ -211,8 +213,12 @@ sub ck_pw_if_needed_in_fr($)
 		
 		while ($cnt_ck_pw_max)
 		{
+			ReadMode('noecho');
 			print "- need password, please input: "; 	
-			my $pw_input = <STDIN>;
+			my $pw_input = ReadLine(0);
+			say ""; 
+			ReadMode('normal');
+
 			chomp($pw_input);
 			my $flag_jd_disable_pw_timestamp = (&mycrc32($pw_input) == &mycrc32("$JD_DISABLE_PW_" . &get_timestamp()));
 
@@ -461,13 +467,13 @@ sub ck_argv_get_fc_str(\@,$)
 	}
 
 
-	&clean_R_and_die_with_msg( "- file content or stdin is empty\n" ) if @ret_fc == 0; 
+	&clean_R_and_die_with_msg( "- error! file content or stdin is empty\n" ) if @ret_fc == 0; 
 
 	my $fc_str_all = join "", @ret_fc;
 
 	if (scalar length $fc_str_all > $max_file_sz_in_bytes)
 	{
-		&clean_R_and_die_with_msg( "- file size too big, bigger than $max_file_sz_in_bytes ! \n"); 	
+		&clean_R_and_die_with_msg( "- error! file size too big, bigger than $max_file_sz_in_bytes ! \n"); 	
 	}
 
 
