@@ -37,12 +37,13 @@ use File::Path;
 use Cwd qw(abs_path cwd);
 use File::Spec;
 use Try::Tiny;
+use arybase; # this is used to make sure exe can be run!!!
 use Term::ReadKey;
 use Term::ProgressBar;
 
 
 ### global var ### 
-my $VERSION_ = "2019.02.19";
+my $VERSION_ = "2019.02.22";
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 my $net_speed = 222;  # kb/s
@@ -76,6 +77,9 @@ my $VERSION_KEY_OF_TOR_FR="TOR_FR_VERSION_KEY";
 my $HOMEPAGE = "http://algoers.com:10241/tor_fr_readme.html"; 
 my $FLAG_END_REDIS_SET_OR_GET :shared = 0; 
 my $show_p_if_time_big_than = 10; 
+
+my $progress_max = 10; 
+my $SHARED_PROGRESS :shared = 0; 
 
 ##############
 
@@ -167,14 +171,56 @@ sub connect_to_redis_server($,$)
 		die("- error, cannot connect algoer.com's redis server, please check your internet connection\n"); 
 	}
 }
+
+sub create_progressbar_if_need_long_time($)
+{
+
+	my $len_of_byte = shift; 
+	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed);
+	
+
+	my $flag_show_progress_bar = 0; 
+
+	if ($time_second_assume > $show_p_if_time_big_than)
+	{
+		$flag_show_progress_bar = 1; 
+	}
+
+	
+	my $td_progress = "NULL"; 
+
+	if ($flag_show_progress_bar)
+	{
+
+		$| = 1; 
+		say ""; 
+ 		
+		my $progressbar = Term::ProgressBar->new ({count => $progress_max, name => 'Progress',ETA=>'linear'});
+
+		my $td_progress_sub =  sub($) 
+		{
+
+			while($SHARED_PROGRESS !=  $progress_max)
+			{
+				$progressbar->update($SHARED_PROGRESS);
+				select(undef,undef,undef, 1.0 / 6);
+			}
+			$progressbar->update($progress_max);
+			select(undef,undef,undef, 1.0 / 6);
+		};
+
+		$td_progress = threads->create( $td_progress_sub ); 
+	}
+
+	return $td_progress; 	
+}
+
 sub exec_tor_process()
 {
 	# script/tor.PL
 	my $need_exit_str = &show_version_and_help_if_needed(); 
 
-	#$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0 );
 	&connect_to_redis_server($host_name, $redis_port);  	
-	#die "- error in redis driver\n" if Dumper($R_) !~ m/\:$redis_port/; 
 	&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
 
 	&verify_must_be_latest_version($need_exit_str);
@@ -183,25 +229,62 @@ sub exec_tor_process()
 	my $jd_xx = &incr_jd_incr($jd_incr, $max_jd_incr); 
 	say $jd_xx; 
 
+
 	my @argv = (@ARGV); 
 	my ($fn, $fc_str_all, $pw_if_has) = &ck_argv_get_fc_str(\@argv, $max_file_sz_in_bytes); 
 
-	my $gzip_ret_code = &gzip_data_if_needed(\$fc_str_all, $fn); 
+	$SHARED_PROGRESS++; 
+
+	$fn = &gzip_data_if_needed(\$fc_str_all, $fn); 
+
+	$SHARED_PROGRESS += 0.5;
 	#say scalar length $fc_str_all; 
 
 	&clear_all_jd_xx_and_pw_prefix() if $jd_xx eq "${JD_PREFIX}0"; 
+	$SHARED_PROGRESS += 0.2;
 
 
-	&redis_set_with_progress_if_needed($jd_xx, $fc_str_all);
+	my $td_progress_bar = &create_progressbar_if_need_long_time(length scalar $fc_str_all); 
+
+	&redis_set_with_progress_if_needed($jd_xx, $fc_str_all, $fn, $td_progress_bar);
+
 
 	&create_pw_k_v_if_needed($pw_if_has, $jd_xx); 	
+
+	$SHARED_PROGRESS = $progress_max; 
+	select(undef, undef, undef, 1.0 / 5); 
 
 	$R_->quit; 
 }
 
-sub redis_set_with_progress_if_needed($, $)
+sub fun_progress_increase_($,$) 
 {
-	my ($jd_xx, $fc_str_all) = ($_[0], $_[1]);
+
+	my  ($flag_end_redis_set_or_get_, $time_second_assume, $progress_max_) = ($_[0], $_[1], $_[2]); 
+	
+
+	my $s_r0 = $SHARED_PROGRESS; 
+	my $time_intv = $time_second_assume / ($progress_max_ - $s_r0);
+
+	for(my $i=$s_r0; $i<$progress_max_; $i++)
+	{
+		$SHARED_PROGRESS = $i * 1.0 + rand(0.8)  ;   # seems more real thing
+
+		if ($$flag_end_redis_set_or_get_) 
+		{
+			$SHARED_PROGRESS = $progress_max_ - 0.5;
+			select(undef,undef,undef, $time_intv);
+			last;
+		}
+		select(undef,undef,undef, $time_intv);
+	}		
+
+}
+
+
+sub redis_set_with_progress_if_needed($, $, $, $)
+{
+	my ($jd_xx, $fc_str_all, $fn, $td_progress_bar) = ($_[0], $_[1], $_[2], $_[3]);
 
 	my $len_of_byte = length scalar $fc_str_all; 
 	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed);
@@ -213,12 +296,18 @@ sub redis_set_with_progress_if_needed($, $)
 	}
 	else
 	{
-		say "";
+
+
+		#$| =  1; say "";
+		$td_progress_bar->detach(); 
+		
+
 		my $td_redis_set = threads->create(
-			\&progress_interface
-			,
-			$FLAG_END_REDIS_SET_OR_GET, 
-			$time_second_assume); 
+			\&fun_progress_increase_,
+			\$FLAG_END_REDIS_SET_OR_GET, 
+			$time_second_assume, 
+			$progress_max
+		); 
 
 		my $td_progress_bar = threads->create(
 			sub
@@ -235,6 +324,7 @@ sub redis_set_with_progress_if_needed($, $)
 
 	}
 
+	$R_->set("$FILENAME_PREFIX:$jd_xx", $fn); 
 }
 
 sub progress_interface($,$)
@@ -331,20 +421,36 @@ sub exec_fr_process()
 	&ck_pw_if_needed_in_fr($jd_xx);
 
 	#my $raw_text = &get_jd_xx_content($jd_xx);
-	my $raw_text = &redis_get_with_progress_if_needed($jd_xx);
+	my $fn = $R_->get("$FILENAME_PREFIX:$jd_xx"); 
+	&prompt_overwrite_if_filename_exists($fn);
+
+	$SHARED_PROGRESS++; 
+
+
+	my $len_of_byte = $R_->strlen($jd_xx);
+
+	my $td_progress_bar = &create_progressbar_if_need_long_time($len_of_byte); 
+
+
+	my $raw_text = &redis_get_with_progress_if_needed($jd_xx, $len_of_byte, $td_progress_bar);
 	
 	$R_->quit;
 
-	my ($flag_gzip_, $fn_, $crc32,  $left_raw_text) = &parse_prefix_get_gzip_fn($raw_text);
 
-	&prompt_overwrite_if_filename_exists($fn_);
+	my ($flag_gzip_, $fn_, $crc32,  $left_raw_text) = &parse_prefix_get_gzip_fn($raw_text);
+	$SHARED_PROGRESS++; 
+
+	#&prompt_overwrite_if_filename_exists($fn_);
 
 	&gunzip_if_needed($flag_gzip_, $fn_, \$left_raw_text);
-
 	&ensure_crc32_test($crc32, \$left_raw_text); 
+	$SHARED_PROGRESS++;
+	
 	&print_fc_to_fn($fn_, \$left_raw_text);
 
 	$fn_ = &do_untar_to_folder_if_needed($fn_);  #jd_0
+	$SHARED_PROGRESS = $progress_max; 
+	select(undef, undef, undef, 1.0 / 5); 
 
 	&echo_simplified_fc($fn_); 
 }
@@ -446,6 +552,19 @@ sub clear_all_jd_xx_and_pw_prefix($)
 			}	
 		}
 
+		# clear all fn 
+		my @keys_of_fn = $R_->keys("${FILENAME_PREFIX}:${JD_PREFIX}");
+		my $len_of_fn = @keys_of_fn; 
+
+		say "- delete $len_of_fn ${FILENAME_PREFIX}:${JD_PREFIX}xx keys ... "; 	
+
+		for my $e_key (@keys_of_fn)
+		{
+			if ($e_key =~ m/^${FILENAME_PREFIX}\:${JD_PREFIX}\d/)
+			{
+				$R_->del($e_key); 
+			}	
+		}
 }
 
 sub gzip_data_if_needed(\$,$)
@@ -480,7 +599,7 @@ sub gzip_data_if_needed(\$,$)
 
 	$$data_src = $prefix_info . $$data_src;
 
-	return 1; 
+	return $fn; 
 }
 
 sub ck_argv_get_fc_str(\@,$)
@@ -621,13 +740,14 @@ sub get_jd_xx_from_incr()
 	return $jd_xx;
 }
 
-sub redis_get_with_progress_if_needed($)
+sub redis_get_with_progress_if_needed($, $, $)
 {
 	my $jd_xx = shift; 
+	my $len_of_byte = shift; 
+	my $td_progress_bar = shift; 
 
 	my $res_raw_text :shared = "NULL";  
 
-	my $len_of_byte = $R_->strlen($jd_xx);
 	my $net_speed_dl = $net_speed * 1.0 / 6.0; 
 	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed_dl);
 
@@ -639,12 +759,18 @@ sub redis_get_with_progress_if_needed($)
 	}
 	else
 	{
-		say "";
+		
+		#say "";
+		$td_progress_bar->detach(); 
+
+
 		my $td_redis_get = threads->create(
-			\&progress_interface
-			,
-			$FLAG_END_REDIS_SET_OR_GET, 
-			$time_second_assume); 
+			\&fun_progress_increase_ ,
+
+			\$FLAG_END_REDIS_SET_OR_GET, 
+			$time_second_assume,
+			$progress_max * 80.0 / 100
+		); 
 
 		my $td_progress_bar = threads->create(
 			sub
@@ -744,6 +870,32 @@ sub prompt_overwrite_if_filename_exists($)
 		}
 		say "";
 	}
+	
+	if ($fn_ =~ m/^$FOLDER_PREFIX.*\.tar\.gz$/)
+	{
+		my $prefix_folder_name = $fn_; 	
+		$prefix_folder_name =~ s/^$FOLDER_PREFIX(.*)\.tar\.gz/\1/;
+
+		if(-d $prefix_folder_name)
+		{
+			say "- exists folder $prefix_folder_name, would you like to overwrite? (yes | no)"; 	
+
+			my $ensure_ = <STDIN>;
+			chomp($ensure_);
+			if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
+			{
+				rmtree($prefix_folder_name);
+				assert(not -e $prefix_folder_name);
+			}
+			else
+			{
+				#say "\n- tarball file file save to $fn_\n"; 
+				&clean_R_and_die_with_msg( "- exist folder $prefix_folder_name !\n");
+			}
+			say "";
+		}
+	}
+
 }
 
 sub do_gunzip($,$)
