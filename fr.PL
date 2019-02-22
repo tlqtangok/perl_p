@@ -327,26 +327,6 @@ sub redis_set_with_progress_if_needed($, $, $, $)
 	$R_->set("$FILENAME_PREFIX:$jd_xx", $fn); 
 }
 
-sub progress_interface($,$)
-{
-	my ($flag_end_redis_set_or_get_, $time_second_assume)  = ($_[0], $_[1]); 
-
-	my $progress = Term::ProgressBar->new ({count => $time_second_assume ,name => 'Progress',ETA=>'linear'});
-
-	for (0..$time_second_assume)
-	{
-		my $status =  $_; 
-
-		$progress->update($status);
-		if ($flag_end_redis_set_or_get_)
-		{
-			$status = $time_second_assume; 
-			$progress->update($status);
-			last;
-		}
-		sleep 1; 
-	}
-}
 
 sub create_pw_k_v_if_needed($,$)
 {
