@@ -48,6 +48,7 @@ my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
 my $net_speed = 222;  # kb/s
+my $net_speed_dl = 222 * 1.0 / 6;  # kb/s
 
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
 #
@@ -210,11 +211,12 @@ sub sleep_exact_seconds($)
 	select(undef, undef, undef, $seconds); 
 }
 
-sub create_progressbar_if_need_long_time($)
+sub create_progressbar_if_need_long_time($, $)
 {
 
 	my $len_of_byte = shift; 
-	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed);
+	my $net_speed_ = shift; 
+	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed_);
 	
 
 	my $flag_show_progress_bar = 0; 
@@ -225,7 +227,7 @@ sub create_progressbar_if_need_long_time($)
 	}
 
 	
-	my $td_progress = "NULL"; 
+	my $td_progress = "NULL";
 
 	if ($flag_show_progress_bar)
 	{
@@ -250,7 +252,7 @@ sub create_progressbar_if_need_long_time($)
 		$td_progress = threads->create( $td_progress_sub ); 
 	}
 
-	return $td_progress; 	
+	return ($td_progress, $flag_show_progress_bar, $time_second_assume); 	
 }
 
 sub record_ip_ts_len_cost($,$,$,$)
@@ -292,9 +294,9 @@ sub exec_tor_process()
 	$SHARED_PROGRESS += 0.2;
 
 
-	my $td_progress_bar = &create_progressbar_if_need_long_time(length scalar $fc_str_all); 
+	my ($td_progress_bar, $flag_show_progress_bar, $time_second_assume) = &create_progressbar_if_need_long_time(length scalar $fc_str_all, $net_speed); 
 
-	&redis_set_with_progress_if_needed($jd_xx, $fc_str_all, $fn, $td_progress_bar);
+	&redis_set_with_progress_if_needed($jd_xx, $fc_str_all, $fn, $td_progress_bar, $flag_show_progress_bar, $time_second_assume);
 
 
 	&create_pw_k_v_if_needed($pw_if_has, $jd_xx); 	
@@ -342,14 +344,12 @@ sub fun_progress_increase_($,$)
 
 sub redis_set_with_progress_if_needed($, $, $, $)
 {
-	my ($jd_xx, $fc_str_all, $fn, $td_progress_bar) = ($_[0], $_[1], $_[2], $_[3]);
 
-	my $len_of_byte = length scalar $fc_str_all; 
-	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed);
-
+	my ($jd_xx, $fc_str_all, $fn, $td_progress_bar, $flag_show_progress_bar, $time_second_assume) = ($_[0], $_[1], $_[2], $_[3], $_[4]);
+	my $len_of_byte = length scalar $fc_str_all;
 	my $time_r0 = time; 
 
-	if ($time_second_assume < $show_p_if_time_big_than)
+	if (! $flag_show_progress_bar)
 	{
 		$R_->set($jd_xx, $fc_str_all);
 	}
@@ -390,6 +390,7 @@ sub redis_set_with_progress_if_needed($, $, $, $)
 
 	my $cost = $time_r1 - $time_r0; 
 	my $ip_ = &get_current_client_ip(); 
+
 	&record_ip_ts_len_cost($TOR_SPEED_IP_ts_len_cost_PREFIX, $ip_, $len_of_byte, $cost);
 }
 
@@ -473,10 +474,10 @@ sub exec_fr_process()
 
 	my $len_of_byte = $R_->strlen($jd_xx);
 
-	my $td_progress_bar = &create_progressbar_if_need_long_time($len_of_byte); 
+	my ($td_progress_bar, $flag_show_progress_bar, $time_second_assume) = &create_progressbar_if_need_long_time($len_of_byte, $net_speed_dl); 
 
 
-	my $raw_text = &redis_get_with_progress_if_needed($jd_xx, $len_of_byte, $td_progress_bar);
+	my $raw_text = &redis_get_with_progress_if_needed($jd_xx, $len_of_byte, $td_progress_bar, $flag_show_progress_bar, $time_second_assume);
 	
 	$R_->quit;
 
@@ -782,21 +783,19 @@ sub get_jd_xx_from_incr()
 	return $jd_xx;
 }
 
-sub redis_get_with_progress_if_needed($, $, $)
+sub redis_get_with_progress_if_needed($, $, $,$,$)
 {
 	my $jd_xx = shift; 
 	my $len_of_byte = shift; 
 	my $td_progress_bar = shift; 
+	my $flag_show_progress_bar = shift;
+	my $time_second_assume = shift;
 
 	my $res_raw_text :shared = "NULL";  
 
-	my $net_speed_dl = $net_speed * 1.0 / 6.0; 
-	my $time_second_assume = int ($len_of_byte / 1024 / $net_speed_dl);
-
-
 	my $time_r0 = time; 
 
-	if ($time_second_assume < $show_p_if_time_big_than)
+	if (! $flag_show_progress_bar)
 	{
 		$res_raw_text =  $R_->get($jd_xx);
 	}
