@@ -15,21 +15,20 @@ use File::Basename qw(dirname basename);
 #use List::Util qw(first sum max shuffle maxstr);
 #use List::MoreUtils qw(uniq);
 #use File::Spec::Functions;
-use Data::Dumper;
+#use Data::Dumper;
 #use Scalar::Util qw/reftype/;
 #use File::Copy;
 #use File::Find;
 #use Cwd qw(abs_path);
-use strict;
 
 use threads;
 use threads::shared;
 
-use POSIX qw(assert); 
+#use POSIX qw(assert); 
 use MIME::Base64 qw(encode_base64 decode_base64);
 use Redis; 
-use IO::Compress::Gzip qw(gzip $GzipError); 
 
+use IO::Compress::Gzip qw(gzip $GzipError); 
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Archive::Tar;
 use File::Find;
@@ -86,12 +85,13 @@ my $SHARED_PROGRESS :shared = 0;
 my $TOR_SPEED_IP_ts_len_cost_PREFIX = "TOR_SPEED_";
 my $FR_SPEED_IP_ts_len_cost_PREFIX = "FR_SPEED_";
 
+my $BIN_NAME_OF_TOOL = "tfr"; 
 my $MODULE_NAME_TOR = "t"; 
 my $MODULE_NAME_TOR_FULL = "tor"; 
 my $MODULE_NAME_FR = "f"; 
 my $MODULE_NAME_FR_FULL = "fr"; 
+
 my $MODULE_NAME_VERSION = '-v'; 
-my $BIN_NAME_OF_TOOL = "tfr"; 
 
 ##############
 
@@ -105,7 +105,7 @@ sub main()
 {
 	my $arg_error_msg = "- argc must >= 1 and first args can only be one of {t, f or -v}\n"; 
 
-    die $arg_error_msg if @ARGV == 0; 
+	die $arg_error_msg if @ARGV == 0; 
 
 	my $CALL_SUB_MOUDULE =  $ARGV[0];  
 
@@ -130,6 +130,42 @@ sub main()
 	}
 }
 
+# common__ start
+sub clean_R_and_die_with_msg()
+{
+	my $error_msg = shift;
+	$R_->quit();
+	die $error_msg;
+}
+
+sub show_version_and_help_if_needed()
+{
+	my $arg_version_ = $MODULE_NAME_VERSION;
+
+	my $need_exit_str = "no_exit"; 
+	if(@ARGV == 1 && @ARGV[0] eq $arg_version_)
+	{
+		my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n  usage:\n    $BIN_NAME_OF_TOOL tor <filename> -pw <your_password>\n    $BIN_NAME_OF_TOOL fr jd_xx\n  description:\n    tor-fr is a productive tool that sync-up and share your \n    files,directories instantly, efficently and elegantly\n"; 
+
+		say $version_string; 
+		$need_exit_str = "exit"; 
+	}
+	return $need_exit_str; 
+}
+
+sub connect_to_redis_server($,$)
+{
+	my ($host_name, $redis_port) = ($_[0], $_[1]); 
+
+	try 
+	{
+		$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0, cnx_timeout => 1.1,  sentinels_cnx_timeout => 1.1);
+	}
+	catch
+	{
+		die("- error, cannot connect algoer.com's redis server, please check your internet connection\n"); 
+	};
+}
 
 sub verify_must_be_latest_version($)
 {
@@ -157,58 +193,6 @@ sub verify_must_be_latest_version($)
 	{
 		exit(1);
 	}
-}
-
-sub clean_R_and_die_with_msg()
-{
-	my $error_msg = shift;
-	$R_->quit();
-	die $error_msg;
-}
-
-sub show_version_and_help_if_needed()
-{
-	my $arg_version_ = $MODULE_NAME_VERSION;
-
-	my $need_exit_str = "no_exit"; 
-	if(@ARGV == 1 && @ARGV[0] eq $arg_version_)
-	{
-		my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n  usage:\n    $BIN_NAME_OF_TOOL tor <filename> -pw <your_password>\n    $BIN_NAME_OF_TOOL fr jd_xx\n  description:\n    tor-fr is a productive tool that sync-up and share your \n    files,directories instantly, efficently and elegantly\n"; 
-
-		say $version_string; 
-		$need_exit_str = "exit"; 
-	}
-	return $need_exit_str; 
-}
-
-sub save_all_folder_fn_2_arr_fn_list()
-{
-        my $fn = $File::Find::name;
-        if(-f $fn)
-        {
-                push @arr_fn_list, $fn;
-        }
-}
-
-sub connect_to_redis_server($,$)
-{
-	my ($host_name, $redis_port) = ($_[0], $_[1]); 
-
-	try 
-	{
-		$R_ = Redis->new( server => "$host_name:$redis_port", debug => 0, cnx_timeout => 1.1,  sentinels_cnx_timeout => 1.1);
-	}
-	catch
-	{
-		die("- error, cannot connect algoer.com's redis server, please check your internet connection\n"); 
-	};
-
-}
-
-sub sleep_exact_seconds($)
-{
-	my $seconds = shift; 
-	select(undef, undef, undef, $seconds); 
 }
 
 sub create_progressbar_if_need_long_time($, $)
@@ -255,14 +239,21 @@ sub create_progressbar_if_need_long_time($, $)
 	return ($td_progress, $flag_show_progress_bar, $time_second_assume); 	
 }
 
-sub record_ip_ts_len_cost($,$,$,$)
+sub sleep_exact_seconds($)
 {
-	my ($torfr_prefix, $ip_, $len, $cost) = @_;
-	my $ts = &get_timestamp(1); 
-
-	$R_->rpush("${torfr_prefix}${ip_}", "$ts:$len:$cost"); 
+	my $seconds = shift; 
+	select(undef, undef, undef, $seconds); 
 }
 
+sub assert_use_die($, $)
+{
+	my $equ_or_not = shift; 
+	my $die_msg = shift; 
+	die $die_msg if not $equ_or_not; 
+}
+# common__ end
+
+# tor___ start
 sub exec_tor_process()
 {
 	# script/tor.PL
@@ -271,7 +262,7 @@ sub exec_tor_process()
 
 	my $current_ip = &connect_to_redis_server($host_name, $redis_port);  	
 
-	&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
+	#&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
 
 	&verify_must_be_latest_version($need_exit_str);
 	
@@ -281,7 +272,7 @@ sub exec_tor_process()
 
 
 	my @argv = ( @ARGV[1 .. @ARGV - 1] ); 
-	my ($fn, $fc_str_all, $pw_if_has) = &ck_argv_get_fc_str(\@argv, $max_file_sz_in_bytes); 
+	my ($fn, $fc_str_all, $pw_if_has) = &ck_tor_arg_get_fc_str(\@argv, $max_file_sz_in_bytes); 
 
 	$SHARED_PROGRESS++; 
 
@@ -307,44 +298,180 @@ sub exec_tor_process()
 	$R_->quit; 
 }
 
-sub get_current_client_ip()
+sub incr_jd_incr($,$)
 {
-	&sleep_exact_seconds(0.2); 
 
-	my $clients_redis = $R_->client("list"); 
-	my $current_redis = (split m/addr./, $clients_redis)[-1]; 
-	my $current_client_ip = (split m/\:/, $current_redis)[0]; 
-	return $current_client_ip; 
+	my $jd_incr = shift;
+	my $max_num = shift;
+
+	my $ret_num = $R_->incr($jd_incr);
+	if ($ret_num >= $max_num)
+	{
+		$R_->set($jd_incr, 0);
+		$ret_num = 0; 
+	}
+
+	my $jd_xx = "${JD_PREFIX}$ret_num"; 
+	return $jd_xx;
 }
 
-sub fun_progress_increase_($,$) 
+sub ck_tor_arg_get_fc_str(\@,$)
 {
+	my $argv_ = shift; 
+	my $max_file_sz_in_bytes = shift;
 
-	my  ($flag_end_redis_set_or_get_, $time_second_assume, $progress_max_) = ($_[0], $_[1], $_[2]); 
+	my $fn_if_not_stdin = "NULL"; 
+	my $pw_if_has = "NULL"; 
+
+	($fn_if_not_stdin, $pw_if_has)  = &parse_argv_to_arr_fn_pw($argv_); 
 	
 
-	my $s_r0 = $SHARED_PROGRESS; 
-	my $time_intv = $time_second_assume / ($progress_max_ - $s_r0);
+	my $ret_filename = "NULL"; 
+	my @ret_fc = (); 
+	my $ret_fn = "txt.txt"; 
 
-	for(my $i=$s_r0; $i<$progress_max_; $i++)
+
+	if ($fn_if_not_stdin ne $STDIN_PREFIX)
 	{
-		$SHARED_PROGRESS = $i * 1.0 + rand(0.8)  ;   # seems more real thing
 
-		if ($$flag_end_redis_set_or_get_) 
+		my $fn_from_arg = $fn_if_not_stdin; 
+
+		#jd_0
+		if (-d $fn_from_arg)
 		{
-			$SHARED_PROGRESS = $progress_max_ - 0.5;
-			select(undef,undef,undef, $time_intv);
-			last;
+			# set argv_->[0] to *.tar.gz
+			$fn_from_arg = &tar_folder_to_file_tgz( abs_path($fn_from_arg) ); 
+			&assert_use_die(-f $fn_from_arg, "- $fn_from_arg not file"); 
 		}
-		select(undef,undef,undef, $time_intv);
-	}		
 
+		# now, all are file, not folder 
+		if (-f $fn_from_arg)
+		{
+			$ret_fn = $fn_from_arg; 
+
+			open my $FP, "<", $fn_from_arg; 
+			binmode $FP;
+			@ret_fc = <$FP>; 
+			close $FP; 
+		}
+		else  # an echo string
+		{
+			if ($^O eq "MSWin32") 
+			{
+				@ret_fc = ($fn_from_arg); 
+			}
+			else
+			{
+				@ret_fc = ($fn_from_arg, "\n"); 
+			}
+		}
+	}
+	else
+	{
+		@ret_fc = <STDIN>; 	
+	}
+
+
+	&clean_R_and_die_with_msg( "- error! file content or stdin is empty\n" ) if @ret_fc == 0; 
+
+	my $fc_str_all = join "", @ret_fc;
+
+	if (scalar length $fc_str_all > $max_file_sz_in_bytes)
+	{
+		&clean_R_and_die_with_msg( "- error! file size too big, bigger than $max_file_sz_in_bytes ! \n"); 	
+	}
+
+
+	if (-f $ret_fn 	&& basename($ret_fn) =~ m/$FOLDER_PREFIX.*\.tar.gz$/)
+	{
+		unlink($ret_fn); 	
+	}
+
+	return (basename($ret_fn), $fc_str_all, $pw_if_has);
 }
 
+sub gzip_data_if_needed(\$,$)
+{
+	my $data_src = shift;
+	my $fn = shift;  # fn is basename
+	my $ret_fn_r0 = "txt.txt"; 
+	&assert_use_die(-f $fn, "- should -f $fn") if $fn ne $ret_fn_r0 && $fn =~ m{\/|\\}; 
+
+	my $data_dst;
+	my $prefix_info = "NULL"; 
+
+	my $CRC32 = &mycrc32($$data_src);
+
+
+	my $FLAG_NEED_GZIP_DATA = 0; 
+
+	if ($fn !~ m/\.tar.gz$/ && length scalar $$data_src >=  $gzip_board_sz)
+	{
+		$FLAG_NEED_GZIP_DATA = 1; 
+	}
+
+	if ($FLAG_NEED_GZIP_DATA)
+	{
+		my $die_msg =  "- gzip data failure\n"; 
+
+		my $ret_code = gzip $data_src => \$data_dst or &clean_R_and_die_with_msg("$die_msg"); 
+		$$data_src = $data_dst;
+	}
+
+	$prefix_info = qq($GZIP_PREFIX:${FLAG_NEED_GZIP_DATA}\n$FILENAME_PREFIX:$fn\n$CRC32_PREFIX:$CRC32\n);
+
+	$$data_src = $prefix_info . $$data_src;
+
+	return $fn; 
+}
+
+sub clear_all_jd_xx_and_pw_prefix($)
+{
+		my @keys_jd_xx = $R_->keys("${JD_PREFIX}*");
+		my $len_of_keys_jd_xx = @keys_jd_xx; 
+		say "- delete $len_of_keys_jd_xx ${JD_PREFIX}xx keys ... "; 	
+
+		for my $e_key (@keys_jd_xx)
+		{
+			if ($e_key =~ m/^${JD_PREFIX}\d/)
+			{
+				$R_->del($e_key); 
+
+			}	
+		}
+
+
+		# clear all pw
+		my @keys_of_pw = $R_->keys("${KEY_OF_PW_PREFIX}:*");
+		my $len_of_pw = @keys_of_pw; 
+
+		say "- delete $len_of_pw ${KEY_OF_PW_PREFIX}:${JD_PREFIX}xx keys ... "; 	
+
+		for my $e_key (@keys_of_pw)
+		{
+			if ($e_key =~ m/^${KEY_OF_PW_PREFIX}\:${JD_PREFIX}\d/)
+			{
+				$R_->del($e_key); 
+			}	
+		}
+
+		# clear all fn 
+		my @keys_of_fn = $R_->keys("${FILENAME_PREFIX}:${JD_PREFIX}");
+		my $len_of_fn = @keys_of_fn; 
+
+		say "- delete $len_of_fn ${FILENAME_PREFIX}:${JD_PREFIX}xx keys ... "; 	
+
+		for my $e_key (@keys_of_fn)
+		{
+			if ($e_key =~ m/^${FILENAME_PREFIX}\:${JD_PREFIX}\d/)
+			{
+				$R_->del($e_key); 
+			}	
+		}
+}
 
 sub redis_set_with_progress_if_needed($, $, $, $)
 {
-
 	my ($jd_xx, $fc_str_all, $fn, $td_progress_bar, $flag_show_progress_bar, $time_second_assume) = ($_[0], $_[1], $_[2], $_[3], $_[4]);
 	my $len_of_byte = length scalar $fc_str_all;
 	my $time_r0 = time; 
@@ -394,7 +521,6 @@ sub redis_set_with_progress_if_needed($, $, $, $)
 	&record_ip_ts_len_cost($TOR_SPEED_IP_ts_len_cost_PREFIX, $ip_, $len_of_byte, $cost);
 }
 
-
 sub create_pw_k_v_if_needed($,$)
 {
 	my $pw_if_has = shift;
@@ -403,6 +529,82 @@ sub create_pw_k_v_if_needed($,$)
 	{
 		$R_->set("$KEY_OF_PW_PREFIX:$jd_xx", &mycrc32($pw_if_has)); 
 	}
+}
+# tor___ end
+
+
+# fr__ start
+sub exec_fr_process()
+{
+	# script/fr.PL
+	my $need_exit_str = &show_version_and_help_if_needed(); 
+
+	&connect_to_redis_server($host_name, $redis_port);  	
+
+	#&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
+
+	&verify_must_be_latest_version($need_exit_str);
+
+	my @argv = ( @ARGV[1 .. @ARGV - 1] ); 
+	my $jd_xx = &ck_fr_arg_and_ret_jd_xx(\@argv); 
+
+	&ck_pw_if_needed_in_fr($jd_xx);
+
+	my $fn = $R_->get("$FILENAME_PREFIX:$jd_xx"); 
+	&prompt_overwrite_if_filename_exists($fn);
+
+	$SHARED_PROGRESS++; 
+
+	my $len_of_byte = $R_->strlen($jd_xx);
+
+	my ($td_progress_bar, $flag_show_progress_bar, $time_second_assume) = &create_progressbar_if_need_long_time($len_of_byte, $net_speed_dl); 
+
+
+	my $raw_text = &redis_get_with_progress_if_needed($jd_xx, $len_of_byte, $td_progress_bar, $flag_show_progress_bar, $time_second_assume);
+	
+	$R_->quit;
+
+
+	my ($flag_gzip_, $fn_, $crc32,  $left_raw_text) = &parse_prefix_get_gzip_fn($raw_text);
+	$SHARED_PROGRESS++; 
+
+	&gunzip_if_needed($flag_gzip_, $fn_, \$left_raw_text);
+	&ensure_crc32_test($crc32, \$left_raw_text); 
+	$SHARED_PROGRESS++;
+	
+	&print_fc_to_fn($fn_, \$left_raw_text);
+
+	$fn_ = &do_untar_to_folder_if_needed($fn_);  #jd_0
+	$SHARED_PROGRESS = $progress_max; 
+	select(undef, undef, undef, 1.0 / 5); 
+
+	&echo_simplified_fc($fn_); 
+}
+
+sub ck_fr_arg_and_ret_jd_xx(\@)
+{
+	my $arg_ = shift; 
+	#die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
+
+	my $jd_xx = "NULL"; 
+	if (@$arg_ > 0)
+	{
+		$jd_xx = $arg_->[0]; 
+		if ($jd_xx !~ m/${JD_PREFIX}\d{1,3}$/)
+		{
+			my $jd_incr_val = &get_jd_xx_from_incr();
+			&clean_R_and_die_with_msg( "- argv should be jd_xx, less than $jd_incr_val\n"); 
+		}
+	}
+	else
+	{
+		$jd_xx = &get_jd_xx_from_incr(); 
+	}
+
+	my $res_exist = $R_->exists($jd_xx);
+
+	&clean_R_and_die_with_msg( "- not exist $jd_xx in redis\n" ) if $res_exist !~ m/1/; 
+	return $jd_xx;
 }
 
 sub ck_pw_if_needed_in_fr($)
@@ -451,60 +653,31 @@ sub ck_pw_if_needed_in_fr($)
 		# continue if we got right pw
 }
 
-sub exec_fr_process()
-{
-	# script/fr.PL
-	my $need_exit_str = &show_version_and_help_if_needed(); 
-
-	&connect_to_redis_server($host_name, $redis_port);  	
-
-	&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
-
-	&verify_must_be_latest_version($need_exit_str);
-
-	my @argv = ( @ARGV[1 .. @ARGV - 1] ); 
-	my $jd_xx = &ck_arg_and_ret_jd_xx(\@argv); 
-
-	&ck_pw_if_needed_in_fr($jd_xx);
-
-	my $fn = $R_->get("$FILENAME_PREFIX:$jd_xx"); 
-	&prompt_overwrite_if_filename_exists($fn);
-
-	$SHARED_PROGRESS++; 
-
-	my $len_of_byte = $R_->strlen($jd_xx);
-
-	my ($td_progress_bar, $flag_show_progress_bar, $time_second_assume) = &create_progressbar_if_need_long_time($len_of_byte, $net_speed_dl); 
-
-
-	my $raw_text = &redis_get_with_progress_if_needed($jd_xx, $len_of_byte, $td_progress_bar, $flag_show_progress_bar, $time_second_assume);
-	
-	$R_->quit;
-
-
-	my ($flag_gzip_, $fn_, $crc32,  $left_raw_text) = &parse_prefix_get_gzip_fn($raw_text);
-	$SHARED_PROGRESS++; 
-
-	&gunzip_if_needed($flag_gzip_, $fn_, \$left_raw_text);
-	&ensure_crc32_test($crc32, \$left_raw_text); 
-	$SHARED_PROGRESS++;
-	
-	&print_fc_to_fn($fn_, \$left_raw_text);
-
-	$fn_ = &do_untar_to_folder_if_needed($fn_);  #jd_0
-	$SHARED_PROGRESS = $progress_max; 
-	select(undef, undef, undef, 1.0 / 5); 
-
-	&echo_simplified_fc($fn_); 
-}
-
-sub do_untar_to_folder_if_needed($fn_)
+sub prompt_overwrite_if_filename_exists($)
 {
 	my $fn_ = shift;
-	my $prefix_folder_name =  "NULL"; 
-	if ($fn_ =~ m/^$FOLDER_PREFIX.*tar\.gz$/)
+	my $tmp_file = "txt.txt"; 
+	if ($fn_ eq $tmp_file)
 	{
-		$prefix_folder_name = $fn_; 	
+	}
+	elsif (-f $fn_)
+	{
+		say "- exists $fn_, would you like to overwrite? (yes | no)"; 	
+		my $ensure_ = <STDIN>;
+		chomp($ensure_);
+		if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
+		{
+		}
+		else
+		{
+			&clean_R_and_die_with_msg( "- exist $fn_ !\n");
+		}
+		say "";
+	}
+	
+	if ($fn_ =~ m/^$FOLDER_PREFIX.*\.tar\.gz$/)
+	{
+		my $prefix_folder_name = $fn_; 	
 		$prefix_folder_name =~ s/^$FOLDER_PREFIX(.*)\.tar\.gz/\1/;
 
 		if(-d $prefix_folder_name)
@@ -516,271 +689,17 @@ sub do_untar_to_folder_if_needed($fn_)
 			if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
 			{
 				rmtree($prefix_folder_name);
-				assert(not -e $prefix_folder_name);
+				&assert_use_die(not -e $prefix_folder_name, "- should not -e $prefix_folder_name");
 			}
 			else
 			{
-				say "\n- tarball file file save to $fn_\n"; 
+				#say "\n- tarball file file save to $fn_\n"; 
 				&clean_R_and_die_with_msg( "- exist folder $prefix_folder_name !\n");
 			}
 			say "";
 		}
-	
-		$fn_ = &untar_tgz_file_to_cwd( abs_path($fn_) );
 	}
 
-	return $fn_; 
-}  
-
-sub mycrc32()
-{
-	my ($input, $init_value, $polynomial) = @_;
-
-	$init_value = 0 unless (defined $init_value);
-	$polynomial = 0xedb88320 unless (defined $polynomial);
-
-	my @lookup_table;
-
-	for (my $i=0; $i<256; $i++) {
-		my $x = $i;
-		for (my $j=0; $j<8; $j++) {
-			if ($x & 1) {
-				$x = ($x >> 1) ^ $polynomial;
-			} else {
-				$x = $x >> 1;
-			}
-		}
-		push @lookup_table, $x;
-	}
-
-	my $crc = $init_value ^ 0xffffffff;
-
-	foreach my $x (unpack ('C*', $input)) {
-		$crc = (($crc >> 8) & 0xffffff) ^ $lookup_table[ ($crc ^ $x) & 0xff ];
-	}
-
-	$crc = $crc ^ 0xffffffff;
-
-	return $crc;
-}
-
-
-sub clear_all_jd_xx_and_pw_prefix($)
-{
-		my @keys_jd_xx = $R_->keys("${JD_PREFIX}*");
-		my $len_of_keys_jd_xx = @keys_jd_xx; 
-		say "- delete $len_of_keys_jd_xx ${JD_PREFIX}xx keys ... "; 	
-
-		for my $e_key (@keys_jd_xx)
-		{
-			if ($e_key =~ m/^${JD_PREFIX}\d/)
-			{
-				$R_->del($e_key); 
-
-			}	
-		}
-
-
-		# clear all pw
-		my @keys_of_pw = $R_->keys("${KEY_OF_PW_PREFIX}:*");
-		my $len_of_pw = @keys_of_pw; 
-
-		say "- delete $len_of_pw ${KEY_OF_PW_PREFIX}:${JD_PREFIX}xx keys ... "; 	
-
-		for my $e_key (@keys_of_pw)
-		{
-			if ($e_key =~ m/^${KEY_OF_PW_PREFIX}\:${JD_PREFIX}\d/)
-			{
-				$R_->del($e_key); 
-			}	
-		}
-
-		# clear all fn 
-		my @keys_of_fn = $R_->keys("${FILENAME_PREFIX}:${JD_PREFIX}");
-		my $len_of_fn = @keys_of_fn; 
-
-		say "- delete $len_of_fn ${FILENAME_PREFIX}:${JD_PREFIX}xx keys ... "; 	
-
-		for my $e_key (@keys_of_fn)
-		{
-			if ($e_key =~ m/^${FILENAME_PREFIX}\:${JD_PREFIX}\d/)
-			{
-				$R_->del($e_key); 
-			}	
-		}
-}
-
-sub gzip_data_if_needed(\$,$)
-{
-	my $data_src = shift;
-	my $fn = shift;  # fn is basename
-	my $ret_fn_r0 = "txt.txt"; 
-	assert(-f $fn) if $fn ne $ret_fn_r0 && $fn =~ m{\/|\\}; 
-
-	my $data_dst;
-	my $prefix_info = "NULL"; 
-
-	my $CRC32 = &mycrc32($$data_src);
-
-
-	my $FLAG_NEED_GZIP_DATA = 0; 
-
-	if ($fn !~ m/\.tar.gz$/ && length scalar $$data_src >=  $gzip_board_sz)
-	{
-		$FLAG_NEED_GZIP_DATA = 1; 
-	}
-
-	if ($FLAG_NEED_GZIP_DATA)
-	{
-		my $die_msg =  "- gzip data failure\n"; 
-
-		my $ret_code = gzip $data_src => \$data_dst or &clean_R_and_die_with_msg("$die_msg"); 
-		$$data_src = $data_dst;
-	}
-
-	$prefix_info = qq($GZIP_PREFIX:${FLAG_NEED_GZIP_DATA}\n$FILENAME_PREFIX:$fn\n$CRC32_PREFIX:$CRC32\n);
-
-	$$data_src = $prefix_info . $$data_src;
-
-	return $fn; 
-}
-
-sub ck_argv_get_fc_str(\@,$)
-{
-	my $argv_ = shift; 
-	my $max_file_sz_in_bytes = shift;
-
-	my $fn_if_not_stdin = "NULL"; 
-	my $pw_if_has = "NULL"; 
-
-	($fn_if_not_stdin, $pw_if_has)  = &parse_argv_to_arr_fn_pw($argv_); 
-	
-
-	my $ret_filename = "NULL"; 
-	my @ret_fc = (); 
-	my $ret_fn = "txt.txt"; 
-
-
-	if ($fn_if_not_stdin ne $STDIN_PREFIX)
-	{
-
-		my $fn_from_arg = $fn_if_not_stdin; 
-
-		#jd_0
-		if (-d $fn_from_arg)
-		{
-			# set argv_->[0] to *.tar.gz
-			$fn_from_arg = &tar_folder_to_file_tgz( abs_path($fn_from_arg) ); 
-			assert(-f $fn_from_arg); 
-		}
-
-		# now, all are file, not folder 
-		if (-f $fn_from_arg)
-		{
-			$ret_fn = $fn_from_arg; 
-
-			open my $FP, "<", $fn_from_arg; 
-			binmode $FP;
-			@ret_fc = <$FP>; 
-			close $FP; 
-		}
-		else  # an echo string
-		{
-			if ($^O eq "MSWin32") 
-			{
-				@ret_fc = ($fn_from_arg); 
-			}
-			else
-			{
-				@ret_fc = ($fn_from_arg, "\n"); 
-			}
-		}
-	}
-	else
-	{
-		@ret_fc = <STDIN>; 	
-	}
-
-
-	&clean_R_and_die_with_msg( "- error! file content or stdin is empty\n" ) if @ret_fc == 0; 
-
-	my $fc_str_all = join "", @ret_fc;
-
-	if (scalar length $fc_str_all > $max_file_sz_in_bytes)
-	{
-		&clean_R_and_die_with_msg( "- error! file size too big, bigger than $max_file_sz_in_bytes ! \n"); 	
-	}
-
-
-	if (-f $ret_fn 	&& basename($ret_fn) =~ m/$FOLDER_PREFIX.*\.tar.gz$/)
-	{
-		unlink($ret_fn); 	
-	}
-
-	return (basename($ret_fn), $fc_str_all, $pw_if_has);
-}
-
-sub incr_jd_incr($,$)
-{
-
-	my $jd_incr = shift;
-	my $max_num = shift;
-
-	my $ret_num = $R_->incr($jd_incr);
-	if ($ret_num >= $max_num)
-	{
-		$R_->set($jd_incr, 0);
-		$ret_num = 0; 
-	}
-
-	my $jd_xx = "${JD_PREFIX}$ret_num"; 
-	return $jd_xx;
-}
-
-# 2_
-### sub list ###
-sub print_fc_to_fn($fn, \$left_raw_text)
-{
-	my $fn = shift;
-	my $ref_left_raw_text = shift;
-	open my $FP , ">", $fn or die; 
-	binmode $FP;
-	print $FP $$ref_left_raw_text; 
-	close $FP; 
-
-
-}
-sub ck_arg_and_ret_jd_xx(\@)
-{
-	my $arg_ = shift; 
-	#die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
-
-	my $jd_xx = "NULL"; 
-	if (@$arg_ > 0)
-	{
-		$jd_xx = $arg_->[0]; 
-		if ($jd_xx !~ m/${JD_PREFIX}\d{1,3}$/)
-		{
-			my $jd_incr_val = &get_jd_xx_from_incr();
-			&clean_R_and_die_with_msg( "- argv should be jd_xx, less than $jd_incr_val\n"); 
-		}
-	}
-	else
-	{
-		$jd_xx = &get_jd_xx_from_incr(); 
-	}
-
-	my $res_exist = $R_->exists($jd_xx);
-
-	&clean_R_and_die_with_msg( "- not exist $jd_xx in redis\n" ) if $res_exist !~ m/1/; 
-	return $jd_xx;
-}
-sub get_jd_xx_from_incr()
-{
-	my $res_num = 0;
-	$res_num = $R_->get($jd_incr);  
-	my $jd_xx = "${JD_PREFIX}$res_num"; 
-	return $jd_xx;
 }
 
 sub redis_get_with_progress_if_needed($, $, $,$,$)
@@ -820,7 +739,7 @@ sub redis_get_with_progress_if_needed($, $, $,$,$)
 				my  ($flag_end_redis_set_or_get_, $res_raw_text_) = ($_[0], $_[1]); 
 
 				$$res_raw_text_ = $R_->get($jd_xx); 
-				assert($$res_raw_text_ ne "NULL"); 
+				&assert_use_die($$res_raw_text_ ne "NULL", "- should res_raw_text_ not NULL"); 
 				$$flag_end_redis_set_or_get_ = 1;  
 			}
 			,
@@ -831,7 +750,7 @@ sub redis_get_with_progress_if_needed($, $, $,$,$)
 		$td_progress_bar->join(); 
 	}
 
-	assert($res_raw_text ne "NULL"); 
+	&assert_use_die($res_raw_text ne "NULL", "- should res_raw_text not NULL"); 
 
 	my $time_r1 = time; 
 
@@ -842,15 +761,91 @@ sub redis_get_with_progress_if_needed($, $, $,$,$)
 	return $res_raw_text; 
 }
 
-sub get_jd_xx_content($jd_xx)
+sub parse_prefix_get_gzip_fn($)
 {
-	my $jd_xx = shift; 
-	my $res_raw_text = $R_->get($jd_xx); 
-	return $res_raw_text; 
+	my $raw_text = shift;
+	my $prefix_ = substr($raw_text, 0, 256);
+	my @lines = split m/\n/, $prefix_;
+	my $e_0 = $lines[0]; 
+	my $e_1 = $lines[1]; 
+	my $e_2 = $lines[2]; 
+
+	my $L_0 = length scalar $e_0; 
+	my $L_1 = length scalar $e_1; 
+	my $L_2 = length scalar $e_2; 
+
+
+	my $start_offset = $L_0 + $L_1 + $L_2 + 3; 
+	my $left_raw_str = substr($raw_text, $start_offset); 
+	return (&parse_right_colon($e_0), &parse_right_colon($e_1), &parse_right_colon($e_2), $left_raw_str); 
 }
 
+sub gunzip_if_needed($,$,$)
+{
+	my $flag_gzip_ = shift; 
+	my $fn_ = shift;
+	my $ref_raw_text = shift;
 
-# -----------
+	if ($flag_gzip_ == 1)
+	{
+		&do_gunzip($fn_, $ref_raw_text); 
+	}
+	else
+	{
+   	
+	}
+}
+
+sub ensure_crc32_test($,\$)
+{
+	my $crc32 = shift; 
+	my $ref_left_raw_text = shift; 
+	&clean_R_and_die_with_msg( "- crc32 check failure !\n") if $crc32 != &mycrc32($$ref_left_raw_text);
+}
+
+sub print_fc_to_fn($fn, \$left_raw_text)
+{
+	my $fn = shift;
+	my $ref_left_raw_text = shift;
+	open my $FP , ">", $fn or die; 
+	binmode $FP;
+	print $FP $$ref_left_raw_text; 
+	close $FP; 
+}
+
+sub do_untar_to_folder_if_needed($fn_)
+{
+	my $fn_ = shift;
+	my $prefix_folder_name =  "NULL"; 
+	if ($fn_ =~ m/^$FOLDER_PREFIX.*tar\.gz$/)
+	{
+		$prefix_folder_name = $fn_; 	
+		$prefix_folder_name =~ s/^$FOLDER_PREFIX(.*)\.tar\.gz/\1/;
+
+		if(-d $prefix_folder_name)
+		{
+			say "- exists folder $prefix_folder_name, would you like to overwrite? (yes | no)"; 	
+
+			my $ensure_ = <STDIN>;
+			chomp($ensure_);
+			if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
+			{
+				rmtree($prefix_folder_name);
+				&assert_use_die(not -e $prefix_folder_name, "- should $prefix_folder_name not exist");
+			}
+			else
+			{
+				say "\n- tarball file file save to $fn_\n"; 
+				&clean_R_and_die_with_msg( "- exist folder $prefix_folder_name !\n");
+			}
+			say "";
+		}
+	
+		$fn_ = &untar_tgz_file_to_cwd( abs_path($fn_) );
+	}
+
+	return $fn_; 
+}  
 
 sub echo_simplified_fc($)
 {
@@ -880,70 +875,107 @@ sub echo_simplified_fc($)
 	}
 }
 
-sub gunzip_if_needed($,$,$)
-{
-	my $flag_gzip_ = shift; 
-	my $fn_ = shift;
-	my $ref_raw_text = shift;
+# fr__ end 
 
-	if ($flag_gzip_ == 1)
-	{
-		&do_gunzip($fn_, $ref_raw_text); 
-	}
-	else
-	{
-   	
-	}
+# mess__ start 
+sub save_all_folder_fn_2_arr_fn_list()
+{
+        my $fn = $File::Find::name;
+        if(-f $fn)
+        {
+                push @arr_fn_list, $fn;
+        }
 }
 
-sub prompt_overwrite_if_filename_exists($)
+
+sub record_ip_ts_len_cost($,$,$,$)
 {
-	my $fn_ = shift;
-	my $tmp_file = "txt.txt"; 
-	if ($fn_ eq $tmp_file)
-	{
-	}
-	elsif (-f $fn_)
-	{
-		say "- exists $fn_, would you like to overwrite? (yes | no)"; 	
-		my $ensure_ = <STDIN>;
-		chomp($ensure_);
-		if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
-		{
-		}
-		else
-		{
-			&clean_R_and_die_with_msg( "- exist $fn_ !\n");
-		}
-		say "";
-	}
+	my ($torfr_prefix, $ip_, $len, $cost) = @_;
+	my $ts = &get_timestamp(1); 
+
+	$R_->rpush("${torfr_prefix}${ip_}", "$ts:$len:$cost"); 
+}
+
+sub get_current_client_ip()
+{
+	&sleep_exact_seconds(0.2); 
+
+	my $clients_redis = $R_->client("list"); 
+	my $current_redis = (split m/addr./, $clients_redis)[-1]; 
+	my $current_client_ip = (split m/\:/, $current_redis)[0]; 
+	return $current_client_ip; 
+}
+
+sub fun_progress_increase_($,$) 
+{
+
+	my  ($flag_end_redis_set_or_get_, $time_second_assume, $progress_max_) = ($_[0], $_[1], $_[2]); 
 	
-	if ($fn_ =~ m/^$FOLDER_PREFIX.*\.tar\.gz$/)
+
+	my $s_r0 = $SHARED_PROGRESS; 
+	my $time_intv = $time_second_assume / ($progress_max_ - $s_r0);
+
+	for(my $i=$s_r0; $i<$progress_max_; $i++)
 	{
-		my $prefix_folder_name = $fn_; 	
-		$prefix_folder_name =~ s/^$FOLDER_PREFIX(.*)\.tar\.gz/\1/;
+		$SHARED_PROGRESS = $i * 1.0 + rand(0.8)  ;   # seems more real thing
 
-		if(-d $prefix_folder_name)
+		if ($$flag_end_redis_set_or_get_) 
 		{
-			say "- exists folder $prefix_folder_name, would you like to overwrite? (yes | no)"; 	
-
-			my $ensure_ = <STDIN>;
-			chomp($ensure_);
-			if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
-			{
-				rmtree($prefix_folder_name);
-				assert(not -e $prefix_folder_name);
-			}
-			else
-			{
-				#say "\n- tarball file file save to $fn_\n"; 
-				&clean_R_and_die_with_msg( "- exist folder $prefix_folder_name !\n");
-			}
-			say "";
+			$SHARED_PROGRESS = $progress_max_ - 0.5;
+			select(undef,undef,undef, $time_intv);
+			last;
 		}
-	}
+		select(undef,undef,undef, $time_intv);
+	}		
 
 }
+
+sub mycrc32()
+{
+	my ($input, $init_value, $polynomial) = @_;
+
+	$init_value = 0 unless (defined $init_value);
+	$polynomial = 0xedb88320 unless (defined $polynomial);
+
+	my @lookup_table;
+
+	for (my $i=0; $i<256; $i++) {
+		my $x = $i;
+		for (my $j=0; $j<8; $j++) {
+			if ($x & 1) {
+				$x = ($x >> 1) ^ $polynomial;
+			} else {
+				$x = $x >> 1;
+			}
+		}
+		push @lookup_table, $x;
+	}
+
+	my $crc = $init_value ^ 0xffffffff;
+
+	foreach my $x (unpack ('C*', $input)) {
+		$crc = (($crc >> 8) & 0xffffff) ^ $lookup_table[ ($crc ^ $x) & 0xff ];
+	}
+
+	$crc = $crc ^ 0xffffffff;
+
+	return $crc;
+}
+
+
+
+# 2_
+### sub list ###
+sub get_jd_xx_from_incr()
+{
+	my $res_num = 0;
+	$res_num = $R_->get($jd_incr);  
+	my $jd_xx = "${JD_PREFIX}$res_num"; 
+	return $jd_xx;
+}
+
+# -----------
+
 
 sub do_gunzip($,$)
 {
@@ -959,25 +991,6 @@ sub do_gunzip($,$)
 	return $ret_code; 
 }
 
-sub parse_prefix_get_gzip_fn($)
-{
-	my $raw_text = shift;
-	my $prefix_ = substr($raw_text, 0, 256);
-	my @lines = split m/\n/, $prefix_;
-	my $e_0 = $lines[0]; 
-	my $e_1 = $lines[1]; 
-	my $e_2 = $lines[2]; 
-
-	my $L_0 = length scalar $e_0; 
-	my $L_1 = length scalar $e_1; 
-	my $L_2 = length scalar $e_2; 
-
-
-	my $start_offset = $L_0 + $L_1 + $L_2 + 3; 
-	my $left_raw_str = substr($raw_text, $start_offset); 
-	return (&parse_right_colon($e_0), &parse_right_colon($e_1), &parse_right_colon($e_2), $left_raw_str); 
-}
-
 
 sub parse_right_colon($e_str)
 {
@@ -987,12 +1000,6 @@ sub parse_right_colon($e_str)
 	return $arr_t[1]; 
 }
 
-sub ensure_crc32_test($,\$)
-{
-	my $crc32 = shift; 
-	my $ref_left_raw_text = shift; 
-	&clean_R_and_die_with_msg( "- crc32 check failure !\n") if $crc32 != &mycrc32($$ref_left_raw_text);
-}
 
 sub tar_folder_to_file_tgz($)
 {
@@ -1004,22 +1011,22 @@ sub tar_folder_to_file_tgz($)
 
 	&clean_R_and_die_with_msg( "- error , $fn_out_tar_tgz must match FOLDER_ suffix !\n" ) if $fn_out_tar_tgz !~ m/FOLDER_/; 
 
-	assert(-d $full_path_of_dir);
+	&assert_use_die(-d $full_path_of_dir,"");
 	my $current_dir = cwd(); 
 	chdir(dirname $full_path_of_dir); # must change to upper dir !!!
 	my $current_dir_new = cwd(); 
 
 	# global var : @arr_fn_list; 	
-	assert(@arr_fn_list == 0);  	
+	&assert_use_die(@arr_fn_list == 0, "");  	
 	find(\&save_all_folder_fn_2_arr_fn_list, $full_path_of_dir);  # use global @arr_fn_list
-	assert(@arr_fn_list != 0); 
+	&assert_use_die(@arr_fn_list != 0, ""); 
 
 	my $sep = File::Spec->catfile('', '');
 	map{ $_ = "." . "$sep". File::Spec->abs2rel($_, cwd()); }@arr_fn_list; # to rel path
 
 	$tar->create_archive( $fn_out_tar_tgz, COMPRESS_GZIP, @arr_fn_list );
 
-	assert(-f $fn_out_tar_tgz);
+	&assert_use_die(-f $fn_out_tar_tgz, "");
 
 	my $full_fn_out_tar_tgz = $current_dir_new. "$sep". $fn_out_tar_tgz; 
 
@@ -1045,49 +1052,19 @@ sub untar_tgz_file_to_cwd($)
 
 	my $fn_basename = basename $full_fn_tar_tgz; 
 	#say $fn_basename; 
-	assert($fn_basename eq "${FOLDER_PREFIX}${prefix_of_folder}.tar.gz"); 
+	&assert_use_die($fn_basename eq "${FOLDER_PREFIX}${prefix_of_folder}.tar.gz", ""); 
 
 	$tar->extract(); 
 
 	my $full_path_of_untar_folder = abs_path($prefix_of_folder); 
 
-	assert(-d $full_path_of_untar_folder); 
+	&assert_use_die(-d $full_path_of_untar_folder, ""); 
 
 	#system(qq{find ./$prefix_of_folder -name '*' && rm -rf $prefix_of_folder}); 
 
 	chdir($old_cwd); 
 	unlink($full_fn_tar_tgz); 
 	return abs_path($full_path_of_untar_folder); 
-}
-
-sub test_all()
-{
-	if (1)
-	{
-		# do test
-		if(0)
-		{
-			my $full_path_of_dir = "NULL"; 
-			$full_path_of_dir = abs_path("."); 	
-			#$full_path_of_dir = abs_path($ARGV[0]); 	
-
-			assert(-d $full_path_of_dir);  
-
-			my $full_fn_out_tar_tgz = &tar_folder_to_file_tgz($full_path_of_dir);
-			say -s $full_fn_out_tar_tgz; 
-
-			say ""; 
-
-			say $full_fn_out_tar_tgz; 
-		}
-
-		if(1)
-		{
-			my $full_path_of_tgz = "/mnt/hgfs/et/t_/pi/${FOLDER_PREFIX}pi.tar.gz"; 
-			my $full_path_of_untar_folder = &untar_tgz_file_to_cwd($full_path_of_tgz);
-			say $full_path_of_untar_folder;
-		}
-	}
 }
 
 sub parse_argv_to_arr_fn_pw(\@argv)
@@ -1113,7 +1090,7 @@ sub parse_argv_to_arr_fn_pw(\@argv)
         elsif (@$argv == 2)
         {
 			#say " # 2 stdin + pw";
-                assert($argv->[0] eq $PW_ARG_PREFIX);
+                &assert_use_die($argv->[0] eq $PW_ARG_PREFIX, "");
                 my $pw = $argv->[1];
                 @ret_fn_pw = ($STDIN_PREFIX, $pw);
         }
@@ -1137,7 +1114,7 @@ sub parse_argv_to_arr_fn_pw(\@argv)
                                 last;
                         }
                 }
-                assert($flag_match_pw_arg ==  1);
+                &assert_use_die($flag_match_pw_arg ==  1, "");
 
                 if ($loc_of_pw_arg_prefix == 1)
                 {
@@ -1197,5 +1174,37 @@ sub get_timestamp($)
 	return $time_stamp;
 }
 
+=pod
+sub test_all()
+{
+	if (1)
+	{
+		# do test
+		if(0)
+		{
+			my $full_path_of_dir = "NULL"; 
+			$full_path_of_dir = abs_path("."); 	
+			#$full_path_of_dir = abs_path($ARGV[0]); 	
 
+			&assert_use_die(-d $full_path_of_dir, "");  
+
+			my $full_fn_out_tar_tgz = &tar_folder_to_file_tgz($full_path_of_dir);
+			say -s $full_fn_out_tar_tgz; 
+
+			say ""; 
+
+			say $full_fn_out_tar_tgz; 
+		}
+
+		if(1)
+		{
+			my $full_path_of_tgz = "/mnt/hgfs/et/t_/pi/${FOLDER_PREFIX}pi.tar.gz"; 
+			my $full_path_of_untar_folder = &untar_tgz_file_to_cwd($full_path_of_tgz);
+			say $full_path_of_untar_folder;
+		}
+	}
+}
+=cut
+
+# mess__ end
 
