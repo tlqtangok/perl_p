@@ -47,7 +47,7 @@ my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
 my $net_speed = 222;  # kb/s
-my $net_speed_dl = 222 * 1.0 / 6;  # kb/s
+my $net_speed_dl = 222 * 1.0 / 3;  # kb/s
 
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
 #
@@ -227,10 +227,10 @@ sub create_progressbar_if_need_long_time($, $)
 			while($SHARED_PROGRESS !=  $progress_max)
 			{
 				$progressbar->update($SHARED_PROGRESS);
-				select(undef,undef,undef, 1.0 / 6);
+				&sleep_exact_seconds( 1.0 / 6);
 			}
 			$progressbar->update($progress_max);
-			select(undef,undef,undef, 1.0 / 6);
+			&sleep_exact_seconds( 1.0 / 6);
 		};
 
 		$td_progress = threads->create( $td_progress_sub ); 
@@ -242,7 +242,7 @@ sub create_progressbar_if_need_long_time($, $)
 sub sleep_exact_seconds($)
 {
 	my $seconds = shift; 
-	select(undef, undef, undef, $seconds); 
+	&sleep_exact_seconds( $seconds); 
 }
 
 sub assert_use_die($, $)
@@ -293,7 +293,7 @@ sub exec_tor_process()
 	&create_pw_k_v_if_needed($pw_if_has, $jd_xx); 	
 
 	$SHARED_PROGRESS = $progress_max; 
-	select(undef, undef, undef, 1.0 / 5); 
+	&sleep_exact_seconds( 1.0 / 5); 
 
 	$R_->quit; 
 }
@@ -576,7 +576,7 @@ sub exec_fr_process()
 
 	$fn_ = &do_untar_to_folder_if_needed($fn_);  #jd_0
 	$SHARED_PROGRESS = $progress_max; 
-	select(undef, undef, undef, 1.0 / 5); 
+	&sleep_exact_seconds( 1.0 / 5); 
 
 	&echo_simplified_fc($fn_); 
 }
@@ -917,15 +917,15 @@ sub fun_progress_increase_($,$)
 
 	for(my $i=$s_r0; $i<$progress_max_; $i++)
 	{
-		$SHARED_PROGRESS = $i * 1.0 + rand(0.8)  ;   # seems more real thing
+		$SHARED_PROGRESS = $i * 0.997 + rand(0.5)  ;   # seems more real thing
 
 		if ($$flag_end_redis_set_or_get_) 
 		{
 			$SHARED_PROGRESS = $progress_max_ - 0.5;
-			select(undef,undef,undef, $time_intv);
+			&sleep_exact_seconds( 1.0/2);
 			last;
 		}
-		select(undef,undef,undef, $time_intv);
+		&sleep_exact_seconds( $time_intv);
 	}		
 
 }
