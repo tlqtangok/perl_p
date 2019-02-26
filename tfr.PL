@@ -472,7 +472,7 @@ sub clear_all_jd_xx_and_pw_prefix($)
 
 sub redis_set_with_progress_if_needed($, $, $, $)
 {
-	my ($jd_xx, $fc_str_all, $fn, $td_progress_bar, $flag_show_progress_bar, $time_second_assume) = ($_[0], $_[1], $_[2], $_[3], $_[4]);
+	my ($jd_xx, $fc_str_all, $fn, $td_progress_bar, $flag_show_progress_bar, $time_second_assume) = ($_[0], $_[1], $_[2], $_[3], $_[4], $_[5]);
 	my $len_of_byte = length scalar $fc_str_all;
 	my $time_r0 = time; 
 
