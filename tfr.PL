@@ -15,7 +15,7 @@ use File::Basename qw(dirname basename);
 #use List::Util qw(first sum max shuffle maxstr);
 #use List::MoreUtils qw(uniq);
 #use File::Spec::Functions;
-#use Data::Dumper;
+use Data::Dumper;
 #use Scalar::Util qw/reftype/;
 #use File::Copy;
 #use File::Find;
@@ -47,7 +47,7 @@ my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
 my $net_speed = 222;  # kb/s
-my $net_speed_dl = 222 * 1.0 / 6;  # kb/s
+my $net_speed_dl = 222 * 1.0 / 3;  # kb/s
 
 my $host_name = join "", reverse qw(m o c . s r e o g l a);
 #
@@ -75,7 +75,7 @@ my $STDIN_PREFIX = "STDIN_";
 my $NO_PW_PREFIX = "NO_PW_";
 my $KEY_OF_PW_PREFIX = "PW_OF_"; 
 my $VERSION_KEY_OF_TOR_FR="TOR_FR_VERSION_KEY"; 
-my $HOMEPAGE = "http://algoers.com:10241/tor_fr_readme.html"; 
+my $HOMEPAGE = "http://$host_name:10241/tor_fr_readme.html"; 
 my $FLAG_END_REDIS_SET_OR_GET :shared = 0; 
 my $show_p_if_time_big_than = 10; 
 
@@ -121,7 +121,7 @@ sub main()
 	{
 		my $need_exit_str = &show_version_and_help_if_needed(); 
 		my $current_ip = &connect_to_redis_server($host_name, $redis_port);  	
-		&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
+		#&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
 		&verify_must_be_latest_version($need_exit_str);
 	}
 	else
@@ -145,7 +145,7 @@ sub show_version_and_help_if_needed()
 	my $need_exit_str = "no_exit"; 
 	if(@ARGV == 1 && @ARGV[0] eq $arg_version_)
 	{
-		my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n  usage:\n    $BIN_NAME_OF_TOOL tor <filename> -pw <your_password>\n    $BIN_NAME_OF_TOOL fr jd_xx\n  description:\n    tor-fr is a productive tool that sync-up and share your \n    files,directories instantly, efficently and elegantly\n"; 
+		my $version_string = "- tor-fr\n  version: $VERSION_\n\n  author: Jidor Tang<tlqtangok\@126.com>\n  homepage: $HOMEPAGE\n\n  usage:\n    $BIN_NAME_OF_TOOL tor <filename> -pw <your_password>\n    $BIN_NAME_OF_TOOL fr jd_xx\n\n  description:\n    tor-fr is a productive tool that sync-up and share your \n    files,directories instantly, efficently and elegantly\n"; 
 
 		say $version_string; 
 		$need_exit_str = "exit"; 
@@ -227,10 +227,10 @@ sub create_progressbar_if_need_long_time($, $)
 			while($SHARED_PROGRESS !=  $progress_max)
 			{
 				$progressbar->update($SHARED_PROGRESS);
-				select(undef,undef,undef, 1.0 / 6);
+				&sleep_exact_seconds(1.0 / 6);
 			}
 			$progressbar->update($progress_max);
-			select(undef,undef,undef, 1.0 / 6);
+			&sleep_exact_seconds(1.0 / 6);
 		};
 
 		$td_progress = threads->create( $td_progress_sub ); 
@@ -293,7 +293,7 @@ sub exec_tor_process()
 	&create_pw_k_v_if_needed($pw_if_has, $jd_xx); 	
 
 	$SHARED_PROGRESS = $progress_max; 
-	select(undef, undef, undef, 1.0 / 5); 
+	&sleep_exact_seconds(1.0 / 5); 
 
 	$R_->quit; 
 }
@@ -456,7 +456,7 @@ sub clear_all_jd_xx_and_pw_prefix($)
 		}
 
 		# clear all fn 
-		my @keys_of_fn = $R_->keys("${FILENAME_PREFIX}:${JD_PREFIX}");
+		my @keys_of_fn = $R_->keys("${FILENAME_PREFIX}:${JD_PREFIX}*");
 		my $len_of_fn = @keys_of_fn; 
 
 		say "- delete $len_of_fn ${FILENAME_PREFIX}:${JD_PREFIX}xx keys ... "; 	
@@ -470,9 +470,9 @@ sub clear_all_jd_xx_and_pw_prefix($)
 		}
 }
 
-sub redis_set_with_progress_if_needed($, $, $, $)
+sub redis_set_with_progress_if_needed($, $, $, $,$)
 {
-	my ($jd_xx, $fc_str_all, $fn, $td_progress_bar, $flag_show_progress_bar, $time_second_assume) = ($_[0], $_[1], $_[2], $_[3], $_[4]);
+	my ($jd_xx, $fc_str_all, $fn, $td_progress_bar, $flag_show_progress_bar, $time_second_assume) = ($_[0], $_[1], $_[2], $_[3], $_[4], $_[5]);
 	my $len_of_byte = length scalar $fc_str_all;
 	my $time_r0 = time; 
 
@@ -576,7 +576,7 @@ sub exec_fr_process()
 
 	$fn_ = &do_untar_to_folder_if_needed($fn_);  #jd_0
 	$SHARED_PROGRESS = $progress_max; 
-	select(undef, undef, undef, 1.0 / 5); 
+	&sleep_exact_seconds(1.0 / 5); 
 
 	&echo_simplified_fc($fn_); 
 }
@@ -807,7 +807,7 @@ sub print_fc_to_fn($fn, \$left_raw_text)
 {
 	my $fn = shift;
 	my $ref_left_raw_text = shift;
-	open my $FP , ">", $fn or die; 
+	open my $FP , ">", $fn or die "- cannot open $fn for read!\n"; 
 	binmode $FP;
 	print $FP $$ref_left_raw_text; 
 	close $FP; 
@@ -908,26 +908,30 @@ sub get_current_client_ip()
 
 sub fun_progress_increase_($,$) 
 {
-
 	my  ($flag_end_redis_set_or_get_, $time_second_assume, $progress_max_) = ($_[0], $_[1], $_[2]); 
-	
 
 	my $s_r0 = $SHARED_PROGRESS; 
 	my $time_intv = $time_second_assume / ($progress_max_ - $s_r0);
 
-	for(my $i=$s_r0; $i<$progress_max_; $i++)
+	my $time_split_ = $time_intv * 2; 
+	for(my $i=$s_r0; $i<$progress_max_ - 1; $i++)
 	{
-		$SHARED_PROGRESS = $i * 1.0 + rand(0.8)  ;   # seems more real thing
+		my $shared_progress_ = $i * 0.98 + rand(0.44)  ;   # seems more real thing
 
 		if ($$flag_end_redis_set_or_get_) 
 		{
 			$SHARED_PROGRESS = $progress_max_ - 0.5;
-			select(undef,undef,undef, $time_intv);
+			#&sleep_exact_seconds($time_intv);
 			last;
 		}
-		select(undef,undef,undef, $time_intv);
-	}		
 
+		for(my $ii = 0; $ii < $time_split_; $ii++)
+		{
+			$SHARED_PROGRESS = $shared_progress_ + $ii / $time_split_;
+			&sleep_exact_seconds($time_intv * 1.0 / $time_split_);
+		}
+	}		
+	$SHARED_PROGRESS = $progress_max_ - 0.5;
 }
 
 sub mycrc32()
@@ -1168,7 +1172,7 @@ sub get_timestamp($)
 	$minute = $add_zero_if_lt_10->($minute);
 	$time_stamp = "$year$month${date}";
 
-	$time_stamp = "$year$month${date}_$hour$minute" if $flag_exact;
+	$time_stamp = "$year$month${date}_$hour$minute" if $flag_exact == 1;
 
 	chomp( $time_stamp );
 	return $time_stamp;
