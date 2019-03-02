@@ -689,7 +689,8 @@ sub prompt_overwrite_if_filename_exists($)
 			if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
 			{
 				rmtree($prefix_folder_name);
-				&assert_use_die(not -e $prefix_folder_name, "- should not -e $prefix_folder_name");
+				&sleep_exact_seconds(1.0/2); 
+				&assert_use_die(int(not -d $prefix_folder_name), "- should not -e $prefix_folder_name");
 			}
 			else
 			{
@@ -831,7 +832,7 @@ sub do_untar_to_folder_if_needed($fn_)
 			if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
 			{
 				rmtree($prefix_folder_name);
-				&assert_use_die(not -e $prefix_folder_name, "- should $prefix_folder_name not exist");
+				&assert_use_die(int(not -d $prefix_folder_name), "- should $prefix_folder_name not exist");
 			}
 			else
 			{
