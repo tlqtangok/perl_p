@@ -42,7 +42,7 @@ use Term::ProgressBar;
 
 
 ### global var ### 
-my $VERSION_ = "2019.02.24";  # or 2019.02.22:die
+my $VERSION_ = "2019.03.05";  # or 2019.02.22:die
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
@@ -656,51 +656,9 @@ sub ck_pw_if_needed_in_fr($)
 sub prompt_overwrite_if_filename_exists($)
 {
 	my $fn_ = shift;
-	my $tmp_file = "txt.txt"; 
-	if ($fn_ eq $tmp_file)
-	{
-	}
-	elsif (-f $fn_)
-	{
-		say "- exists $fn_, would you like to overwrite? (yes | no)"; 	
-		my $ensure_ = <STDIN>;
-		chomp($ensure_);
-		if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
-		{
-		}
-		else
-		{
-			&clean_R_and_die_with_msg( "- exist $fn_ !\n");
-		}
-		say "";
-	}
-	
-	if ($fn_ =~ m/^$FOLDER_PREFIX.*\.tar\.gz$/)
-	{
-		my $prefix_folder_name = $fn_; 	
-		$prefix_folder_name =~ s/^$FOLDER_PREFIX(.*)\.tar\.gz/\1/;
-
-		if(-d $prefix_folder_name)
-		{
-			say "- exists folder $prefix_folder_name, would you like to overwrite? (yes | no)"; 	
-
-			my $ensure_ = <STDIN>;
-			chomp($ensure_);
-			if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
-			{
-				rmtree($prefix_folder_name);
-				#&sleep_exact_seconds(1.0/2); 
-				&assert_use_die(! -d $prefix_folder_name, "- should not -e $prefix_folder_name");
-			}
-			else
-			{
-				#say "\n- tarball file file save to $fn_\n"; 
-				&clean_R_and_die_with_msg( "- exist folder $prefix_folder_name !\n");
-			}
-			say "";
-		}
-	}
-
+	my ($h_overwrite_0, $h_overwrite_1) = 	&gen_overwrite_struct($fn_);
+	&real_run_prompt_and_input_yes($h_overwrite_0);
+	&real_run_prompt_and_input_yes($h_overwrite_1);
 }
 
 sub redis_get_with_progress_if_needed($, $, $,$,$)
@@ -1145,6 +1103,143 @@ sub parse_argv_to_arr_fn_pw(\@argv)
         return @ret_fn_pw;
 }
 
+sub gen_overwrite_struct($)
+{
+	my $fn_ = shift;
+	my $hash_0 = {};
+	my $hash_1 = {}; 
+
+=pod 
+	{
+	flag: 0/1,
+	type: d/f,
+	on_fn: fn/prefix_folder
+	overwrite_stat: "some text, $type",
+	del_call: sub_rmtee()
+	}
+=cut 
+	my $gen_prompt_stat = sub($)
+	{
+		my $hash_ = shift;  
+
+		my $type_ = $hash_->{type}; 
+		my $on_fn = $hash_->{on_fn}; 
+
+		my $type_full = "file";
+		$type_full = "folder" if $type_ eq "d"; 
+
+		return "- exists $type_full $on_fn, would you like to overwrite? (yes | no)"; 
+	};
+
+	my $prefix_folder = "NULL"; 
+	# default
+	{
+		$hash_0->{flag} = 0; 	
+		$hash_0->{type} = "f"; 
+		$hash_0->{on_fn} = $fn_; 
+		$hash_0->{overwrite_stat} = $gen_prompt_stat->($hash_0); 
+		$hash_0->{del_call} = "unlink"; 
+
+
+		$hash_1->{flag} = 0; 	
+		$hash_1->{type} = "d"; 
+		$hash_1->{on_fn} = $fn_; 
+		$hash_1->{overwrite_stat} = $gen_prompt_stat->($hash_1); 
+		$hash_1->{del_call} = "rmtree"; 
+	}
+
+
+	my $tmp_file = "txt.txt"; 
+	if ( (! -e $fn_ ) || $fn_ eq $tmp_file)
+	{
+		$hash_0->{flag} = 0;  
+	}
+	elsif (-f $fn_)
+	{
+		$hash_0->{flag} = 1; 
+		$hash_0->{type} = "f"; 
+		$hash_0->{on_fn} = $fn_; 
+		$hash_0->{overwrite_stat} = $gen_prompt_stat->($hash_0); 
+		$hash_0->{del_call} = "unlink"; 
+	}
+	elsif (-d $fn_)
+	{
+		$hash_0->{flag} = 1; 
+		$hash_0->{type} = "d"; 
+		$hash_0->{on_fn} = $fn_; 
+		$hash_0->{overwrite_stat} = $gen_prompt_stat->($hash_0); 
+		$hash_0->{del_call} = "rmtree"; 
+	}
+	elsif (-e $fn_)
+	{
+		&assert_use_die(0, "- error, unknown file type $fn_ !\n"); 
+	}
+
+
+
+	if ($fn_ =~ m/^$FOLDER_PREFIX.*\.tar\.gz$/)
+	{
+		$prefix_folder = $fn_; 
+		$prefix_folder =~ s/^$FOLDER_PREFIX(.*)\.tar\.gz$/\1/;
+
+		if (-d $prefix_folder)
+		{
+			$hash_1->{flag} = 1; 
+			$hash_1->{type} = "d"; 
+			$hash_1->{on_fn} = $prefix_folder; 
+			$hash_1->{overwrite_stat} = $gen_prompt_stat->($hash_1); 
+			$hash_1->{del_call} = "rmtree"; 
+		}
+		elsif (-f $prefix_folder)
+		{
+			$hash_1->{flag} = 1; 
+			$hash_1->{type} = "f"; 
+			$hash_1->{on_fn} = $prefix_folder; 
+			$hash_1->{overwrite_stat} = $gen_prompt_stat->($hash_1); 
+			$hash_1->{del_call} = "unlink"; 
+		}
+	}
+
+
+	return ($hash_0, $hash_1); 
+}
+
+sub real_run_prompt_and_input_yes($)
+{
+	my $hash_ = shift; 
+	if ($hash_->{flag})
+	{
+		my $on_fn = $hash_->{on_fn}; 
+
+		say $hash_->{overwrite_stat};
+		my $ensure_ = <STDIN>; chomp($ensure_); 
+		if ($ensure_ eq "yes" or $ensure_ eq "y" or $ensure_ eq "Y" or $ensure_ eq "YES")
+		{
+			if ($hash_->{del_call} eq "rmtree")
+			{
+				&assert_use_die(-d $on_fn); 
+
+				rmtree($on_fn); 
+
+				&assert_use_die(! -d $on_fn, "- should not -d $on_fn");
+			}
+
+			elsif ($hash_->{del_call} eq "unlink")
+			{
+
+				unlink($on_fn); 
+			}
+			else {&assert_use_die(0,"- not match unlink or rmtree?\n");};
+		}
+		else
+		{
+			&clean_R_and_die_with_msg("- exist $on_fn !\n"); 
+		}
+
+	}
+}
+
+
 
 sub get_timestamp($)
 {
@@ -1213,3 +1308,4 @@ sub test_all()
 
 # mess__ end
 
+### sub list ###
