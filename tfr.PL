@@ -820,7 +820,7 @@ sub echo_simplified_fc($)
 			@fc = (@fc[0..$half_line_num], " ...\n" x 1, @fc[-1*$half_line_num..-1]); 
 
 		}
-		say @fc; 
+		say "\n", @fc; 
 		close $FP; 
 	}
 
