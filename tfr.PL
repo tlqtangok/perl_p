@@ -1149,6 +1149,7 @@ sub gen_overwrite_struct($)
 	}
 
 
+	# stage 0 => hash_0
 	my $tmp_file = "txt.txt"; 
 	if ( (! -e $fn_ ) || $fn_ eq $tmp_file)
 	{
@@ -1172,11 +1173,12 @@ sub gen_overwrite_struct($)
 	}
 	elsif (-e $fn_)
 	{
-		&assert_use_die(0, "- error, unknown file type $fn_ !\n"); 
+		&clean_R_and_die_with_msg("- error, ". __LINE__ ." unknown file type $fn_ !\n"); 
 	}
 
 
 
+	# stage 1 => hash_1
 	if ($fn_ =~ m/^$FOLDER_PREFIX.*\.tar\.gz$/)
 	{
 		$prefix_folder = $fn_; 
@@ -1198,8 +1200,11 @@ sub gen_overwrite_struct($)
 			$hash_1->{overwrite_stat} = $gen_prompt_stat->($hash_1); 
 			$hash_1->{del_call} = "unlink"; 
 		}
+		elsif (-e $fn_)
+		{
+			&clean_R_and_die_with_msg("- error, ". __LINE__ ." unknown file type $fn_ !\n"); 
+		}
 	}
-
 
 	return ($hash_0, $hash_1); 
 }
@@ -1223,10 +1228,8 @@ sub real_run_prompt_and_input_yes($)
 
 				&assert_use_die(! -d $on_fn, "- should not -d $on_fn");
 			}
-
 			elsif ($hash_->{del_call} eq "unlink")
 			{
-
 				unlink($on_fn); 
 			}
 			else {&assert_use_die(0,"- not match unlink or rmtree?\n");};
