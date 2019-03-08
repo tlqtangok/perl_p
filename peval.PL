@@ -1,8 +1,9 @@
 #!perl 
 use feature qw(say);
-while(<>)
+while(my $e_l = <>)
 {
    chomp(); 
    last   if (m/^q$|^quit$/i);
-   say eval $_; 
+   eval "\$_=$e_l;"; 
+   say $_;
 }
