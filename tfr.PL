@@ -123,7 +123,7 @@ sub main()
 	elsif ($CALL_SUB_MOUDULE eq $MODULE_NAME_VERSION)
 	{
 		my $need_exit_str = &show_version_and_help_if_needed(); 
-		my $current_ip = &connect_to_redis_server($host_name, $redis_port);  	
+		&connect_to_redis_server($host_name, $redis_port);  	
 		&verify_must_be_latest_version($need_exit_str);
 	}
 	elsif ($CALL_SUB_MOUDULE eq $MODULE_NAME_SHOW_VISITOR)
@@ -265,8 +265,7 @@ sub exec_tor_process()
 	# script/tor.PL
 	my $need_exit_str = &show_version_and_help_if_needed(); 
 	
-
-	my $current_ip = &connect_to_redis_server($host_name, $redis_port);  	
+	&connect_to_redis_server($host_name, $redis_port);  	
 
 	#&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
 
@@ -849,7 +848,13 @@ sub exec_show_visitor_process()
 	&verify_must_be_latest_version($need_exit_str);
 
 
-	&ck_password_for_show_visitor(); 
+	my $ip_ = &get_current_client_ip();
+	my $flag_ip_is_jd_ = ($ip_ eq "116.6.99.221" || $ip_ eq "127.0.0.1");
+
+	if (! $flag_ip_is_jd_)
+	{
+		&ck_password_for_show_visitor(); 
+	}
 
 	my @argv = ( @ARGV[1 .. @ARGV - 1] ); 
 
@@ -858,7 +863,6 @@ sub exec_show_visitor_process()
 	{
 		$show_number = -1 * $argv[0]; 	
 	}
-
 
 	my @arr_vistors = $R_->lrange($VISIT_PREFIX, $show_number, -1); 
 	for my $e_v (@arr_vistors)
