@@ -3,8 +3,8 @@
 # written by jidor at 2018-11-10
 # last modified by Jidor Tang <tlqtangok@126.com> at 2019-02-01
 #
-# need cpanm:  sudo apt install cpanminus
-# 	sudo cpan -i  Redis
+# 	sudo cpan -i pp 
+# 	sudo cpan -i Redis
 # 	sudo cpan -i Term::ReadKey
 #	sudo cpan -i Term::ProgressBar;
 
@@ -42,7 +42,7 @@ use Term::ProgressBar;
 
 
 ### global var ### 
-my $VERSION_ = "2019.03.05";  # or 2019.02.22:die
+my $VERSION_ = "2019.03.11";  # or 2019.02.22:die
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
@@ -74,6 +74,7 @@ my $PW_ARG_PREFIX = "-pw";
 my $STDIN_PREFIX = "STDIN_";
 my $NO_PW_PREFIX = "NO_PW_";
 my $KEY_OF_PW_PREFIX = "PW_OF_"; 
+my $JD_DISABLE_PW_ = "JD_DISABLE_PW_"; 
 my $VERSION_KEY_OF_TOR_FR="TOR_FR_VERSION_KEY"; 
 my $HOMEPAGE = "http://$host_name:10241/tor_fr_readme.html"; 
 my $FLAG_END_REDIS_SET_OR_GET :shared = 0; 
@@ -82,17 +83,19 @@ my $show_p_if_time_big_than = 10;
 my $progress_max = 10; 
 my $SHARED_PROGRESS :shared = 0; 
 
-my $TOR_SPEED_IP_ts_len_cost_PREFIX = "TOR_SPEED_";
-my $FR_SPEED_IP_ts_len_cost_PREFIX = "FR_SPEED_";
+#my $TOR_SPEED_IP_ts_len_cost_PREFIX = "TOR_SPEED_";
+#my $FR_SPEED_IP_ts_len_cost_PREFIX = "FR_SPEED_";
 
 my $BIN_NAME_OF_TOOL = "tfr"; 
 my $MODULE_NAME_TOR = "t"; 
 my $MODULE_NAME_TOR_FULL = "tor"; 
 my $MODULE_NAME_FR = "f"; 
 my $MODULE_NAME_FR_FULL = "fr"; 
+my $MODULE_NAME_SHOW_VISITOR = "show_visitor"; 
 
 my $MODULE_NAME_VERSION = '-v'; 
 
+my $VISIT_PREFIX = "VISITOR_"; 
 ##############
 
 
@@ -103,7 +106,7 @@ my $MODULE_NAME_VERSION = '-v';
 ### sub list ###
 sub main()
 {
-	my $arg_error_msg = "- argc must >= 1 and first args can only be one of {t, f or -v}\n"; 
+	my $arg_error_msg = "- argc must >= 1 and first args can only be one of {$MODULE_NAME_TOR_FULL, $MODULE_NAME_FR_FULL, $MODULE_NAME_VERSION}\n"; 
 
 	die $arg_error_msg if @ARGV == 0; 
 
@@ -121,8 +124,11 @@ sub main()
 	{
 		my $need_exit_str = &show_version_and_help_if_needed(); 
 		my $current_ip = &connect_to_redis_server($host_name, $redis_port);  	
-		#&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
 		&verify_must_be_latest_version($need_exit_str);
+	}
+	elsif ($CALL_SUB_MOUDULE eq $MODULE_NAME_SHOW_VISITOR)
+	{
+		&exec_show_visitor_process(); 
 	}
 	else
 	{
@@ -518,7 +524,7 @@ sub redis_set_with_progress_if_needed($, $, $, $,$)
 	my $cost = $time_r1 - $time_r0; 
 	my $ip_ = &get_current_client_ip(); 
 
-	&record_ip_ts_len_cost($TOR_SPEED_IP_ts_len_cost_PREFIX, $ip_, $len_of_byte, $cost);
+	&record_ip_ts_len_cost($MODULE_NAME_TOR_FULL, $ip_, $len_of_byte, $cost);
 }
 
 sub create_pw_k_v_if_needed($,$)
@@ -613,7 +619,6 @@ sub ck_pw_if_needed_in_fr($)
 
 	my $key_of_pw = "$KEY_OF_PW_PREFIX:$jd_xx"; 
 	my $res_exist = $R_->exists($key_of_pw);
-	my $JD_DISABLE_PW_ = "JD_DISABLE_PW_"; 
 
 	my $cnt_ck_pw_max = 3;
 
@@ -715,7 +720,7 @@ sub redis_get_with_progress_if_needed($, $, $,$,$)
 
 	my $cost = $time_r1 - $time_r0; 
 	my $ip_ = &get_current_client_ip(); 
-	&record_ip_ts_len_cost($FR_SPEED_IP_ts_len_cost_PREFIX, $ip_, $len_of_byte, $cost);
+	&record_ip_ts_len_cost($MODULE_NAME_FR_FULL, $ip_, $len_of_byte, $cost);
 
 	return $res_raw_text; 
 }
@@ -836,6 +841,56 @@ sub echo_simplified_fc($)
 
 # fr__ end 
 
+# show_visitor__ start 
+sub exec_show_visitor_process()
+{
+	my $need_exit_str = &show_version_and_help_if_needed(); 
+	&connect_to_redis_server($host_name, $redis_port);  	
+	&verify_must_be_latest_version($need_exit_str);
+
+
+	&ck_password_for_show_visitor(); 
+
+	my @argv = ( @ARGV[1 .. @ARGV - 1] ); 
+
+	my $show_number = 0; 
+	if (@argv > 0)
+	{
+		$show_number = -1 * $argv[0]; 	
+	}
+
+
+	my @arr_vistors = $R_->lrange($VISIT_PREFIX, $show_number, -1); 
+	for my $e_v (@arr_vistors)
+	{
+		say $e_v; 
+	}
+
+	$R_->quit; 
+}
+
+sub ck_password_for_show_visitor()
+{
+	ReadMode('noecho');
+	print "- need admin password, please input: "; 	
+	my $pw_input = ReadLine(0);
+	say ""; 
+	ReadMode('normal');
+
+	chomp($pw_input);
+	my $flag_jd_disable_pw_timestamp = (&mycrc32($pw_input) == &mycrc32("$JD_DISABLE_PW_" . &get_timestamp()));
+
+	if ($flag_jd_disable_pw_timestamp)
+	{
+		#last;
+	}
+	else
+	{
+		&clean_R_and_die_with_msg( "  incorrect password, try again\n"); 
+	}
+}
+# show_visitor__ end 
+
 # mess__ start 
 sub save_all_folder_fn_2_arr_fn_list()
 {
@@ -849,10 +904,11 @@ sub save_all_folder_fn_2_arr_fn_list()
 
 sub record_ip_ts_len_cost($,$,$,$)
 {
-	my ($torfr_prefix, $ip_, $len, $cost) = @_;
+	my ($module_full_name_, $ip_, $len, $cost) = @_;
+	my $op = $module_full_name_; 
 	my $ts = &get_timestamp(1); 
 
-	$R_->rpush("${torfr_prefix}${ip_}", "$ts:$len:$cost"); 
+	$R_->rpush($VISIT_PREFIX, (join "\t", ($ts,$op,$ip_,$len,$cost))); 
 }
 
 sub get_current_client_ip()
@@ -1269,7 +1325,7 @@ sub get_timestamp($)
 	$date = $add_zero_if_lt_10->($date);
 	$hour = $add_zero_if_lt_10->($hour);
 	$minute = $add_zero_if_lt_10->($minute);
-	$time_stamp = "$year$month${date}";
+	$time_stamp = "$year$month${date}";  # 20190311
 
 	$time_stamp = "$year$month${date}_$hour$minute" if $flag_exact == 1;
 
