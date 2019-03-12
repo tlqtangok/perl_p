@@ -42,7 +42,7 @@ use Term::ProgressBar;
 
 
 ### global var ### 
-my $VERSION_ = "2019.03.11";  # or 2019.02.22:die
+my $VERSION_ = "2019.03.12";  # or on server 2019.02.22:die
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
