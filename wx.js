@@ -61,7 +61,7 @@ app.get('/', function(req, res, next)
 
 app.use(bodyParser.xml());
 // POST
-app.post('/*', function(req, res, next) 
+app.post('/wechat/?', function(req, res, next) 
 {
 	var flag_ret = validateToken(req,res); 
 	if(!flag_ret)
@@ -113,6 +113,7 @@ app.post('/*', function(req, res, next)
 	if (flag_text) {
 		res.send( create_res_xml(xml_content));
 		//res.send( create_res_xml(xml_content));
+
 	} else {
 		res.send("");
     }
@@ -229,13 +230,19 @@ function create_res_xml(xml_content)
 	var ret_run_ans = xml_content.Content[0]; 
 
 
-	if (userid == "ls")
+	if (userid == "ls" || userid == "jd")
 	{
+		console.log(`- welcome ${userid}`); 
 
-		//ret_run_ans = Buffer.from(ret_run_ans).toString("base64");
 		try
 		{
-			ret_run_ans = execSync_(`python3 ls.wx.py ${ret_run_ans}`); 
+			var fn_input_for_python3 = "ls.wx.req.txt"; 
+
+			fs.writeFileSync(fn_input_for_python3, ret_run_ans); 
+			ret_run_ans = execSync_(`python3 ls.wx.py ${fn_input_for_python3}`); 
+
+			//ret_run_ans = Buffer.from(ret_run_ans).toString("base64");
+			//ret_run_ans = execSync_(`python3 ls.wx.py ${ret_run_ans}`); 
 		}
 		catch(e)
 		{
@@ -246,8 +253,7 @@ function create_res_xml(xml_content)
 	}
 	else if( userid == "jd")
 	{
-		console.log("- welcome jd"); 
-
+		console.log(`- welcome ${userid}`); 
 	}
 
 
