@@ -42,7 +42,7 @@ use Term::ProgressBar;
 
 
 ### global var ### 
-my $VERSION_ = "2019.03.12";  # or 2019.02.22:die
+my $VERSION_ = "2019.03.13";  # or 2019.02.22:die
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
@@ -523,7 +523,7 @@ sub redis_set_with_progress_if_needed($, $, $, $,$)
 	my $cost = $time_r1 - $time_r0; 
 	my $ip_ = &get_current_client_ip(); 
 
-	&record_ip_ts_len_cost($MODULE_NAME_TOR_FULL, $ip_, $len_of_byte, $cost);
+	&record_ip_ts_len_cost($MODULE_NAME_TOR_FULL, $ip_, $len_of_byte, $cost, $jd_xx, $fn);
 }
 
 sub create_pw_k_v_if_needed($,$)
@@ -565,7 +565,7 @@ sub exec_fr_process()
 	my ($td_progress_bar, $flag_show_progress_bar, $time_second_assume) = &create_progressbar_if_need_long_time($len_of_byte, $net_speed_dl); 
 
 
-	my $raw_text = &redis_get_with_progress_if_needed($jd_xx, $len_of_byte, $td_progress_bar, $flag_show_progress_bar, $time_second_assume);
+	my $raw_text = &redis_get_with_progress_if_needed($jd_xx, $len_of_byte, $td_progress_bar, $flag_show_progress_bar, $time_second_assume, $fn);
 	
 	$R_->quit;
 
@@ -665,13 +665,14 @@ sub prompt_overwrite_if_filename_exists($)
 	&real_run_prompt_and_input_yes($h_overwrite_1);
 }
 
-sub redis_get_with_progress_if_needed($, $, $,$,$)
+sub redis_get_with_progress_if_needed($, $, $,$,$,$)
 {
 	my $jd_xx = shift; 
 	my $len_of_byte = shift; 
 	my $td_progress_bar = shift; 
 	my $flag_show_progress_bar = shift;
 	my $time_second_assume = shift;
+	my $fn = shift;
 
 	my $res_raw_text :shared = "NULL";  
 
@@ -719,7 +720,7 @@ sub redis_get_with_progress_if_needed($, $, $,$,$)
 
 	my $cost = $time_r1 - $time_r0; 
 	my $ip_ = &get_current_client_ip(); 
-	&record_ip_ts_len_cost($MODULE_NAME_FR_FULL, $ip_, $len_of_byte, $cost);
+	&record_ip_ts_len_cost($MODULE_NAME_FR_FULL, $ip_, $len_of_byte, $cost, $jd_xx, $fn);
 
 	return $res_raw_text; 
 }
@@ -908,11 +909,11 @@ sub save_all_folder_fn_2_arr_fn_list()
 
 sub record_ip_ts_len_cost($,$,$,$)
 {
-	my ($module_full_name_, $ip_, $len, $cost) = @_;
+	my ($module_full_name_, $ip_, $len, $cost, $jd_xx, $fn) = @_;
+
 	my $op = $module_full_name_; 
 	my $ts = &get_timestamp(1); 
-
-	$R_->rpush($VISIT_PREFIX, (join "\t", ($ts,$op,$ip_,$len,$cost))); 
+	$R_->rpush($VISIT_PREFIX, (join "\t", ($ts,$op,$ip_,$len,$cost, $jd_xx, $fn))); 
 }
 
 sub get_current_client_ip()
