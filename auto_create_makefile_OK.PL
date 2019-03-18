@@ -10,8 +10,19 @@ my $perl_p = @ENV{perl_p};
 ##### NEVER EDIT FOLLOWING STRING #####
 #######################################
 
-my $auto_txt_str =q{CC = g++ -std=c++11 -Wno-format
-c_flag = -g -o
+my $auto_txt_str =q{CC = g++ -std=c++11 
+
+nullstring := 
+dep_I_incpath = -I./include/hiredis -I./include
+dep_L_libpath = -L./lib
+dep_l_libname = -lhiredis
+#deps_extra = $(dep_I_incpath) $(dep_L_libpath)  $(dep_l_libname)
+
+deps_extra = $(nullstring)
+
+#c_flag = -g -Wno-format -fpermissive 
+c_flag = -g -pthread -Wno-format -fpermissive
+
 c_files =  \
 $(wildcard *.cpp) $(wildcard *.c)
 h_files = \
@@ -30,11 +41,11 @@ rm_files = \
 all:$(elf_file)
 
 $(elf_file):$(o_files)
-	$(CC) $(c_flag) $@ $(o_files)
+	$(CC) $(c_flag) -o $@ $(o_files) $(deps_extra) 
 %.o: %.c $(h_files)
-	$(CC) $(c_flag) $@ -c $<
+	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
 %.o: %.cpp $(h_files)
-	$(CC) $(c_flag) $@ -c $<
+	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
 #	@echo "c_file is:$(c_files)"; echo "h_files:$(h_files)"; echo "o_files:$(o_files)"
 
 clean:
@@ -42,17 +53,30 @@ clean:
 
 run:$(elf_file)
 	./$(elf_file)
+
 };
 
 ##### end fc of auto_txt_str ########
 
 my @auto_txt=split m/\n/, $auto_txt_str;
 map{$_.="\n";}@auto_txt;
+my $cnt_met_CC = 0;
+for (0..@auto_txt -1){$cnt_met_CC++; last if $auto_txt[$_] =~ m/^\s+\$\(CC\)/; };
 
-my $perc_no=21; 
+my $perc_no = "NULL"; 
+
+$perc_no= $cnt_met_CC ;
+my $perc_no_R0 = $cnt_met_CC;
+
+
+
 my $per_c=@auto_txt[$perc_no++];# %.c  
+
+
+
 my $CC= @auto_txt[$perc_no++];# \t$(CC)
 my $per_cpp= @auto_txt[$perc_no++]; # %.cpp
+
 
 my @c_files = `ls *.c 2>/dev/null`; 
 chomp(@c_files); 
@@ -101,7 +125,8 @@ if ( !$len_c && !$len_cpp)
 
 my @arr_out=(); 
 my $i=0; 
-for($i=0;$i <21;$i++)
+
+for($i=0;$i <$perc_no_R0;$i++)
 {
 	push @arr_out , @auto_txt[$i]; 
 }
@@ -111,10 +136,9 @@ map
 	push @arr_out, $_; 
 	push @arr_out, $CC;  
 }@arr_deps; 
-for($i=25; $i<@auto_txt; $i++)
+for($i=$perc_no_R0 + 3; $i<@auto_txt; $i++)
 {
 	push @arr_out,@auto_txt[$i]; 
 }
 say @arr_out; 
-
 
