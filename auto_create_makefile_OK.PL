@@ -166,7 +166,15 @@ map
 	push @arr_out, $_; 
 	push @arr_out, $CC;  
 }@arr_deps; 
-for($i=$perc_no_R0 + 4 + 2; $i<@auto_txt; $i++)
+
+
+$cnt_met_CC = 0;
+for (0..@auto_txt -1){$cnt_met_CC++; last if $auto_txt[$_] =~ m/echo.*c_files.*echo.*h_files/; };
+
+$perc_no= $cnt_met_CC ;
+my $perc_no_R1 = $cnt_met_CC; 
+
+for($i=$perc_no_R1 - 1; $i<@auto_txt; $i++)
 {
 	push @arr_out,@auto_txt[$i]; 
 }
