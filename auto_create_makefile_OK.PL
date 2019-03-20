@@ -24,11 +24,11 @@ deps_extra = $(nullstring)
 c_flag = -g -pthread -Wno-format -fpermissive
 
 c_files =  \
-$(wildcard *.cpp) $(wildcard *.c)
+$(wildcard *.cpp) $(wildcard *.c) $(wildcard *.cc)
 h_files = \
 $(wildcard *.hpp) $(wildcard *.h)
 o_files_mess = \
-$(patsubst %.cpp,%.o,${c_files}) $(patsubst %.c,%.o,${c_files})
+$(patsubst %.cpp,%.o,${c_files}) $(patsubst %.c,%.o,${c_files}) $(patsubst %.cc,%.o,${c_files})
 o_files = \
 $(filter %.o, $(o_files_mess))
 elf_file=  \
@@ -45,6 +45,8 @@ $(elf_file):$(o_files)
 %.o: %.c $(h_files)
 	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
 %.o: %.cpp $(h_files)
+	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
+%.o: %.cc $(h_files)
 	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
 #	@echo "c_file is:$(c_files)"; echo "h_files:$(h_files)"; echo "o_files:$(o_files)"
 
@@ -80,15 +82,22 @@ my $per_cpp= @auto_txt[$perc_no++]; # %.cpp
 
 my @c_files = `ls *.c 2>/dev/null`; 
 chomp(@c_files); 
+
 my @cpp_files = `ls *.cpp 2>/dev/null`; 
 chomp(@cpp_files);
+
+my @cc_files = `ls *.cc 2>/dev/null`; 
+chomp(@cc_files);
+
 my $len_cpp=@cpp_files; 
 my $len_c=@c_files;
+my $len_cc=@cc_files;
+
 my @arr_deps = (); 
 
 if($len_c)
 {
-	@arr_deps=(); 
+	#@arr_deps=(); 
 	while($len_c--)
 	{
 		my @arr=`$CC_NAME -std=c++11 -MM @c_files[$len_c]`;
@@ -102,24 +111,45 @@ if($len_c)
 }
 
 
+
 if($len_cpp)
 {
-	@arr_deps=(); 
+	#@arr_deps=(); 
 	while($len_cpp--){
+
 		my @arr=`$CC_NAME -std=c++11 -MM @cpp_files[$len_cpp]`; 
 
 		@arr=grep ! m/(\(LLVM)|(\(c\))/  , @arr; 
 		map{chomp;s/\\/ /g;}@arr; 
 		my $deps="@arr";
 		$deps =~ s/\s{1,}/ /g;
+
 		push @arr_deps,$deps."\n"; 
 	} # --- END $len_cpp 
 }
 
-
-if ( !$len_c && !$len_cpp)
+if($len_cc)
 {
-	say "no c and cpp files !"; 
+	#@arr_deps=(); 
+	while($len_cc--)
+	{
+		my @arr=`$CC_NAME -std=c++11 -MM @cc_files[$len_cc]`;
+
+		@arr=grep ! m/(\(LLVM)|(\(c\))/  , @arr; 
+		map{chomp;s/\\/ /g;s/\s{2,}/ /g;}@arr; 
+
+		my $deps="@arr";
+		$deps =~ s/\s{1,}/ /g;
+		push @arr_deps,$deps."\n"; 
+	} 
+}
+
+
+
+
+if ( !$len_c && !$len_cpp && !$len_cc)
+{
+	say "no c, cpp, cc files !"; 
 }
 #say @arr_deps; 
 
@@ -136,7 +166,7 @@ map
 	push @arr_out, $_; 
 	push @arr_out, $CC;  
 }@arr_deps; 
-for($i=$perc_no_R0 + 3; $i<@auto_txt; $i++)
+for($i=$perc_no_R0 + 4 + 2; $i<@auto_txt; $i++)
 {
 	push @arr_out,@auto_txt[$i]; 
 }
