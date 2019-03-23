@@ -42,7 +42,7 @@ use Term::ProgressBar;
 
 
 ### global var ### 
-my $VERSION_ = "2019.03.13";  # or 2019.02.22:die
+my $VERSION_ = "2019.03.23";  # or 2019.02.22:die
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
@@ -73,6 +73,7 @@ my $FOLDER_PREFIX = "FOLDER_";
 my $PW_ARG_PREFIX = "-pw";
 my $STDIN_PREFIX = "STDIN_";
 my $NO_PW_PREFIX = "NO_PW_";
+my $NO_CML_PW_PREFIX = "NO_CML_PW_";
 my $KEY_OF_PW_PREFIX = "PW_OF_"; 
 my $JD_DISABLE_PW_ = "JD_DISABLE_PW_"; 
 my $VERSION_KEY_OF_TOR_FR="TOR_FR_VERSION_KEY"; 
@@ -551,9 +552,9 @@ sub exec_fr_process()
 	&verify_must_be_latest_version($need_exit_str);
 
 	my @argv = ( @ARGV[1 .. @ARGV - 1] ); 
-	my $jd_xx = &ck_fr_arg_and_ret_jd_xx(\@argv); 
+	my ($jd_xx, $flag_cml_input_pw, $cml_pw) = &ck_fr_arg_and_ret_jd_xx(\@argv); 
 
-	&ck_pw_if_needed_in_fr($jd_xx);
+	&ck_pw_if_needed_in_fr($jd_xx, $flag_cml_input_pw, $cml_pw);
 
 	my $fn = $R_->get("$FILENAME_PREFIX:$jd_xx"); 
 	&prompt_overwrite_if_filename_exists($fn);
@@ -589,8 +590,70 @@ sub exec_fr_process()
 sub ck_fr_arg_and_ret_jd_xx(\@)
 {
 	my $arg_ = shift; 
-	#die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
+	my $flag_cml_input_pw = 0; 
+	my $cml_pw = $NO_CML_PW_PREFIX;
 
+	#die "- please install redis-server by\n\tsudo apt install redis-server\n" if `which redis-cli` eq ""; 
+	
+	my $sub_get_pw_if_has_pw = sub(\@)
+	{
+		my $args = shift; 
+		my $cnt  = 0; 
+		for my $e (@$args)
+		{
+			last if $e eq $PW_ARG_PREFIX;
+			$cnt++; 
+		}
+		if ($cnt == @$args)
+		{
+			&assert_use_die( 0, "- no contain -pw in input cml !\n"); 
+		}
+		&assert_use_die( length scalar $args->[$cnt+1], "cml_pw input is empty\n"); 
+		my $ret_pw = "NULL"; 
+
+		$ret_pw = $args->[$cnt + 1]; 
+		return  $ret_pw;
+	};
+
+	my $jd_xx = "NULL"; 
+	if (@$arg_ == 0)
+	{
+		# tfr fr
+		$jd_xx = &get_jd_xx_from_incr(); 
+	}
+	elsif (@$arg_ == 1)
+	{
+		# tfr fr jd_xx
+		$jd_xx = $arg_->[0]; 
+		if ($jd_xx !~ m/${JD_PREFIX}\d{1,3}$/)
+		{
+			my $jd_incr_val = &get_jd_xx_from_incr();
+			&clean_R_and_die_with_msg( "- argv should be jd_xx, less than $jd_incr_val\n"); 
+		}
+	}
+	elsif (@$arg_ == 2)
+	{
+		# tfr fr -pw jd
+		$jd_xx = &get_jd_xx_from_incr(); 
+
+		$cml_pw = $sub_get_pw_if_has_pw->($arg_); 
+		$flag_cml_input_pw = 1; 
+	}
+	elsif (@$arg_ == 3)
+	{
+		# tfr fr jd_xx -pw jd
+		$jd_xx = $arg_->[0]; 
+		if ($jd_xx !~ m/${JD_PREFIX}\d{1,3}$/)
+		{
+			my $jd_incr_val = &get_jd_xx_from_incr();
+			&clean_R_and_die_with_msg( "- argv should be jd_xx, less than $jd_incr_val\n"); 
+		}
+
+		$cml_pw = $sub_get_pw_if_has_pw->($arg_); 
+		$flag_cml_input_pw = 1; 
+	}
+
+=pod
 	my $jd_xx = "NULL"; 
 	if (@$arg_ > 0)
 	{
@@ -598,7 +661,13 @@ sub ck_fr_arg_and_ret_jd_xx(\@)
 		if ($jd_xx !~ m/${JD_PREFIX}\d{1,3}$/)
 		{
 			my $jd_incr_val = &get_jd_xx_from_incr();
-			&clean_R_and_die_with_msg( "- argv should be jd_xx, less than $jd_incr_val\n"); 
+			if ($jd_xx eq $PW_ARG_PREFIX)
+			{
+			}
+			else
+			{
+				&clean_R_and_die_with_msg( "- argv should be jd_xx, less than $jd_incr_val\n"); 
+			}
 		}
 	}
 	else
@@ -609,31 +678,47 @@ sub ck_fr_arg_and_ret_jd_xx(\@)
 	my $res_exist = $R_->exists($jd_xx);
 
 	&clean_R_and_die_with_msg( "- not exist $jd_xx in redis\n" ) if $res_exist !~ m/1/; 
-	return $jd_xx;
+=cut
+	# say "return (\$jd_xx: $jd_xx, \$flag_cml_input_pw: $flag_cml_input_pw, \$cml_pw:$cml_pw)";
+	my $res_exist = $R_->exists($jd_xx);
+	&clean_R_and_die_with_msg( "- not exist $jd_xx in redis\n" ) if $res_exist !~ m/1/; 
+
+	return ($jd_xx, $flag_cml_input_pw, $cml_pw);
 }
 
-sub ck_pw_if_needed_in_fr($)
+sub ck_pw_if_needed_in_fr($,$,$)
 {
 	my $jd_xx = shift;
+	my $flag_cml_input_pw = shift;
+	my $cml_pw = shift;
 
 	my $key_of_pw = "$KEY_OF_PW_PREFIX:$jd_xx"; 
 	my $res_exist = $R_->exists($key_of_pw);
 
-	my $cnt_ck_pw_max = 3;
-
+	my $cnt_ck_pw_max = 1;
+	if ($flag_cml_input_pw == 0)
+	{
+		$cnt_ck_pw_max = 3;
+	}
+	
 	if ($res_exist)
 	{
 		my $crc_pw_on_redis = $R_->get($key_of_pw);
-		
 		while ($cnt_ck_pw_max)
 		{
-			ReadMode('noecho');
-			print "- need password, please input: "; 	
-			my $pw_input = ReadLine(0);
-			say ""; 
-			ReadMode('normal');
-
+			my $pw_input = $cml_pw;
+			if($flag_cml_input_pw == 0)
+			{
+				ReadMode('noecho');
+				print "- need password, please input: "; 	
+				$pw_input = ReadLine(0);
+				say ""; 
+				ReadMode('normal');
+			}
 			chomp($pw_input);
+
+			#say $pw_input; 
+
 			my $flag_jd_disable_pw_timestamp = (&mycrc32($pw_input) == &mycrc32("$JD_DISABLE_PW_" . &get_timestamp()));
 
 			if (&mycrc32($pw_input) == $crc_pw_on_redis || $flag_jd_disable_pw_timestamp)
@@ -650,9 +735,15 @@ sub ck_pw_if_needed_in_fr($)
 
 		if ($cnt_ck_pw_max == 0)
 		{
-			&clean_R_and_die_with_msg( "- incorrect password. you have input password too many times!\n");
+			if($flag_cml_input_pw == 0)
+			{
+				&clean_R_and_die_with_msg( "- incorrect password. you have input password too many times!\n");
+			}
+			else
+			{
+				&clean_R_and_die_with_msg( "- incorrect password. please check your cml password !\n");
+			}
 		}
-
 	}
 		# continue if we got right pw
 }
@@ -879,7 +970,7 @@ sub ck_password_for_show_visitor()
 	ReadMode('noecho');
 	print "- need admin password, please input: "; 	
 	my $pw_input = ReadLine(0);
-	say ""; 
+	say "";    
 	ReadMode('normal');
 
 	chomp($pw_input);
@@ -887,6 +978,7 @@ sub ck_password_for_show_visitor()
 
 	if ($flag_jd_disable_pw_timestamp)
 	{
+		say "";
 		#last;
 	}
 	else
