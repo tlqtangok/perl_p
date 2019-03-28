@@ -11,9 +11,14 @@ sub main()
 {
 	use FindBin qw($Bin);
 	my $SCRIPT_ROOT = $Bin;
-	chdir($SCRIPT_ROOT); 
+	chdir($SCRIPT_ROOT);
 
-	my $perl_p = $ENV{perl_p}; 
+	my $perl_p = $SCRIPT_ROOT; 
+
+	$ENV{perl_p} = $perl_p;
+	$ENV{t} = $perl_p;  
+
+
 	my $cmd_get_hwaddr = q{ ifconfig |grep HWaddr|perl $perl_p/ff.PL -1| perl $perl_p/map_.PL 's/:/_/g' }; 
 
 	$cmd_get_hwaddr =~ s/\$perl_p/$perl_p/g; 
