@@ -169,7 +169,8 @@ sub get_timestamp()
 
 sub get_HWaddr()
 {
-	my @cmd_out_ifconfig = qx( ifconfig ); 
+	die "- no /sbin/ifconfig\n" if ! -e "/sbin/ifconfig";
+	my @cmd_out_ifconfig = qx( /sbin/ifconfig ); 
 	chomp(@cmd_out_ifconfig); 
 
 	my $cmd_out_hostname = qx( hostname -I ); 
@@ -208,7 +209,7 @@ sub get_HWaddr()
 		}
 	}
 
-	die "hwadd should has ':' \n" if $hwaddr !~ m/\:/;
+	die "hwaddr should has ':' \n" if $hwaddr !~ m/\:/;
 	$hwaddr =~ s/\:/_/g;
 	chomp($hwaddr);
 	return ($hwaddr, $true_ip); 
