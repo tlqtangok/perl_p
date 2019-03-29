@@ -3,7 +3,9 @@
 # create by jidor tang at 2019.03.28 
 # to record the ip address at each reboot time
 # record to algo , to redis : 00_0a_f7_bc_c3_26.tell_my_ip.txt
-# deps : $t, $perl_p/tfr and tell_my_ip.PL 
+
+# deps : 
+#   $perl_p/tfr , $perl_p/tell_my_ip.PL 
 
 # usage:
 #   perl tell_my_ip.PL    # upload my ip 
@@ -29,16 +31,20 @@ sub main()
 	$ENV{perl_p} = $perl_p;
 	$ENV{t} = $perl_p;  
 
+	&ck_deps($ENV{perl_p}); 
+
 	if (@ARGV == 0)
 	{
 
-		my $hwaddr = &get_HWaddr(); 
+		my ($hwaddr, $true_ip) = &get_HWaddr(); 
 		my $tor_file_full = $ENV{t}. "/" . $hwaddr. ".tell_my_ip.txt"; 
 
-		qx{ ifconfig > $tor_file_full 2>&1 }; 
+		qx{ echo '$true_ip' > $tor_file_full }; 
 
 		my $return_of_tor = qx{ $perl_p/tfr tor $tor_file_full };
 		say $return_of_tor; 
+		say ""; 
+		say "- upload to $tor_file_full"; 
 
 	}
 	else
@@ -75,7 +81,6 @@ sub main()
 
 				die if $jd_xx !~ m/jd_\d{1,3}/; 
 
-				say "- the last time record your ip was $arr_record_of_visitor[0]\n-------------\n";  
 
 				my @cmd_fr_ans = qx{ $perl_p/tfr fr $jd_xx };
 
@@ -83,10 +88,15 @@ sub main()
 				my @arr_ip_fn = split m/\s+/, $fn_ip;
 				$fn_ip = @arr_ip_fn[-1]; 
 				my $new_ip = `cat $fn_ip`; 
+
+				say "- the last time record your ip was $arr_record_of_visitor[0]";
+				say "------------";  
+				chomp($new_ip);
 				say $new_ip; 
+				say "------------";  
 			}
 		}
-		else # all
+		elsif ( $ARGV[0] eq "all")
 		{
 
 			die "- please input HWaddr, such as 18_66_da_f4_ca_e0\n" if $ARGV[0] ne "all"; 
@@ -97,6 +107,23 @@ sub main()
 			my $ts_jd_xx_fn =  qx{ echo ${DIS_PW_PREFIX_}${ts_day} | $perl_p/tfr show_visitor  |grep tell_my_ip.txt | grep tor |tail -n 255};
 			say $ts_jd_xx_fn; 
 		}
+		elsif ($ARGV[0] eq "help")
+		{
+
+			say "usage:","\n",
+			"    tell_my_ip\t# upload my ip", "\n",
+			"    tell_my_ip 18_66_da_f4_ca_e0\t# query an ip ", "\n",
+			"    tell_my_ip all\t# query all ip based on hwaddr", "\n",
+			"\n", 
+			"- created by Jidor Tang<tlqtangok\@126.com> at 2019.03.29","\n";
+
+		}
+		else
+		{
+			die "- argv 0 is incorrect, must be [hardware addr] or [all] or [help]\n";
+		}
+
+
 	}
 
 
@@ -184,6 +211,16 @@ sub get_HWaddr()
 	die "hwadd should has ':' \n" if $hwaddr !~ m/\:/;
 	$hwaddr =~ s/\:/_/g;
 	chomp($hwaddr);
-	return $hwaddr; 
+	return ($hwaddr, $true_ip); 
 }
 
+
+sub ck_deps($)
+{
+
+	my $curdir = shift;
+
+	use Cwd 'abs_path';
+	my $tfr_path_full =	abs_path($curdir) . "/" . "tfr"; 
+	die "- please make sure $tfr_path_full file exist!\n" if ! -e $tfr_path_full;
+}
