@@ -287,9 +287,6 @@ sub exec_tor_process()
 	# script/tor.PL
 	my $need_exit_str = &show_version_and_help_if_needed(); 
 
-say $host_name; 
-say $redis_port; 
-
 	&connect_to_redis_server($host_name, $redis_port);  	
 
 	#&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
