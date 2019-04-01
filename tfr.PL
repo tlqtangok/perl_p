@@ -200,7 +200,7 @@ sub verify_must_be_latest_version($)
 	my $need_exit_str = shift;
 	if (not $R_->exists($VERSION_KEY_OF_TOR_FR))
 	{
-		&clean_R_and_die_with_msg("- please set up VERSION_KEY_OF_TOR_FR on server!\n");
+		&clean_R_and_die_with_msg("- please set up $VERSION_KEY_OF_TOR_FR on server!\n");
 	}
 
 
