@@ -39,10 +39,12 @@ use Try::Tiny;
 use arybase; # this is used to make sure exe can be run!!!
 use Term::ReadKey;
 use Term::ProgressBar;
+use FindBin qw($Bin);
+use File::Spec::Functions;
 
 
 ### global var ### 
-my $VERSION_ = "2019.03.23";  # or 2019.02.22:die
+my $VERSION_ = "2019.04.01";  # or 2019.02.22:die
 my $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 my $max_jd_incr = 256; 
 
@@ -97,8 +99,8 @@ my $MODULE_NAME_SHOW_VISITOR = "show_visitor";
 my $MODULE_NAME_VERSION = '-v'; 
 
 my $VISIT_PREFIX = "VISITOR_"; 
+my $fn_tfr_config = "tfr.config";
 ##############
-
 
 
 &main();
@@ -107,6 +109,8 @@ my $VISIT_PREFIX = "VISITOR_";
 ### sub list ###
 sub main()
 {
+	&source_config_if_needed($fn_tfr_config);
+
 	my $arg_error_msg = "- argc must >= 1 and first args can only be one of {$MODULE_NAME_TOR_FULL, $MODULE_NAME_FR_FULL, $MODULE_NAME_VERSION}\n"; 
 
 	die $arg_error_msg if @ARGV == 0; 
@@ -134,6 +138,23 @@ sub main()
 	else
 	{
 		die $arg_error_msg; 
+	}
+}
+
+sub source_config_if_needed($)
+{
+	my $fn_config = shift; 
+	my $SCRIPT_ROOT = $Bin;
+	my $fn_config_full = catfile($SCRIPT_ROOT, $fn_config); 
+
+	if (-f $fn_config_full) 
+	{
+		open my $fp_config, "<", $fn_config_full or die "- cannot open $fn_config_full !\n"; 
+		my @fc = <$fp_config>; 
+		my $res = eval("@fc"); 
+		&assert_use_die($res >= 1000, "- redis port should not less than 1000 !\n"); 
+		#say $res;   # it is port value 
+		close $fp_config; 	
 	}
 }
 
@@ -265,7 +286,10 @@ sub exec_tor_process()
 {
 	# script/tor.PL
 	my $need_exit_str = &show_version_and_help_if_needed(); 
-	
+
+say $host_name; 
+say $redis_port; 
+
 	&connect_to_redis_server($host_name, $redis_port);  	
 
 	#&clean_R_and_die_with_msg("- error in redis driver\n") if Dumper($R_) !~ m/\:$redis_port/; 
