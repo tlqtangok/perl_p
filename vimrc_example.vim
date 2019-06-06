@@ -56,57 +56,15 @@ endif " has("autocmd")
 if has('syntax') && has('eval')
   packadd matchit
 endif
-
-
-
-" jd add
-set nobackup
+""" jd add
+source $VIMRUNTIME/mswin.vim
 
 set nu
-set guifont=Consolas:h16
+set guifont=Consolas:h20
 colorscheme darkblue
 
-
-if &diff
-  "diff mode
-  set diffopt+=iwhite
-endif
-
-set nofoldenable
-set formatoptions-=t
-
-set autoread
-
-
-source $VIMRUNTIME/mswin.vim
-behave mswin
-
-let @d='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##'
-let @g='yiw:vim /\<0\>(.*\n\{0,1\}{/##'
-let @s='yiw:vim /\<0\>/##'
-
-
-" From http://got-ravings.blogspot.com/2008/07/vim-pr0n-visual-search-mappings.html
-
-" makes * and # work on visual mode too.
-function! s:VSetSearch(cmdtype)
-  let temp = @s
-  norm! gv"sy
-  let @/ = '\V' . substitute(escape(@s, a:cmdtype.'\'), '\n', '\\n', 'g')
-  let @s = temp
-endfunction
-
-xnoremap * :<C-u>call <SID>VSetSearch('/')<CR>/<C-R>=@/<CR><CR>
-xnoremap # :<C-u>call <SID>VSetSearch('?')<CR>?<C-R>=@/<CR><CR>
-
-" recursively vimgrep for word under cursor or selection if you hit leader-star
-if maparg('<leader>*', 'n') == ''
-  nmap <leader>* :execute 'noautocmd vimgrep /\V' . substitute(escape(expand("<cword>"), '\'), '\n', '\\n', 'g') . '/ **'<CR>
-endif
-if maparg('<leader>*', 'v') == ''
-  vmap <leader>* :<C-u>call <SID>VSetSearch()<CR>:execute 'noautocmd vimgrep /' . @/ . '/ **'<CR>
-endif
-" gvim ctags : https://nchc.dl.sourceforge.net/project/ctags/ctags/5.8/ctags58.zip
-
-" jd end 
+set directory=$tmp
+set backupdir=$tmp
+set undodir=$tmp
+""" jd end
 
