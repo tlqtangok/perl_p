@@ -16,6 +16,7 @@
 #include <vector>
 #include <stdint.h>  // uint64_t
 #include <assert.h>
+#include <list>
 
 #include <vector>
 #include <sstream>
@@ -34,8 +35,17 @@
 #include <thread>
 #include <mutex>
 
-#if 0
-//#if __linux__
+
+// test 
+#include <tuple>
+#include <type_traits>
+#include <utility>
+#include <future>
+#include <omp.h>
+#include <array>
+#include <numeric>
+
+#if __linux__
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -55,13 +65,13 @@
 #include <unordered_map>
 #include <iomanip>
 #include <list>
-#include "hfile_internal.h"
+//#include "hfile_internal.h"
 #include <unistd.h>
 
 
-#include "samtools.h"
-#include "version.h"
-#include <config.h>
+//#include "samtools.h"
+//#include "version.h"
+//#include <config.h>
 #endif
 
 
@@ -4838,27 +4848,27 @@ string baqtools::calcBAQFromHMM(sam_record& e_sam_record, string & refSeq)
 				break;
 			case bgitools::OPT::S: refI += l; // move the reference too, in addition to I
 			case bgitools::OPT::I:
-								   // GATK:todo -- is it really the case that we want to treat I and S the same?
-								   for (int i = readI; i < readI + l; i++)
-								   {
-									   baqResult->bq[i] = baqResult->rawQuals[i] - 33;
-								   }
-								   readI += l;
-								   break;
+					       // GATK:todo -- is it really the case that we want to treat I and S the same?
+					       for (int i = readI; i < readI + l; i++)
+					       {
+						       baqResult->bq[i] = baqResult->rawQuals[i] - 33;
+					       }
+					       readI += l;
+					       break;
 			case bgitools::OPT::D: refI += l; break;
 			case bgitools::OPT::M:
-								   for (uint32_t i = readI; i < readI + l; i++) {
-									   int expectedPos = refI - refOffset + (i - readI);
-									   char oq = (baqResult->rawQuals[i] - 33);
-									   char bq = baqResult->bq[i];
-									   int state = (baqResult->state[i]);
-									   baqResult->bq[i] = baqtools::capBaseByBAQ(oq, bq, state, expectedPos);
-								   }
-								   readI += l; refI += l;
-								   break;
+					       for (uint32_t i = readI; i < readI + l; i++) {
+						       int expectedPos = refI - refOffset + (i - readI);
+						       char oq = (baqResult->rawQuals[i] - 33);
+						       char bq = baqResult->bq[i];
+						       int state = (baqResult->state[i]);
+						       baqResult->bq[i] = baqtools::capBaseByBAQ(oq, bq, state, expectedPos);
+					       }
+					       readI += l; refI += l;
+					       break;
 			default:
-								   cout << "BUG: Unexpected CIGAR element in read " << e_sam_record.qname << endl;
-								   assert(0 == 1);
+					       cout << "BUG: Unexpected CIGAR element in read " << e_sam_record.qname << endl;
+					       assert(0 == 1);
 		}
 	}
 
@@ -4965,7 +4975,7 @@ string sam_record::to_string()
 			qname.c_str(), flag, rname.c_str(), pos, mapq,  // 5 items
 			cigar.c_str(), rnext.c_str(), pnext, tlen, seq.c_str(), //5 items
 			qual.c_str(), ex_str_to_string().c_str() // 2 items
-			);
+		);
 
 	return e_line;
 }
@@ -5950,8 +5960,8 @@ void r_d::td_br_exec(r_d::td_br_arg &e_td_arg)
 	static int chr_cnt = 0;
 	static int read_cnt = 0;
 	volatile clock_t brBeginT, filterPreprocessT, aggregateReadDataT, forloopT,
-			 forloopBeginT, baqT, knownSitesT, isSNPT, skipT, snpErrorsT,
-			 computeCovariatesT, updateDataForReadT;
+		 forloopBeginT, baqT, knownSitesT, isSNPT, skipT, snpErrorsT,
+		 computeCovariatesT, updateDataForReadT;
 	chr_cnt++;
 	static vector<float> chr_time(4, 0);
 	static vector<float> read_time(6, 0);
@@ -6108,9 +6118,9 @@ void r_d::td_pr_exec(r_d::td_pr_arg &e_td_arg)
 					}
 
 				default: {
-							 cout << "unknown error!" << endl;
-							 assert(0 == 1);
-						 }
+						 cout << "unknown error!" << endl;
+						 assert(0 == 1);
+					 }
 			}
 
 			break;
@@ -6721,199 +6731,1172 @@ char from_hex(char ch) {
 /* Converts an integer value to its hex character*/
 char to_hex(char code) {
 	static char hex[] = "0123456789ABCDEF";
-	return hex[code & 15];
+		return hex[code & 15];
 }
 
 /* Returns a url-encoded version of str */
 /* IMPORTANT: be sure to free() the returned string after use */
 unsigned char *url_encode(unsigned char *str, unsigned int & len) {
 	unsigned char *pstr = str, *buf = (unsigned char*)malloc(len * 3 + 1), *pbuf = buf;
-	for (int i = 0; i < len; i++)
-	{
-
-		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~')
-			*pbuf++ = *pstr;
-		else if (*pstr == ' ')
-			*pbuf++ = '+';
-		else
-			*pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
-		pstr++;    
-	}
-
-	*pbuf = '\0';
-	cout << len * 3 + 1 << endl; 
-	cout << pbuf - buf << endl;
-	//assert(len * 3 + 1 == pbuf - buf);
-	len = pbuf - buf;
-
-	return buf;
+		for (int i = 0; i < len; i++)
+		{
+			
+				if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~')
+					*pbuf++ = *pstr;
+				else if (*pstr == ' ')
+					*pbuf++ = '+';
+				else
+					*pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
+						pstr++;    
+		}
+	
+		*pbuf = '\0';
+		cout << len * 3 + 1 << endl; 
+		cout << pbuf - buf << endl;
+		//assert(len * 3 + 1 == pbuf - buf);
+		len = pbuf - buf;
+		
+		return buf;
 }
 
 /* Returns a url-decoded version of str */
 /* IMPORTANT: be sure to free() the returned string after use */
 char *url_decode(char *str, int len) {
 	char *pstr = str, *buf = (char*)malloc(strlen(str) + 1), *pbuf = buf;
-	while (*pstr) {
-		if (*pstr == '%') {
-			if (pstr[1] && pstr[2]) {
-				*pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
-				pstr += 2;
+		while (*pstr) {
+			if (*pstr == '%') {
+				if (pstr[1] && pstr[2]) {
+					*pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
+						pstr += 2;
+				}
 			}
+			else if (*pstr == '+') {
+				*pbuf++ = ' ';
+			}
+			else {
+				*pbuf++ = *pstr;
+			}
+			pstr++;
 		}
-		else if (*pstr == '+') {
-			*pbuf++ = ' ';
-		}
-		else {
-			*pbuf++ = *pstr;
-		}
-		pstr++;
-	}
 	*pbuf = '\0';
-	return buf;
+		return buf;
 }
 
-#endif
 
+#endif 
 
 template<typename T> string tools_to_string(const T &t)
 {
-	ostringstream ss;
-	ss << t;
-	return ss.str();
+    ostringstream ss;
+    ss << t;
+    return ss.str();
 }
 
-
+#if 0
 void exec_e(float &e)
 {
-	cout << e << " ";
-	e *= 10.0f;
-	e += 0.1f;
+    cout << e << " ";
 }
 
 
 
 void exec_multi_threads_on_data(vector<float>& arr_src, const int& N, const int& td_num, void (*cb)(float &e))
 {
+#if 1
+    //typedef  pair<int, std::thread> i_td;
+    int td_num_real = td_num - 1; 
+    int mod_num = (int)(N / td_num);
+    vector< pair<int, std::thread> > arr_pair_i_td{};
 
-#define FLAG_USE_MULTIPLE_THREAD_ 0 
+    //const int N = (const int)(2e2 + 3);
+    //int mod_num = 3;
+    arr_pair_i_td.resize(N % mod_num == 0 ? N / mod_num : N / mod_num + 1);
 
-#define FLAG_USE_SINGLE_THREAD_ (!FLAG_USE_MULTIPLE_THREAD_) 
+    int cnt = 0;
+    int cnt_arr = 0;
 
+    cnt = 0;
+    while (cnt < N)
+    {
 
-	//typedef  pair<int, std::thread> i_td;
-	//int td_num_real = td_num - 1; 
-	int mod_num = ceil (N * 1.0f / td_num );
-	vector< pair<int, std::thread> > arr_pair_i_td{};
+        //cout << cnt << endl;
 
-	arr_pair_i_td.resize(td_num);
-
-	//arr_pair_i_td.resize(N % mod_num == 0 ? N / mod_num : N / mod_num + 1);
-
-	int cnt = 0;
-	int cnt_arr = 0;
-
-	cnt = 0;
-	int flag_break_at_pad = 0;
-	int cnt_threads = 0; 
-	for(int i=0;i<td_num;i++)
-	{
-		auto id_td = i; 
-		int start ; 
-		int end; 
-		if(i*mod_num + mod_num <= N)
-		{
-			end = i * mod_num + mod_num; 
-		}
-		else
-		{
-			int pad_num = N % mod_num; 
-			end = i * mod_num + pad_num; 
-			flag_break_at_pad = 1; 
-		}
-		start = i * mod_num; 
+        int id_td = (int)(cnt / mod_num);
+        cout << id_td << endl;
+        auto& pair_i_i = make_pair(cnt, cnt + mod_num > N ? N : cnt + mod_num);
 
 
-		cnt_threads++; 
-		auto pair_i_i = make_pair(start, end);
-		//auto pair_i_i = make_pair(cnt, cnt + mod_num > N ? N : cnt + mod_num);
-
-
-		arr_pair_i_td[id_td].first = id_td;
-		arr_pair_i_td[id_td].second = thread([&cb](int id_td, vector<float>& arr_src, pair<int, int> pair_i_i) {
+        arr_pair_i_td[id_td].first = id_td;
+        arr_pair_i_td[id_td].second = thread([cb](int id_td, vector<float>& arr_src, pair<int, int> pair_i_i) {
 
 #if 1
-				float sleep_time_seconds = id_td * 0.02f;
-				string cmd_sleep = string("sleep ") + tools_to_string(sleep_time_seconds) + "s";
-				system(cmd_sleep.c_str());
-				//cout << cmd_sleep << endl; 
+            float sleep_time_seconds = id_td * 0.1f;
+            string cmd_sleep = string("sleep ") + tools_to_string(sleep_time_seconds) + "s";
+            system(cmd_sleep.c_str());
+            //cout << cmd_sleep << endl; 
 #endif 
-				cout << "- id_td: " << id_td << endl;
+            cout << "- id_td: " << id_td << endl;
+            
+            for (auto i = pair_i_i.first; i < pair_i_i.second; i++)
+            {
+                //cout << arr_src[i] << " ";
+                cb(arr_src[i]);
+            }
+            cout << endl << "--------------------" << endl;
 
-				for (auto i = pair_i_i.first; i < pair_i_i.second; i++)
-				{
-				//cout << arr_src[i] << " ";
-				cb(arr_src[i]);
-				}
-				cout << endl << "--------------------" << endl;
-
-				},
-				id_td, std::ref(arr_src), pair_i_i
-				);
-
-
+        },
+            id_td, std::ref(arr_src), pair_i_i
+            );
 
 
 
-#if FLAG_USE_SINGLE_THREAD_
-		cout << "- FLAG_USE_SINGLE_THREAD_ " << endl; 
-		arr_pair_i_td[id_td].second.join();
-#endif 
+        //cnt_arr++;
+        cnt += mod_num;
 
-		if (flag_break_at_pad) break; 
-	}
 
-	cout << "- cnt_threads : " << cnt_threads << endl; 
+        //arr_pair_i_td[id_td].second.join();
+    }
 
-#if FLAG_USE_MULTIPLE_THREAD_  
-	for (auto& e_pair : arr_pair_i_td)
-	{
-		e_pair.second.join();
-	}
+
+    for (auto& e_pair : arr_pair_i_td)
+    {
+        //cout << e_pair.first << endl; 
+        e_pair.second.join();
+    }
+
+
+    arr_pair_i_td.clear();
+
 
 #endif
-
-
-	arr_pair_i_td.clear();
-
-
-
-
 
 }
 
 
+struct A
+{
+ 
+
+}; 
+#endif 
+
+#if 0
+vector<string> split_str_2_vec(const string & str, const char & delimiter = '\t', const int & retainNum = -1, int flag_push_tail_str = 0);
+vector<string> split_str_2_vec(const string & str, const char & delimiter, const int & retainNum, int flag_push_tail_str)
+{
+    std::vector<std::string>   vec_ret{};
+    vec_ret.reserve(16);
+
+    std::stringstream  data(str);
+
+    std::string line;
+    if (retainNum == -1)
+    {
+        if (delimiter == ' ')
+        {
+            while (std::getline(data, line, delimiter)) // assume
+            {
+                // Note: if multiple delimitor in the source string,
+                //           you may see many empty item in vector
+                if (line == "") continue;
+                vec_ret.push_back(line);
+            }
+            return vec_ret;
+        }
+        while (std::getline(data, line, delimiter))     // assume
+        {
+            // Note: if multiple delimitor in the source string,
+            //       you may see many empty item in vector
+            vec_ret.push_back(line);
+        }
+    }
+    else
+    {
+        if (delimiter == ' ')
+        {
+            int cnt = 0;
+            while (std::getline(data, line, delimiter)) // assume
+            {
+                if (cnt >= retainNum) break;
+                if (line == "") continue;
+                vec_ret.push_back(line);
+                cnt++;
+            }
+            return vec_ret;
+        }
+        int cnt = 0;
+        while (cnt < retainNum && std::getline(data, line, delimiter))     // assume
+        {
+            //if (cnt >= retainNum) break;
+            vec_ret.push_back(line);
+            cnt++;
+        }
+    }
+
+    if (flag_push_tail_str)
+    {
+        std::getline(data, line, '\a');
+        vec_ret.push_back(line);
+    }
+    return vec_ret;
+}
+#endif 
+
+
+#if 0 
+#define SIZE 1 * 1024 * 1024 * 1024
+
+#define print_v_i(v)    ( for_each(v.begin(),v.end(),[](int i){cout<<i<<" ";} ) ) 
+
+
+
+class B {
+public:
+    int x; 
+    int y; 
+    B() { x = 99; y = 999; cout << "- con" << endl; }
+    ~B() { cout << "- decon" << endl; }
+};
+
+template<typename Func, typename... Args>
+auto ret_f(Func func, Args... args)
+{
+    return [=](auto... lastParam)
+    {
+        return func(args..., lastParam...);
+    };
+};
+
+#endif 
+
+#if 0
+int fac(int n, int sum)
+{
+    if (n == 0)
+    {
+        return sum;
+    }
+    return fac(n - 1, sum*n);
+}
+
+int fac(int n)
+{
+    return fac(n, 1);
+}
+
+/* permutation.cpp */
+#include <iostream>
+
+using namespace std;
+
+// Calculation the permutation
+// of the given string
+void doPermute(
+    const string &chosen,
+    const string &remaining)
+{
+    if (remaining == "")
+    {
+        cout << chosen << endl;
+    }
+    else
+    {
+        for (uint32_t u = 0; u < remaining.length(); ++u)
+        {
+            doPermute(
+                chosen + remaining[u],
+                remaining.substr(0, u)
+                + remaining.substr(u + 1));
+        }
+    }
+}
+
+// The caller of doPermute() function
+void permute(const string &s)
+{
+    doPermute("", s);
+}
+
+vector<vector<char>> createLabyrinth()
+{
+    // Initializing the multidimensional vector
+    // labyrinth 
+    // # is a wall
+    // S is the starting point
+    // E is the finishing point
+    vector<vector<char>> labyrinth =
+    {
+        { '#', '#', '#', '#', '#', '#', '#', '#' },
+        { '#', 'S', ' ', ' ', ' ', ' ', ' ', '#' },
+        { '#', '#', '#', ' ', '#', '#', '#', '#' },
+        { '#', ' ', '#', ' ', '#', '#', '#', '#' },
+        { '#', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
+        { '#', ' ', '#', '#', '#', '#', '#', '#' },
+        { '#', ' ', ' ', ' ', ' ', ' ', 'F', '#' },
+        { '#', '#', '#', '#', '#', '#', '#', '#' }
+    };
+
+    return labyrinth;
+}
+
+void displayLabyrinth(vector<vector<char>> labyrinth)
+{
+    cout << endl;
+    cout << "====================" << endl;
+    cout << "The Labyrinth" << endl;
+    cout << "====================" << endl;
+    auto rows = 8;
+    auto cols = 8;
+
+    // Displaying all characters in labyrinth vector
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            cout << labyrinth[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << "====================" << endl << endl;
+}
+
+#endif 
+#if 0 
+
+int *g_r_core = NULL;
+auto range = [](int M, int N = 0)
+{
+    if (0 == N) { N = M; M = 0; }
+
+    static size_t flag_first_range = 0;
+    const int max_range = 1024 * 10;
+    assert(N <= max_range);
+
+    if (0 == flag_first_range++)
+    {
+        g_r_core = new int[max_range];  assert(NULL != g_r_core);
+        for (int i = 0; i<max_range; i++) { g_r_core[i] = i; }
+    }
+    return vector<int>(g_r_core + M, g_r_core + N);
+};
+
+auto clear_range = []()
+{
+    if (NULL != g_r_core) { delete[] g_r_core; }
+};
+
+
+
+#endif 
+
+#if 0
+int filter_out_e(vector<string> & v_s)
+{
+    // 0, not filter out; 1, filter out
+    int cnt_filter_out = 0;
+    const int WINDOWSIZE = 64;
+    const int WINDOWSTEP = 32;
+    const float POINTFIVE = 0.5f;
+    const float COMPLVAL = 7.0f;
+
+    auto &seq = v_s[1];
+    auto &qual = v_s[3];
+    std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
+    auto &seqn = seq;
+    auto length = seqn.size();
+    auto steps = (int)((length - WINDOWSIZE) * 1.0f / WINDOWSTEP) + 1;
+    auto rest = length - steps * WINDOWSTEP;
+
+    auto num = WINDOWSIZE - 2;
+    auto bynum = 1.0f / num;
+    num--;
+    auto mean = 0.0f;
+
+    // cal "dust"
+    float dustscore = 0.0f;
+    vector<float> v_vals{};
+
+    // 1
+    for (auto &i : range(0, steps)) {
+        auto str = seqn.substr((i * WINDOWSTEP), WINDOWSIZE);
+        //%counts = ();
+        unordered_map<string, int> counts;
+        for (auto i : range(0, 62)) {
+            counts[str.substr(i, 3)]++;
+        }
+        dustscore = 0;
+
+        for (auto &e : counts)
+        {
+            auto &s_ = e.second;
+            dustscore += (s_ * (s_ - 1) * POINTFIVE);
+        }
+
+        v_vals.push_back(dustscore * bynum);
+    }
+
+    // 2
+    if (rest > 5)
+    {
+        auto str = seqn.substr((steps * WINDOWSTEP), rest);
+        unordered_map<string, int> counts;
+        num = rest - 2;
+
+        for (auto i : range(0, num)) {
+            counts[str.substr(i, 3)]++;
+        }
+        dustscore = 0;
+        for (auto &e : counts)
+        {
+            auto &s_ = e.second;
+            dustscore += (s_ * (s_ - 1) * POINTFIVE);
+        }
+
+        auto last_val = ((dustscore / (num - 1)) * ((WINDOWSIZE - 2) / (float)num));
+        v_vals.push_back(last_val);
+    }
+
+    auto mean_ = accumulate(v_vals.begin(), v_vals.end(), 0.0) / v_vals.size();
+
+    if ((int)(mean_ * 100 / 31) > COMPLVAL) 
+    {
+        cnt_filter_out = 1;
+    }
+
+    return cnt_filter_out;
+};
+
+#endif 
 
 // st__ main_
 int main(int argc, char **argv)
 {
-	const int N = (const int)(1e4 + 0);
-	const int td_num = 30; 
+
+#if 0 
+    const int e_line_sz = 4;
+    string fn = "NULL";
+    fn = "./data/18B0000399-1-11.umhg19.fq";
+    if (argc > 1)
+    {
+        fn = string(argv[1]);
+    }
+    string fn_out_clean = fn + ".clean.fastq";
+    ofstream of_(fn_out_clean.c_str()); assert(of_.is_open());
+    ifstream if_(fn.c_str());  assert(if_.is_open());
+
+    string e_str = "NULL";
+
+    int cnt_lines = 0;
+    int cnt_bad_base = 0;
+    vector<string> v_str(e_line_sz, "");
+    auto p_s = [&v_str,&of_]() {v_str[2] = string(v_str[0]); v_str[2][0] = '+'; for (auto &e : v_str) { of_ << e << endl; }};
+    while (std::getline(if_, e_str))
+    {
+        //cout << "___" << e_str << "___" << endl; 
+        auto v_idx = cnt_lines < e_line_sz ? cnt_lines : cnt_lines % 4;
+        cnt_lines++;
+
+        v_str[v_idx] = e_str;
+        if (cnt_lines % e_line_sz == 0)
+        {
+            if (filter_out_e(v_str))
+            {
+                cnt_bad_base++;
+            }
+            else
+            {
+                p_s();
+            }
+        }
+
+    }
+
+    std::cerr << endl << "- cnt_bad_base : " << cnt_bad_base << endl;
+
+
+    if_.close();
+    of_.close();
+
+    clear_range();
+#endif 
+
+
+
+
+#if 0
+    ifstream if_("txt.txt"); 
+    assert(if_.is_open());
+
+    string e_str="NULL"; 
+    int cnt = 9;
+    while (!if_.eof())
+    {
+        if_ >> e_str;
+        cout << "___"<<e_str << "___" << endl;
+    }
+    if_.close();
+#endif 
+    
+
+
+
+#if 0
+
+    int arr[1024] = { 0 };
+    int cnt = 0;
+    for (auto &e : arr)
+    {
+        e = cnt++;
+    }
+#define R(N) vector<int>(arr + 0, arr + N)
+#define R_(M,N) vector<int>(arr + M, arr + N)
+
+
+    for (auto i : R(9))
+    {
+        cout << i << endl; 
+    }
+    for (auto i : R_(2,9))
+    {
+        cout << i << endl;
+    }
+    
+#endif
+
+
+
+#if 0
+
+    vector<vector<char>> mg =
+    {
+        { '#', '#', '#', '#', '#', '#', '#', '#' },
+        { '#', 'S', ' ', ' ', ' ', ' ', ' ', '#' },
+        { '#', '#', '#', ' ', '#', '#', '#', '#' },
+        { '#', ' ', '#', ' ', '#', '#', '#', '#' },
+        { '#', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
+        { '#', ' ', '#', '#', '#', '#', '#', '#' },
+        { '#', ' ', ' ', ' ', ' ', ' ', 'F', '#' },
+        { '#', '#', '#', '#', '#', '#', '#', '#' }
+    };
+
+    auto s = pair<int, int>(1, 1);
+    auto f = pair<int, int>(6, 6);
+
+    vector<tuple<int, int,int,int>> visitor{};
+
+    vector<pair<int,int>> D = { {-1,0}, {0,-1}, {0,1}, {1,0} };
+    
+
+    auto s_ = pair<int, int>(s);
+
+    
+    int cnt = 0;
+    int cnt_times = 17;
+    while (cnt_times--)
+    {
+        
+        for (int i = cnt; i < D.size()+ cnt; i++)
+        {
+            auto e = D[i%D.size()];
+            auto s_old = pair<int, int>(s_);
+            s_.first += e.first;
+            s_.second += e.second;
+
+            if (mg[s_.first][s_.second] == ' ')
+            {
+                auto if_visitor_has_ele = [visitor,s_old,e]() {
+                    auto ret_i = 0;
+                    for (auto e_v : visitor)
+                    {
+                        int _0, _1, _2, _3;
+                        tie(_0,_1,_2,_3) = e_v;
+                        if (_0 == s_old.first && _1 == s_old.second &&
+                            _2 == e.first && _2 == e.second)
+                        {
+                            ret_i = 1;
+                            break;
+                        }
+                        
+                    }
+                    return ret_i;
+                };
+
+                if (! if_visitor_has_ele() )
+                {
+                    visitor.push_back(make_tuple(s_old.first, s_old.second, e.first, e.second));
+                    cout << s_.first << " " << s_.second << endl;
+                    i--;
+                }
+                else // retrate
+                {
+                    s_ = pair<int, int>(s_old);
+                    cnt++;
+                }
+
+            }
+            else
+            {
+                s_ = pair<int, int>(s_old);
+                break;
+            }
+        }
+
+        cnt++;
+      
+    }
+
+
+
+    
+ 
+
+
+    
+    
+
+#endif 
+#if 0
+    string e_str = "ABCD";
+    string e_str_ = std::string(e_str);
+
+    std::transform(e_str.begin(), e_str.end(), e_str_.begin(), [](char e_c) {return e_c + 1; });
+    cout << e_str << endl; 
+    cout << e_str_ << endl; 
+#endif
+
+#if 0
+
+    ifstream if_("E:/jd/t/1.txt");
+
+    assert(if_.is_open()); 
+  
+    std::stringstream fc_;
+    fc_ << if_.rdbuf(); 
+    auto &fc = fc_.str();
+
+
+   cout << "___" << fc << "___" << endl;
+
+   auto id_v = split_str_2_vec(fc, ' ', 3);
+   for (auto &e : id_v)
+   {
+       cout << "___" << e << "___" << endl;
+   }
+    
+    if_.close();
+
+
+#endif 
+
+#if 0
+
+    vector<int> v0(3, 1); 
+    vector<int> v1(19, 22); 
+    std::copy(v0.begin(), v0.end(), v1.begin() + 2); 
+    std::copy(v0.begin(), v0.end(), (int*)(v1.data()) + 11);
+
+    for (auto &e : v1)
+    {
+        cout << e << endl; 
+    }
+    
+
+
+
+#endif 
+
+#if 0
+
+    auto f_0 = std::async();
+
+
+
+
+    std::future<int> f1 = std::async(std::launch::async, []() {
+        return 8;
+    });
+
+    cout << f1.get() << endl; //output: 8
+
+    std::future<int> f2 = std::async(std::launch::async, []() {
+        cout << 8 << endl;
+        return 8;
+    });
+
+    f2.wait(); //output: 8
+
+    std::future<int> future = std::async(std::launch::async, []() {
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        return 8;
+    });
+
+    std::cout << "waiting...\n";
+    std::future_status status;
+
+
+
+    do {
+        status = future.wait_for(std::chrono::seconds(1));
+        if (status == std::future_status::deferred) {
+            std::cout << "deferred\n";
+        }
+        else if (status == std::future_status::timeout) {
+            std::cout << "timeout\n";
+        }
+        else if (status == std::future_status::ready) {
+            std::cout << "ready!\n";
+        }
+    } while (status != std::future_status::ready);
+
+    std::cout << "result is " << future.get() << '\n';
+
+
+   
+
+
+
+
+
+
+    
+
+
+    
+
+#endif 
+
+
+#if 0
+
+    vector<int> a{ 2 };
+    vector<int> b{2,4,6}; 
+  
+
+    int cnt = 0;
+    
+
+    vector<int> ans;
+
+   
+    int j = 0; 
+    int i = 0;
+
+    float res = 12345;
+    if (a.size() == 0)
+    {
+        auto &_v = b;
+        auto len = _v.size();
+        res = len % 2 == 0 ? (_v[len / 2] + _v[len / 2 - 1]) / 2 : _v[len / 2];
+    }
+ 
+    else if (b.size() == 0)
+    {
+        auto &_v = a;
+        auto len = _v.size();
+        res = len % 2 == 0 ? (_v[len / 2] + _v[len / 2 - 1]) / 2 : _v[len / 2];
+    }
+
+
+    if (res != 12345)
+    {
+        cout << res <<endl;
+    }
+
+    while(1)
+    {
+
+        if (cnt * 2 >= a.size() + b.size()) break;
+
+        if (i == a.size())
+        {
+            ans.push_back(b[j]);
+            j++;
+            cnt++;
+            continue;
+        }
+ 
+
+        if (j == b.size())
+        {
+            ans.push_back(a[i]);
+            i++;
+            cnt++;
+            continue;
+        }
+      
+
+
+        if (i < a.size() && j < b.size() && a[i] <= b[j])
+        {
+                ans.push_back(a[i]);
+                i++;
+        }
+        else if (j < b.size() && i< a.size() && a[i] > b[j] )
+        {
+            ans.push_back(b[j]);
+            j++;
+        }
+        cnt++;
+    }
+
+    for (auto &e : ans)
+    {
+        cout << e << " " << endl;
+    }
+
+#if 0
+
+
+
+    if (ans.size() % 2 == 0)
+    {
+        res = ans[ans.size() - 1];
+    }
+    else
+    {
+         res = ans[ans.size() - 1] + ans[ans.size() - 2];
+         res = res / 2.0;
+
+    }
+
+    cout << res; 
+#endif
+    
+
+    
+
+
+#endif 
+
+
+#if 0
+
+   //l1, l2
+    //l1_,l2_
+    int C = 0;
+    auto head = NULL; 
+    while (l1_ || l2_)
+    {
+
+        auto v1 = 0; 
+        auto v2 = 0;
+
+        
+        if (! l1_->next)
+        {
+            v1 = l1_->val;
+            l1_ = l1_->next;
+        
+        }
+
+        if (! l2_->next)
+        {
+            v2 = l2_->val;
+            l2_ = l2_->next;
+        }
+
+        auto v = (v1 + v2 + C) % 10;
+        C = (v1 + v2 + C >= 10)? 1:0;
+
+        // print v
+    }
+
+
+
+#endif 
+
+#if 0
+
+    auto lengthOfLongestSubstring = [](string s) {
+
+
+        map<char, int> map_;
+
+        auto exists_e_c = [&map_](char e_c)
+        {
+            return map_.find(e_c) == map_.end() ? 0 : 1;
+        };
+
+        int max_len = 0;
+
+        for (auto &e_c : s)
+        {
+            if (exists_e_c(e_c))
+            {
+                int max_len_ = map_.size();
+                max_len = max_len_ > max_len ? max_len_ : max_len;
+                map_.clear();
+                map_[e_c] = 1;
+            }
+            else
+            {
+                map_[e_c] = 1;
+            }
+        }
+
+        int max_len_ = map_.size();
+        max_len = max_len_ > max_len ? max_len_ : max_len;
+        return max_len;
+
+
+
+    };
+
+    cout << lengthOfLongestSubstring(string("dvdf")) << endl;
+
+
+#endif
+
+
+
+
+
+
+#if 0
+
+    const int N = (const int)(2e1 + 0);
+    const int td_num = 2;
+    
+    vector<float> arr_src{};
+    arr_src.resize(N);
+    int  cnt = 0;
+    for (auto &e : arr_src)
+    {
+        e = (cnt++) * 1.0f;
+    }
+
+    exec_multi_threads_on_data(arr_src, N, td_num, exec_e);
+
+
+
+
+
+#endif 
+
+
+#if 0
+	typedef  pair<int, std::thread> i_td;
+
+	vector<i_td> arr_pair_i_td{};
+
+	const int N = (const int)(2e2 + 3);
+	int mod_num = 3;
+	arr_pair_i_td.resize(N % mod_num == 0 ? N / mod_num : N / mod_num + 1);
+
+	int cnt = 0;
+	int cnt_arr = 0;
 
 
 	vector<float> arr_src{};
 	arr_src.resize(N);
-	int  cnt = 0;
+	cnt = 0;
 	for (auto &e : arr_src)
 	{
 		e = (cnt++) * 1.0f;
 	}
 
-	exec_multi_threads_on_data(arr_src, N, td_num, exec_e);
+    cnt = 0;
+	while (cnt < N)
+	{
 
-	cout << arr_src[1] << endl; 
-	cout << arr_src[N - 1] << endl; 
+		//cout << cnt << endl;
 
-	arr_src.clear(); 
+		int id_td = (int)(cnt / mod_num);
+        cout << id_td << endl; 
+		auto& pair_i_i = make_pair(cnt, cnt + mod_num > N ? N : cnt + mod_num);
+
+
+        arr_pair_i_td[id_td].first = id_td;
+        arr_pair_i_td[id_td].second = thread([](int id_td, const vector<float>& arr_src, pair<int, int> pair_i_i) {
+           
+#if 1
+            if (id_td == 0)
+            {
+                system("sleep 0s");
+            }
+            else if(id_td == 1)
+            {
+                system("sleep 0.1s");
+            }
+            else if (id_td == 2)
+            {
+                system("sleep 0.2s");
+            }
+            else if (id_td == 3)
+            {
+                system("sleep 0.3s");
+            }
+            else if (id_td == 4)
+            {
+                system("sleep 0.4s");
+            }
+            else
+            {
+                system("sleep 0.6s");
+            }
+
+#endif 
+            cout << "- id_td: " << id_td << endl;
+            //cout << pair_i_i.first << " " << pair_i_i.second << endl; 
+            for (auto i = pair_i_i.first; i < pair_i_i.second; i++)
+            {
+                cout << arr_src[i] << " ";
+            }
+            cout << endl << "--------------------" << endl; 
+
+        },
+            id_td, std::ref(arr_src), pair_i_i
+            );
+
+            
+
+		//cnt_arr++;
+		cnt += mod_num;
+
+
+        //arr_pair_i_td[id_td].second.join();
+	}
+
+
+	for (auto& e_pair : arr_pair_i_td)
+	{
+		//cout << e_pair.first << endl; 
+		e_pair.second.join();
+	}
+
+
+
+#endif
+
+#if 0
+
+	typedef  pair<std::thread, std::pair<int, int>> i__pair_i_i;
+
+	vector<i__pair_i_i> arr_pair_i_i{};
+
+
+#if 1
+	const int N = 2e2 + 3;
+	int mod_num = 200;
+	arr_pair_i_i.resize( N % mod_num == 0? N/mod_num : N/mod_num + 1);
+
+	int cnt = 0;
+	int cnt_arr = 0;
+
+
+
+
+
+	while (cnt < N)
+	{
+
+		//cout << cnt << endl;
+		auto& e_pair = make_pair(
+				std::thread([]() {cout << 1 << endl; }),
+				std::make_pair(cnt, cnt + mod_num > N ? N : cnt + mod_num)
+				);
+		arr_pair_i_i[cnt / mod_num] = e_pair;
+		//cnt_arr++;
+		cnt += mod_num;
+	}
+
+	// cout << cnt << endl; 
+
+	for (auto &e_pair : arr_pair_i_i)
+	{
+		e_pair.first.join(); 
+	}
+
+
+	vector<float> arr_src{};
+	arr_src.resize(N); 
+	cnt = 0; 
+	for (auto &e : arr_src)
+	{
+		e = cnt++;
+	}
+
+#if 0
+	int id_td = 0; 
+	for (auto &e_args : arr_pair_i_i)
+	{
+
+		auto e_td = std::thread(
+				/* exec_e_td() */
+				[](vector<float> &arr_src, vector<std::pair<int, int> >& arr_pair_i_i, int& id_td) {
+
+				auto &e_pair_i_i = arr_pair_i_i[id_td];
+
+				cout << "- id_td: " << id_td << endl; 
+				system("sleep 1s");
+				for (int i = e_pair_i_i.first; i < e_pair_i_i.second; i++)
+				{
+				cout << arr_src[i] << " ";
+				}
+				cout << endl;
+				},
+				std::ref(arr_src),
+				std::ref(arr_pair_i_i),
+				std::ref(id_td)
+				);
+
+		e_td.join();
+		id_td++;
+	}
+#endif 
+
+
+
+	//cnt = 2;
+	//while (cnt--)
+	{
+		//system("sleep 2s");
+	}
+#endif 
+
+#endif 
+
+
+
+#if 0
+
+	auto g_cnt = 714; 
+	auto td_num = 4; 
+	auto t = ceil(g_cnt * 1.0f / td_num);       // 179
+	// t = ceil(g_cnt / td_num);                // => 178
+
+	cout << t; 
+
+	auto id_td_args_0 = td_args(2); 
+	auto id_td_args_1 = td_args(2<<1);
+
+
+	auto tid_0 = thread(td_exec_0, std::ref(id_td_args_0));
+	auto tid_1 = thread(td_exec_1, std::ref(id_td_args_1));
+
+	tid_0.join(); 
+	tid_1.join();
+
+	//id_td_args_0.~td_args();
+	//id_td_args_1.~td_args();
+
+
+	cout << "- end" << endl; 
+#endif 
+
+
+
+#if 0
+	auto *ACGT = "ACGT";
+
+	int arr[] = { 3, 3, 1, 3, 3, 2, 1, 3, 2, 0, 1 };
+
+	for (auto &e : arr)
+	{
+		cout << ACGT[e];
+	}
+#endif
+
 
 
 
