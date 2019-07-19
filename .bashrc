@@ -116,9 +116,13 @@ if ! shopt -oq posix; then
   fi
 fi
 
-### export list ###
+### jd export ###
+HISTSIZE=5000
+HISTFILESIZE=10000
+export gs=/mnt/hgfs/et/git/s/t
 export perl_p=$HOME/perl_p
-export t=$HOME/t
+export t=/mnt/hgfs/et
+export tfilter=/mnt/hgfs/et/git/pmseq/src/filter
 
 alias s_b='source $perl_p/.bash_aliases'
 s_b
