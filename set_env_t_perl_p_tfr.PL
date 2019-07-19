@@ -80,7 +80,7 @@ sub main()
 {
 	if (0)
 	{
-		system(" git clone https://github.com/tlqtangok/perl_p	")
+		system(" git clone https://github.com/tlqtangok/perl_p	");
 		chdir ("perl_p"); 
 	}
 
@@ -105,8 +105,8 @@ sub main()
 	my @fn_bashrc = `cat .bashrc`;
 	my $fn_home_bashrc = "$ENV{HOME}/.bashrc";
 	open my $FP_home_bashrc , ">>", $fn_home_bashrc;
-
 	my $flag_output = 0; 
+
 	for my $e_l (@fn_bashrc) 
 	{
 		if ($e_l =~ m/jd export/)
@@ -127,6 +127,7 @@ sub main()
 			print $FP_home_bashrc $e_l;
 		}
 	}
+
 	close $FP_home_bashrc;
 }
 
