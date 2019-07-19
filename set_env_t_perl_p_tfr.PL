@@ -10,7 +10,7 @@ use Data::Dumper;
 #use Scalar::Util qw/reftype/;
 #use File::Copy;
 #use File::Find;
-#use Cwd qw(abs_path);
+use Cwd qw(abs_path);
 use strict;
 use threads;
 use threads::shared;
@@ -78,35 +78,56 @@ use Try::Tiny;
 	
 sub main()
 {
-    my $curdir = cwd(); 
-    die if ! -f "${curdir}/lsh.PL";
+	if (0)
+	{
+		system(" git clone https://github.com/tlqtangok/perl_p	")
+		chdir ("perl_p"); 
+	}
 
-    system(
-        qq{
-        curl http://algoers.com:10241/tor_fr/linux/tfr > /tmp/tfr_
-        sudo cp /tmp/tfr_  /bin/
-        rm /tmp/tfr_
-        base64 -d b64.bash_aliases |grep -v ssh_ > .bash_aliases
-        cp ./vimrc $ENV{HOME}/
-        }
-    ); 
+	my $curdir = cwd(); 
+	my $perl_p = $curdir;
+	my $t_folder = abs_path( "../t" );
 
-    my @fn_bashrc = `cat .bashrc`;
-    my $fn_new_home_bashrc = "$ENV{HOME}/.bashrc";
-    open my $FP_home_bashrc , ">>", $fn_new_home_bashrc;
+	die if ! -f "${curdir}/lsh.PL";
 
-    my $flag_output = 0; 
-    for my $e_l (@fn_bashrc) 
-    {
-        if ($e_l =~ m/jd export/)
-        {$flag_output = 1;}
-        if ($flag_output)
-        {
-             print $FP_home_bashrc $e_l;
-        }
-    }
-    close $FP_home_bashrc;
+	
+	my $host_name = join "", reverse qw(m o c . s r e o g l a);
+	system(
+		qq{
+		curl http://$host_name:10241/tor_fr/linux/tfr > /tmp/tfr_
+		sudo cp /tmp/tfr_  /bin/
+		#rm /tmp/tfr_
+		base64 -d b64.bash_aliases |grep -v ssh_ > .bash_aliases
+		cp ./vimrc $ENV{HOME}/
+		}
+	); 
 
+	my @fn_bashrc = `cat .bashrc`;
+	my $fn_home_bashrc = "$ENV{HOME}/.bashrc";
+	open my $FP_home_bashrc , ">>", $fn_home_bashrc;
+
+	my $flag_output = 0; 
+	for my $e_l (@fn_bashrc) 
+	{
+		if ($e_l =~ m/jd export/)
+		{$flag_output = 1;}
+
+		if ($flag_output)
+		{
+
+			if ($e_l =~ m/export perl_p\=/)
+			{
+				$e_l =~ s/\=.*/=$perl_p/;
+			}
+			elsif ($e_l =~  m/export t\=/)
+			{
+				$e_l =~ s/\=.*/=$t_folder/;
+			}
+
+			print $FP_home_bashrc $e_l;
+		}
+	}
+	close $FP_home_bashrc;
 }
 
 
