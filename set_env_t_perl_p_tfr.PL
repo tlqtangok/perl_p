@@ -97,7 +97,7 @@ sub main()
 		curl http://$host_name:10241/tor_fr/linux/tfr > /tmp/tfr_
 		sudo cp /tmp/tfr_  /bin/
 		#rm /tmp/tfr_
-		base64 -d b64.bash_aliases |grep -v ssh_ > .bash_aliases
+		base64 -d b64.bash_aliases |grep -v ssh_ |grep -v 'alias tfr=' > .bash_aliases
 		cp ./vimrc $ENV{HOME}/
 		}
 	); 
