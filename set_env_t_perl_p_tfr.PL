@@ -6,7 +6,7 @@ use List::Util qw(first sum max shuffle maxstr);
 #use List::MoreUtils qw(uniq);
 #use File::Spec::Functions;
 #use File::Basename qw(dirname basename);
-use Data::Dumper;
+#use Data::Dumper;
 #use Scalar::Util qw/reftype/;
 #use File::Copy;
 #use File::Find;
@@ -32,7 +32,7 @@ use File::Basename qw(dirname basename);
 #use List::Util qw(first sum max shuffle maxstr);
 #use List::MoreUtils qw(uniq);
 #use File::Spec::Functions;
-use Data::Dumper;
+#use Data::Dumper;
 #use Scalar::Util qw/reftype/;
 #use File::Copy;
 #use File::Find;
@@ -45,15 +45,15 @@ use threads::shared;
 use POSIX qw(assert); 
 use MIME::Base64 qw(encode_base64 decode_base64);
 #use Redis; 
-use IO::Compress::Gzip qw(gzip $GzipError); 
+#use IO::Compress::Gzip qw(gzip $GzipError); 
 
-use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
-use Archive::Tar;
+#use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+#use Archive::Tar;
 use File::Find;
 use File::Path;
 use Cwd qw(abs_path cwd);
 use File::Spec;
-use Try::Tiny;
+#use Try::Tiny;
 #use Term::ReadKey;
 #use Term::ProgressBar;
 
@@ -67,7 +67,7 @@ use Try::Tiny;
 
 
 ### global var ###
-
+my $FLAG_NEED_GIT_PULL_PERL_P = 1; 
 ##################
 
 &main();
@@ -78,7 +78,7 @@ use Try::Tiny;
 	
 sub main()
 {
-	if (0)
+	if ($FLAG_NEED_GIT_PULL_PERL_P)
 	{
 		system(" git clone https://github.com/tlqtangok/perl_p	");
 		chdir ("perl_p"); 
@@ -87,6 +87,7 @@ sub main()
 	my $curdir = cwd(); 
 	my $perl_p = $curdir;
 	my $t_folder = abs_path( "../t" );
+	`mkdir -p $t_folder`;
 
 	die if ! -f "${curdir}/lsh.PL";
 
@@ -95,14 +96,15 @@ sub main()
 	system(
 		qq{
 		curl http://$host_name:10241/tor_fr/linux/tfr > /tmp/tfr_
-		sudo cp /tmp/tfr_  /bin/
+		sudo cp /tmp/tfr_  /usr/bin/
+
 		#rm /tmp/tfr_
 		base64 -d b64.bash_aliases |grep -v ssh_ |grep -v 'alias tfr=' > .bash_aliases
-		cp ./vimrc $ENV{HOME}/
+		cp ./.vimrc $ENV{HOME}/
 		}
 	); 
 
-	my @fn_bashrc = `cat .bashrc`;
+	my @fn_bashrc = `cat ./.bashrc`;
 	my $fn_home_bashrc = "$ENV{HOME}/.bashrc";
 	open my $FP_home_bashrc , ">>", $fn_home_bashrc;
 	my $flag_output = 0; 
