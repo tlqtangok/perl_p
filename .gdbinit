@@ -1,5 +1,6 @@
 set print repeats 0
 set print elements 0
+set max-value-size unlimited
 set history filename ~/.gdb_history
 set history save on
 
