@@ -19,3 +19,12 @@ apt-cache madison docker-ce
 
 export VERSION_STRING="18.06.3~ce~3-0~ubuntu"
 sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+sudo docker -v 
+
+sudo groupadd docker 
+sudo gpasswd -a ${USER} docker
+newgrp - docker    # after config, need restart 
+sudo service docker restart
+
+docker -v 
