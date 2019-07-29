@@ -17,5 +17,5 @@ sudo add-apt-repository \
 sudo apt-get update
 apt-cache madison docker-ce
 
-#export VERSION_STRING="17.12.0"
+export VERSION_STRING="18.06.3~ce~3-0~ubuntu"
 sudo apt-get install docker-ce docker-ce-cli containerd.io
