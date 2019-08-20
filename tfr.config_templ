@@ -1,5 +1,5 @@
 ### tfr.config ###
-$host_name = "algoers.com";
+$host_name = "localhost";
 $max_file_sz_in_bytes = 50 * 1024 * 1024 + 5 * 1024; # 50M in max
 $redis_port = 6370;
 $max_jd_incr = 256; 
