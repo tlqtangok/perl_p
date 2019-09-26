@@ -88,7 +88,16 @@ if __name__ == "__main__":
     print("- to\t: " + to_mail_addr)
     print("- content_text\t: " + "\n" + "======")
     print( content_text )
+
+    if send_type == "img":
+        print ("-")
+        print ("- img: " + sys.argv[1+argc_r0])
+
+    if send_type == "attachment":
+        print ("-")
+        print ("- attachment: " + sys.argv[1+argc_r0])
     print("======")
+
 
     id_yagmail.send(to = to_mail_addr, subject = sub_content, contents = contents)
 
