@@ -24,13 +24,14 @@ if __name__ == "__main__":
     ##################
 
     argc_r0 = 1 
+    _at_ = '@';
     send_type = "text"
     content_text = "NULL" 
     img_suffix = [".jpg",".jpeg", ".png", ".bmp"]
     password='jhdlubsemxhjbedc'
 
-    user_mail_addr = "9"+magic_number+"837"+magic_number+"829@qq.com" 
-    to_mail_addr = "tlqtangok@126.com"
+    user_mail_addr = "9"+magic_number+"837"+magic_number+"829"+_at_+"qq.com" 
+    to_mail_addr = "tlqtangok"+_at_+"126.com"
 
     id_yagmail = yagmail.SMTP(user = user_mail_addr, password=password, host = 'smtp.qq.com')
 
