@@ -114,3 +114,5 @@ endif
 let @d='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##'
 let @g='yiw:vim /\<0\>(.*\n\{0,1\}{/##'
 let @s='yiw:vim /\<0\>/##'
+let @f=':!ctags -L %:args `cat %`:bf'
+
