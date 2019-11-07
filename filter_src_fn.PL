@@ -6,7 +6,7 @@ use Data::Dumper;
 
 ### global var ###
 my $fn_of_file_list = @ARGV[0] if @ARGV != 0;
-die if ! -e $fn_of_file_list;
+die "- usage:\n\tfsrc fn_all.txt DEBUG\n\tfsrc fn_all.txt c cpp h hpp\n" if ! -e $fn_of_file_list;
 
 my @fn = `cat $fn_of_file_list`;
 my %hash_suffix = ();
