@@ -1,0 +1,7 @@
+# ub18.04 enable rc.local
+#
+#sudo ln -s /lib/systemd/system/rc-local.service /etc/systemd/system/
+#sudo /etc/systemd/system/rc-local.service
+
+/bin/su - bgi902 -c "/home/bgi902/tell_my_ip/tell_my_ip &"
+
