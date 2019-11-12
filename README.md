@@ -1,1 +1,17 @@
 # perl_p
+t,
+lsh ,
+lshp,
+ls_big_fn,
+ff,
+full_,
+scp_it,
+map_,
+fsrc,
+peval,
+s_b,
+findf_by_name，
+perl_create_makefile,
+cp_to_bak,
+see_path,
+tol,
