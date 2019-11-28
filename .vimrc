@@ -43,7 +43,7 @@ inoremap <C-U> <C-G>u<C-U>
 
 " In many terminal emulators the mouse works just fine, thus enable it.
 if has('mouse')
-  set mouse=v
+  set mouse=a
 endif
 
 " Switch syntax highlighting on, when the terminal has colors
@@ -94,6 +94,9 @@ if !exists(":DiffOrig")
   command DiffOrig vert new | set bt=nofile | r # | 0d_ | diffthis
 		  \ | wincmd p | diffthis
 endif
+
+" jd add
+set mouse=v
 set nu
 set nocompatible
 set backspace=indent,eol,start
@@ -115,4 +118,4 @@ let @d='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##'
 let @g='yiw:vim /\<0\>(.*\n\{0,1\}{/##'
 let @s='yiw:vim /\<0\>/##'
 let @f=':!ctags -L %:args `cat %`:bf'
-
+" jd end
