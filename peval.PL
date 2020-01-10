@@ -14,6 +14,10 @@ sub main()
 
 		chomp(); 
 		last   if (m/^q$|^quit$|^exit$/i);
+
+		$e_l =~ s/%/\/100/g;
+		#say $e_l;
+
 		eval "\$_=$e_l;"; 
 		say $_;
 	}
@@ -23,7 +27,11 @@ sub main()
 		{
 
 			chomp(); 
+			s/%/\/100/g;
 			last   if (m/^q$|^quit$|^exit$/i);
+
+			$e_l =~ s/%/\/100/g;
+			#say $e_l;
 
 			if (0 && $e_l =~ m/^sc \d/)
 			{
