@@ -45,6 +45,7 @@ sub main()
 	for my $e (@fn)
 	{
 		chomp($e);
+		$e =~ s/\x0d//;
 
 		if (-T $e)
 		{
