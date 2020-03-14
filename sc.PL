@@ -16,7 +16,6 @@ sub main()
 	{
 		($low, $hi) = ($hi, $low);
 	}
-	#my $e_l = '0;$t=($low + $hi * 2)/3.0; $l=$t*0.94; $h=$t*0.97; printf "%.0f ~ %.0f\n",$l ,$h; '; 
 	my $e_l = '0;$t=($low + $hi * 2)/3.0; $l=$t*0.94; $h=$t*0.97; printf "%.2f ~ %.2f\n",$l ,$h; '; 
 	$e_l =~ s/\$low/$low/g;
 	$e_l =~ s/\$hi/$hi/g;
