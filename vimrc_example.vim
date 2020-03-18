@@ -60,6 +60,11 @@ endif
 
 
 " jd add
+
+
+source $VIMRUNTIME/mswin.vim
+behave mswin
+
 set nobackup
 
 set nu
@@ -74,13 +79,9 @@ endif
 
 set nofoldenable
 set formatoptions-=t
-
 set autoread
 
-
-source $VIMRUNTIME/mswin.vim
-behave mswin
-
+set noundofile
 
 " From http://got-ravings.blogspot.com/2008/07/vim-pr0n-visual-search-mappings.html
 
@@ -111,8 +112,9 @@ set shiftwidth=4
 let @d='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##'
 let @g='yiw:vim /\<0\>(.*\n\{0,1\}{/##'
 let @s='yiw:vim /\<0\>/##'
-let @f=':!ctags -L %:args `cat %`:bf'
+let @f=':!ctags -L %:args `cat %`:bf'
 let @i='i ____V:s/____/\=strftime("%Y-%m-%d")/:i'
+
 
 " jd end 
 
