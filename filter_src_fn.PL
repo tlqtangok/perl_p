@@ -45,7 +45,6 @@ sub main()
 	for my $e (@fn)
 	{
 		chomp($e);
-		$e =~ s/\x0d//;
 
 		if (-T $e)
 		{
@@ -63,11 +62,21 @@ sub main()
 
 				for my $e_filter (@filter_param_list)
 				{
+
 					if ($e =~ m/\.$e_filter$/)
-					{
-						say $e;
-						last;
-					}
+                    {
+                        say $e;
+                        last;
+                    }
+
+                    if ($e_filter =~ /^makefile$/i )
+                    {
+                        if ($e =~ m/makefile/i)
+                        {
+                            say $e; 
+                            last;
+                        }
+                    }
 				}
 			}
 		}
