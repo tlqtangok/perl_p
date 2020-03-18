@@ -99,6 +99,7 @@ endif
 set mouse=v
 set nu
 set nocompatible
+set noundofile
 set backspace=indent,eol,start
 " Fix home and end in Terminal.app
 " end
