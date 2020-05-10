@@ -27,7 +27,7 @@ chomp($abs_path);
 chomp($abs_path);
 
 # if we wanna add step machine here 
-# my $_O_paras =  q{ -o "ProxyCommand ssh -q -p 22 tanglq@111.23.141.89  -W %h:%p" }; 
+# my $_O_paras =  q{ -o "ProxyCommand ssh -q -p 22 tanglq@step_machine_ip  -W %h:%p" }; 
 # my $print_out_scp_statement = " scp $_O_paras -P $port -r "."$user_name_host_name:$abs_path ./";
 
 my $print_out_scp_statement = " scp -P $port -r "."$user_name_host_name:$abs_path ./";
