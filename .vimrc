@@ -116,6 +116,7 @@ if &diff
 endif
 
 set formatoptions-=t
+set fileformats=unix,dos
 
 let @d='yiw:vim /define.*\<0\>\|}.*\<0\>\|struct.*\<0\>/##'
 let @g='yiw:vim /\<0\>(.*\n\{0,1\}{/##'
