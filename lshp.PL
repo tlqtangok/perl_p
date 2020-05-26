@@ -15,7 +15,7 @@ sub main()
 
 	$NUM = $ARGV[0] if @ARGV;
 
-	my $cml = q{ find . -name '*' | perl -e '@a=<>; chomp(@a); @a = sort{-M $a<=>-M $b}@a; @a = grep  ! m/(^\.$)|(^\.\/$)|(^\.\/\.\w)/, @a; print join "\n",@a[0.._NUM_];print "\n";' };
+	my $cml = q{ find . -name '*' 2>/dev/null | perl -e '@a=<>; chomp(@a); @a = sort{-M $a<=>-M $b}@a; @a = grep  ! m/(^\.$)|(^\.\/$)|(^\.\/\.\w)/, @a; print join "\n",@a[0.._NUM_];print "\n";' };
 
 	$cml =~ s/_NUM_/$NUM/g; 
 
