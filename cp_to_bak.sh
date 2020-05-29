@@ -1,11 +1,16 @@
 #!/usr/bin/sh
+set -e
 
 for i in "$@"
 do
 #	echo $i
-cp_dst=bak.$i.`date "+%Y%m%d%H%M"`
-cp -r ${i} ${cp_dst}
-echo ${cp_dst}
+FN_FULL_PATH=$i
+basename_fn=$(basename $FN_FULL_PATH)
+dirname_fn=$(dirname $FN_FULL_PATH)
+cd $dirname_fn
+cp_dst=bak.${basename_fn}.`date "+%Y%m%d%H%M"`
+cp -r ${basename_fn} ${cp_dst}
+echo $dirname_fn/${cp_dst}
 
 
 done
