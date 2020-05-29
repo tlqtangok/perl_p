@@ -19,6 +19,8 @@ $user_name_host_name =~ s/\n//g;
 map{
 
 my $abs_path=`readlink -f "$_"`;
+die "- no file or path $abs_path\n" if ! -e $abs_path;
+
 chomp($abs_path);
 chomp($abs_path);
 
