@@ -13,7 +13,7 @@ my @host_arr_maybe = split m/\s+/, $hostaddr;
 @host_arr_maybe[0] =~ s/ //g;
 $hostaddr = @host_arr_maybe[0];
 
-$hostaddr = 'algoers.com';
+$hostaddr = '39.108.3.14';
 my $port = '10247'; 
 
 chomp($hostaddr);
@@ -23,8 +23,9 @@ $user_name_host_name =~ s/\n//g;
 map{
 
 my $abs_path=`readlink -f "$_"`;
-die "- no file or path $abs_path\n" if ! -e $abs_path;
+chomp($abs_path); 
 
+die "- no file or path $abs_path\n" if ! -e $abs_path;
 chomp($abs_path);
 chomp($abs_path);
 

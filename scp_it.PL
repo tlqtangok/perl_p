@@ -8,23 +8,20 @@ $arg0=$pwd_;
 @ARGV[0]=$pwd_;
 }
 
-my $hostaddr = `hostname -I`; 
-my @host_arr_maybe = split m/\s+/, $hostaddr;
-@host_arr_maybe[0] =~ s/ //g;
-$hostaddr = @host_arr_maybe[0];
-chomp($hostaddr);
-my $user_name_host_name=`whoami`.'@'.$hostaddr;
+my $user_name_host_name=`whoami`.'@'.`uname -n`;
 $user_name_host_name =~ s/\n//g;
 
 map{
 
 my $abs_path=`readlink -f "$_"`;
-die "- no file or path $abs_path\n" if ! -e $abs_path;
 
-chomp($abs_path);
-chomp($abs_path);
+chomp($abs_path); 
+if ( ! -e $abs_path )
+{
+	die "- no exist path : $abs_path\n"; 
+}
 
-my $print_out_scp_statement = ' scp -r '."$user_name_host_name:$abs_path ./";
+my $print_out_scp_statement = ' scp -r '."$user_name_host_name:$abs_path";
 chomp($print_out_scp_statement);
 if ($print_out_scp_statement =~ m/\n/){
 	print $print_out_scp_statement;
@@ -34,5 +31,4 @@ else{
 }
 
 }@ARGV; 
-
 
