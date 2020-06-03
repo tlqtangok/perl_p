@@ -46,7 +46,7 @@ sub main()
 	{
 		chomp($e);
 
-		if (-T $e)
+		if (-f $e)
 		{
 			#(!$DEBUG) && say $e;
 
