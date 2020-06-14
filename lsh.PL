@@ -25,6 +25,9 @@ getopts("A:",\%options);   # if with : then must need a param_value
 my $arg0='MAGIC_STR_ARG0';
 
 my @A_keys_of_options= keys %options; 
+
+my $list_num = 7; 
+my $list_num_max = 38; 
 if (! ("@A_keys_of_options" =~ m/A/) ){
 	$cmd_templ =~ s/\-A//;
 
@@ -34,8 +37,18 @@ if (! ("@A_keys_of_options" =~ m/A/) ){
 
 	}
 	else {
-$arg0=`readlink -f @ARGV[0]`;chomp($arg0);  
-		$cmd_templ =~ s/\$dirname_/$arg0/; 
+
+		if ( -d "$ARGV[0]")
+		{
+			$arg0=`readlink -f @ARGV[0]`;chomp($arg0);  
+			$cmd_templ =~ s/\$dirname_/$arg0/; 
+		}
+		elsif ( $ARGV[0] =~ /^\d+$/ )
+		{
+
+			$cmd_templ =~ s/\$dirname_/$pwd_/; 
+			$list_num = $ARGV[0]; 
+		}
 	}
 
 }
@@ -57,7 +70,7 @@ my @cmd_result=`$cmd_templ|grep -v -i total | grep -v \'总用量 \' `;
 map{
 @cmd_result[$_] =~ s/^.*\s(\d\d\:?\d\d)\s/ /g; 
 print @cmd_result[$_];
-}(0..6);
+}(0..$list_num);
 
 
 
