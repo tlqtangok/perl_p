@@ -25,7 +25,11 @@ chomp($abs_path);
 
 say STDERR "- error! exist path or file : $abs_path\n" if ! -e $abs_path; 
 
-my $print_out_scp_statement = ' scp -r '."$user_name_host_name:$abs_path ./";
+my $_R_flag = "";
+$_R_flag = "-r" if -d $abs_path;
+my $print_out_scp_statement = ' scp '."$_R_flag " ."$user_name_host_name:$abs_path ./";
+
+#my $print_out_scp_statement = ' scp -r '."$user_name_host_name:$abs_path ./";
 chomp($print_out_scp_statement);
 if ($print_out_scp_statement =~ m/\n/){
 	print $print_out_scp_statement;
