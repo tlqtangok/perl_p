@@ -12,7 +12,7 @@ git pull
 ); 
 
 
-#system( $cmd_reset_pull ); 
-printf( $cmd_reset_pull );
+system( $cmd_reset_pull ); 
+#printf( $cmd_reset_pull );
 
 
