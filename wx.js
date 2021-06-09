@@ -222,7 +222,8 @@ function create_res_xml(xml_content)
 
 	var userid = get_userid(xml_content.FromUserName[0]); 
 
-	var welcome_stat = userid == "jd"?"welcome jd !": (userid == "ls"? "welcome ls !": "welcome !"); 
+	var welcome_stat = `welcome ${userid} !`; 
+	//var welcome_stat = userid == "jd"?"welcome jd !": (userid == "ls"? "welcome ls !": "welcome !"); 
 
 
 	var jd_geek = `泛智能时代`;
@@ -230,16 +231,17 @@ function create_res_xml(xml_content)
 	var ret_run_ans = xml_content.Content[0]; 
 
 
-	if (userid == "ls" || userid == "jd")
+	if (userid == "ls" || userid == "jd" || userid == "ww")
 	{
 		console.log(`- welcome ${userid}`); 
 
 		try
 		{
-			var fn_input_for_python3 = "ls.wx.req.txt"; 
+			var fn_input_for_python3 = "jd_wx_req_data.txt"; 
 
 			fs.writeFileSync(fn_input_for_python3, ret_run_ans); 
-			ret_run_ans = execSync_(`python3 ls.wx.py ${fn_input_for_python3}`); 
+			//ret_run_ans = execSync_(`python3 ls.wx.py ${fn_input_for_python3}`); 
+			ret_run_ans = execSync_(`perl wx.PL ${fn_input_for_python3}`); 
 
 			//ret_run_ans = Buffer.from(ret_run_ans).toString("base64");
 			//ret_run_ans = execSync_(`python3 ls.wx.py ${ret_run_ans}`); 
@@ -264,7 +266,7 @@ function create_res_xml(xml_content)
 		<FromUserName><![CDATA[${f_}]]></FromUserName>
 		<CreateTime>${new_createtime}</CreateTime>
 		<MsgType><![CDATA[text]]></MsgType>
-		<Content><![CDATA[${welcome_stat}\n${jd_geek} got text message\n\n---msg---\n${ret_run_ans}\n---]]></Content>
+		<Content><![CDATA[${welcome_stat}\n${jd_geek} got text message\n\n---res---\n${ret_run_ans}\n---]]></Content>
 		</xml>
 		`;
 
@@ -293,7 +295,8 @@ function get_userid(openid)
 
 	var openid_to_whom = {
 		"oWJ5CwR9HKLdxV4rYCglcCwLtBz4":"ls",
-		"oWJ5CwSiI0_NSAjdUy9LiYHU9wYk":"jd"
+		"oWJ5CwSiI0_NSAjdUy9LiYHU9wYk":"jd",
+		"oWJ5CwUrvzjgLjaxDgQl2eBb1wbM":"ww",
 	};
 
 
