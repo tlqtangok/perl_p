@@ -10,13 +10,20 @@ use Scalar::Util qw/reftype/;
 use File::Copy;
 
 
-my $src_folder = q(E:\jd\t\git\bgi_gpu_server);
-my $full_fn_of_list_file = q(E:\jd\t\git\bgi_gpu_server\1.win.txt);
-my $dst_folder = q(Y:\git\bgi_gpu_server);
+my $src_folder = q(/home/ubuntu/jd/t/t0);
+
+my $full_fn_of_list_file = $src_folder . q(/1.win.txt);
+my $dst_folder = q(/home/ubuntu/jd/t/t1);
 
 
-my $cmd_read_win = qq(type $full_fn_of_list_file);
-my @fn_all = `$cmd_read_win`;
+open my $FP_fn_list_all, "<", $full_fn_of_list_file; 
+my @fn_all = <$FP_fn_list_all>; 
+close $FP_fn_list_all;
+
+
+
+
+
 
 =pod
 @fn_all =
@@ -42,14 +49,15 @@ map{
 		
 
 			my $files_mtime = &gen_size($files[0]);
+			#say $files_mtime;
 
 			if ($files_mtime != $prev_mtime)
 			{
 
 				my ($original, $new_copy) = &gen_copy_cmd($files[0], $dst_folder);
 				my $ts = &get_timestamp();
-				say $ts; 
-				say("\t", $original," ", $new_copy);
+				#say $ts; 
+				say("- copy\t", $original," ", $new_copy);
 				copy( $original, $new_copy) or die "Copy failed: $!";        # new_copy can be a dir 
 			}
 
@@ -67,7 +75,7 @@ sub gen_copy_cmd($fn, $dst_folder)
 {
 	my $fn = shift; 
 	my $fn_r0 = $fn; 
-	$fn =~ s/.*bgi_gpu_server/$dst_folder/;
+	$fn =~ s/.*\/t0/$dst_folder/;
 	return $fn_r0, $fn; 
 }
 
@@ -117,3 +125,5 @@ my $if_windows = "True";
 
 #################
 
+ # /home/ubuntu/jd/t/t0 ./
+ # /home/ubuntu/jd/t/t1 ./
