@@ -88,24 +88,46 @@ sub main()
 	# cmd_
 	my $cmd_sc = "perl $perl_p/sc.PL"; 
 	my $cmd_pe = "perl $perl_p/peval.PL"; 
-	my $cmd_tfr = "perl $perl_p/tfr.PL";
+	my $cmd_tfr = "tfr";
 
 	my $res_cml = `cat $fn`;
-	my $flag_match_cmd = 0;
 
 	while(1)
 	{
 		# subs_
+		$res_cml =~ s/^\s*rnd\b/rnd /i;
+
+		#say $res_cml;
+
+		if ( $res_cml =~ m/^rnd /i )
+		{
+
+			my $rnd_base = 12;
+
+			if ($res_cml =~ m/ \d/)
+			{
+				chomp($res_cml);
+				$res_cml =~ s/\s+/ /g;
+				$rnd_base = (split m/\s+/, $res_cml)[1];
+			}
+
+			#say $rnd_base;
+			
+			my $rnd_res_num =int ((rand 1)*$rnd_base)+1;
+			$res_cml = "echo $rnd_res_num";
+
+			last;
+		}
+
 		$res_cml =~ s/^\s*sc /sc /i;
 
 		if ( $res_cml =~ m/^sc / )
 		{
 			$res_cml =~ s/^sc /$cmd_sc /; 
-			$flag_match_cmd = 1;
 			last;
 		}
 
-
+		
 		$res_cml =~ s/^\s*peval /peval /i;
 		$res_cml =~ s/^\s*pe /peval /i;
 		if ( $res_cml =~ m/^peval / )
@@ -113,7 +135,6 @@ sub main()
 			$res_cml =~ s/^peval /peval '/;
 			$res_cml =~ s/$/'/;
 			$res_cml =~ s/^peval /$cmd_pe /;
-			$flag_match_cmd = 1;
 			last;
 		}
 
@@ -136,9 +157,12 @@ sub main()
 		if ($res_cml =~ m/_CMD_TFR_ /)
 		{
 			$res_cml =~ s/_CMD_TFR_ /$cmd_tfr /;
-			$flag_match_cmd = 1;
 			last;
 		}
+
+
+
+		
 
 
 		last;
@@ -146,20 +170,14 @@ sub main()
 
 	#say $res_cml; 
 
-	my $cmd_default = "cat $fn"; 
-	my $res_to_node_js = "NULL"; 
-	if ($flag_match_cmd == 1)
-	{
-		$res_to_node_js = qx{ $res_cml };
-	}
-	else
-	{
-		$res_to_node_js = qx {$cmd_default};
-	}
-
+	my $res_to_node_js = qx{ $res_cml };
 	chomp($res_to_node_js);
-	print $res_to_node_js; 
+	print $res_to_node_js;
+
 }
 
-### sub list ###
+
+### change log ###
+# 20221007 add rnd support : rnd [%d] 
+
 
