@@ -8,17 +8,46 @@ use File::Basename qw(dirname basename);
 use Data::Dumper;
 use Scalar::Util qw/reftype/;
 use File::Copy;
+use Cwd qw(abs_path cwd);
 
 
-my $src_folder = q(/home/ubuntu/jd/t/t0);
-
-my $full_fn_of_list_file = $src_folder . q(/1.win.txt);
-my $dst_folder = q(/home/ubuntu/jd/t/t1);
 
 
-open my $FP_fn_list_all, "<", $full_fn_of_list_file; 
-my @fn_all = <$FP_fn_list_all>; 
-close $FP_fn_list_all;
+
+&main();
+
+
+
+### main_ ###
+
+
+sub main()
+{
+
+	my $src_folder = q(/home/ubuntu/jd/t/t0);
+
+	my $dst_folder = q(/home/ubuntu/jd/t/t1);
+
+
+	if (@ARGV == 2 )
+	{
+		$src_folder = $ARGV[0];
+		$dst_folder = $ARGV[1];
+	}
+
+
+	$src_folder = abs_path($src_folder);
+	$dst_folder = abs_path($dst_folder);
+
+	say "- sync $src_folder ===> $dst_folder\n"; 
+
+	my $full_fn_of_list_file = $src_folder . q(/1.win.txt);
+	say "- sync file list: $full_fn_of_list_file";
+
+
+	open my $FP_fn_list_all, "<", $full_fn_of_list_file; 
+	my @fn_all = <$FP_fn_list_all>; 
+	close $FP_fn_list_all;
 
 
 
@@ -36,17 +65,17 @@ E:\jd\t\bgi_gpu_server\include\bwt.h
 E:\jd\t\bgi_gpu_server\include\zlog.h
 );
 =cut
-chomp(@fn_all);
+	chomp(@fn_all);
 
 
-my @prev = (); 
-my $prev_mtime = "";
-map{
-	my @files = (sort{ -M "$a" <=> -M "$b" } @fn_all)[0..3];
+	my @prev = (); 
+	my $prev_mtime = "";
+	map{
+		my @files = (sort{ -M "$a" <=> -M "$b" } @fn_all)[0..3];
 
-	if (@prev > 0)
-	{
-		
+		if (@prev > 0)
+		{
+
 
 			my $files_mtime = &gen_size($files[0]);
 			#say $files_mtime;
@@ -54,28 +83,31 @@ map{
 			if ($files_mtime != $prev_mtime)
 			{
 
-				my ($original, $new_copy) = &gen_copy_cmd($files[0], $dst_folder);
+				my ($original, $new_copy) = &gen_copy_cmd($src_folder, $files[0], $dst_folder);
 				my $ts = &get_timestamp();
 				#say $ts; 
 				say("- copy\t", $original," ", $new_copy);
 				copy( $original, $new_copy) or die "Copy failed: $!";        # new_copy can be a dir 
 			}
 
-	}
-	@prev = (@files); 
-	$prev_mtime = &gen_size($prev[0]);
+		}
+		@prev = (@files); 
+		$prev_mtime = &gen_size($prev[0]);
 
-	sleep(4);
-}(0..1e6);
+		sleep(4);
+	}(0..1e6);
 
-
+}
 
 ### sub list ###
-sub gen_copy_cmd($fn, $dst_folder)
+sub gen_copy_cmd($src_folder_, $fn, $dst_folder_)
 {
+	my $src_folder_ = shift;
 	my $fn = shift; 
+	my $dst_folder_ = shift;
 	my $fn_r0 = $fn; 
-	$fn =~ s/.*\/t0/$dst_folder/;
+
+	$fn =~ s/^$src_folder_/$dst_folder_/;
 	return $fn_r0, $fn; 
 }
 
