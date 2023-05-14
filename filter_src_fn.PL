@@ -6,9 +6,13 @@ use Data::Dumper;
 
 ### global var ###
 my $fn_of_file_list = @ARGV[0] if @ARGV != 0;
-die "- usage:\n\tfsrc fn_all.txt DEBUG\n\tfsrc fn_all.txt c cpp h hpp\n" if ! -e $fn_of_file_list;
+die if ! -e $fn_of_file_list;
 
-my @fn = `cat $fn_of_file_list`;
+open my $FP , "<", $fn_of_file_list;
+my @fn = <$FP>; 
+close $FP; 
+
+#my @fn = `cat $fn_of_file_list`;
 my %hash_suffix = ();
 my @filter_param_list = qw(c cpp cuh hpp cu h); 
 
@@ -46,7 +50,7 @@ sub main()
 	{
 		chomp($e);
 
-		if (-f $e)
+		if (-T $e)
 		{
 			#(!$DEBUG) && say $e;
 
@@ -62,21 +66,11 @@ sub main()
 
 				for my $e_filter (@filter_param_list)
 				{
-
 					if ($e =~ m/\.$e_filter$/)
-                    {
-                        say $e;
-                        last;
-                    }
-
-                    if ($e_filter =~ /^makefile$/i )
-                    {
-                        if ($e =~ m/makefile/i)
-                        {
-                            say $e; 
-                            last;
-                        }
-                    }
+					{
+						say $e;
+						last;
+					}
 				}
 			}
 		}
