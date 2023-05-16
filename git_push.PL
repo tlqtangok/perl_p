@@ -50,7 +50,8 @@ if ($cwd =~ m/\/bgi_samtools/ || $cwd=~ m/\/bgi_bqsr/)
 }
 else
 {
-	system( " expect $perl_p/git_push.exp "); 
+	system("git push");
+	#system( " expect $perl_p/git_push.exp "); 
 }
 
 
