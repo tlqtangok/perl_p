@@ -1,9 +1,12 @@
 @echo off
 set this_dir=%cd%
 ::echo %this_dir%
+set last_few_num=7
 if not "%1" == "" (
-set this_dir=%1
+set last_few_num=%1
 )
 pushd %this_dir% > nul
-dir /s /b /o-D  |perl -e "@arr=<>; map{print ' '.@arr[$_];}(0..7);"
+
+dir /s /b /o-D  |perl -e "@arr=<>; chomp(@arr); @arr_sort = sort{-M $a <=> -M $b}@arr;print join qq{\n}, @arr_sort[0..$ENV{last_few_num}];"
+
 popd
