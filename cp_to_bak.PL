@@ -30,6 +30,9 @@ for $file ( @ARGV_)
         system( " rmdir /s /q $new_copy > %tmp%\log.log 2>&1");
         my $bat_cmd = qq( mkdir $new_copy && xcopy /V /Y /Q /E $_ $new_copy > %tmp%\log.log 2>&1 );
         system( $bat_cmd );
+        my $utime_int = time();
+        utime ($utime_int, $utime_int, $new_copy);
+
         print $new_copy,"\n";
     }
 
@@ -48,8 +51,12 @@ for $file ( @ARGV_)
             
             my $new_copy = 'bak.'  .$base_name.  ".$time_stamp";
             $new_copy = $dir_name ."$SP". $new_copy if $dir_name ne "."; 
+
             unlink $new_copy if -e $new_copy;
             copy( $_old_fn, $new_copy ) or die "Copy failed: $!";
+            my $utime_int = time();
+            utime ($utime_int, $utime_int, $new_copy);
+            
             print " ", $new_copy, "\n";
             }($file);
 
