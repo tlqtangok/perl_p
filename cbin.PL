@@ -1,6 +1,7 @@
 #!perl
 use Cwd; 
 use File::Basename;
+use feature qw(say);
 
 
 my $bin = @ARGV[0]; 
@@ -12,7 +13,8 @@ if ($OS eq "cygwin" || $OS eq "linux"){
 	$raw_which =  `which $bin`; 
 }
 elsif ($OS eq "MSWin32" ){
-	$raw_which =  `where $bin`; 
+	my @where_list =  `where $bin`; 
+    $raw_which = $where_list[0];
 }
 else {
 	die "- error ! you OS is not linux or cygwin or win32 !\n"; 
@@ -23,7 +25,8 @@ if ($raw_which eq ""){
 	die "- no found bin root, please run which bin !\n"; 
 }
 
-chdir (   dirname ( $raw_which ) ) ; 
+my $bin_dir = dirname($raw_which); 
+chdir ($bin_dir); 
 
 
 my $bin_root = &jd_getcwd(); 
