@@ -102,3 +102,5 @@ alias bwa='cd $bwa'
 alias L='perl $perl_p/L.PL'
 alias psh='ps au --sort=lstart'
 alias seq_2_num='perl $perl_p/seq_2_num.PL'
+#alias tfr='docker exec ub_ssh_v4_0 bash /usr/bin/tfr.sh '
+
