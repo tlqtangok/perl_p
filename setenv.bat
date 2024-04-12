@@ -1,15 +1,11 @@
-@echo off 
-pushd %0\..\ >nul 2>&1
-set ROOT=%CD%
-:: jd env list
+
+pushd %0\..
+set ROOT=%cd%
+echo %ROOT%
+
 set t=%ROOT%\t
 set pro=%ROOT%\pro
-set dl=%ROOT%\dl
 set perl_p=%ROOT%\perl_p
 
-
-set PATH=%PATH%;%perl_p%;%pro%\Perl\bin
-
-@echo on 
-
-
+set PATH=%PATH%;___SEP___;%ROOT%\pro\Perl\bin;%ROOT%\pro\npp;%ROOT%\pro\vim\vim80;%ROOT%\pro\git\cmd;%ROOT%\pro\git\mingw64\bin;%ROOT%\pro\git\usr\bin;%ROOT%\perl_p
+popd 
