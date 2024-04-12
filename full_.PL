@@ -7,12 +7,32 @@ use File::Spec;
 my $SP = File::Spec->catfile('', ''); 
 use Cwd 'abs_path';
 
+&main();
 
 
 
+### sub list ###
+sub main()
+{
+    my $dirname_ = $ARGV[0];
+    #print $dirname_;
+
+    my $fn = $ARGV[1];
+    #print $fn; 
+
+    my @fc = `type $fn`; 
+    for (@fc)
+    {
+        s/^/$dirname_\\/;
+        print $_; 
+    }
+
+#system(qq{type $fn| repl "^" "$dirname_\\"} ); 
+}
 
 
 
+=pod
 
 my $if_windows = 'False';
 $if_windows = "True"  if @ENV{WINDIR};
@@ -35,7 +55,6 @@ for $file ( @ARGV_)
     {
     }
 
-    say $abs_path_;
+    print $abs_path_,"\n";
 }
-
-### sub list ###
+=cut
