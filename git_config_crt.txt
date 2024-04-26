@@ -1,0 +1,2 @@
+set pro=xxxx
+git config --system  http.sslcainfo "%pro%\git\mingw64\etc\ssl\certs\ca-bundle.crt"
