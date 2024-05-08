@@ -50,7 +50,7 @@ sub main()
 			}
 
 			eval "\$_=$e_l;"; 
-			say $_;
+			print $_,"\n";
 		}
 	}
 }
