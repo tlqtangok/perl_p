@@ -20,6 +20,7 @@ for $file ( @ARGV_)
         
         $_ = $file;
         chomp; 
+        my $tmp = $ENV{tmp};
         my $_old_fn = $_; 
         my $dir_name = dirname($_); 
         my $base_name = basename($_); 
@@ -27,8 +28,10 @@ for $file ( @ARGV_)
         my $new_copy = 'bak.'.$base_name.".$time_stamp";
         $new_copy = $dir_name . $SP . $new_copy if $dir_name ne ".";
 
-        system( " rmdir /s /q $new_copy > %tmp%\log.log 2>&1");
-        my $bat_cmd = qq( mkdir $new_copy && xcopy /V /Y /Q /E $_ $new_copy > %tmp%\log.log 2>&1 );
+        system( " rmdir /s /q $new_copy ".'> %tmp%\log.log 2>&1');
+        #my $bat_cmd = qq( mkdir $new_copy && xcopy /V /Y /Q /E $_ $new_copy > %tmp%\log.log 2>&1 );
+        my $bat_cmd = qq( robocopy $_ $new_copy  /MIR /SJ ) . '> %tmp%\log.log 2>&1';
+        #print($bat_cmd);
         system( $bat_cmd );
         my $utime_int = time();
         utime ($utime_int, $utime_int, $new_copy);
