@@ -1,7 +1,6 @@
 @echo off
 
 
-
 set argc=0
 for %%x in (%*) do (
     set /a argc+=1
@@ -13,6 +12,6 @@ if  %argc% equ 0 (
 pushd %cd%
 explorer.exe /e, %cd%
 popd
-)else start explorer.exe /select, %1%
+)else explorer.exe /e, %1%
 
 @echo on 
