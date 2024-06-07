@@ -1,6 +1,6 @@
 #!perl
 use strict ;
-use feature qw(say);
+#use feature qw(say);
 use List::Util qw(first sum max shuffle maxstr);
 #use List::MoreUtils qw(uniq);
 use File::Spec::Functions;
@@ -23,6 +23,7 @@ my $curdir = cwd();
 
 #my $edit_log = $curdir."/"."bak_script/watch_folder_log.txt";
 my $g_fn_list = "";
+my %hash_fn_sz = ();
 ##################
 
 &main(); 
@@ -39,13 +40,26 @@ sub main()
 	#cat fn_all.txt |perl -e '@a=<>;chomp(@a);@aa=sort {-s $b <=> -s $a} @a;print "@aa[0..10]";'
 	find(\&save_g_fn_list ,  "$curdir"); 
 
-	my %hash_fn_sz = (); 
-	my $cmd_eval_to_hash =  q{%hash_fn_sz = } . "qw{$g_fn_list}"; 
-	eval($cmd_eval_to_hash); 
+    #my %hash_fn_sz = (); 
+    #my $cmd_eval_to_hash =  q{%hash_fn_sz = } . "qw{$g_fn_list}"; 
+    #eval($cmd_eval_to_hash);
+
+
 
 	my @fn_modified =  sort { $hash_fn_sz{$b} <=> $hash_fn_sz{$a} } keys %hash_fn_sz;
 
-	say join "\n", @fn_modified[0..$num_topn];
+    #print join "\n", @fn_modified[0..$num_topn];
+    my $cnt = 0;
+    for( @fn_modified )
+    {
+       print $_, " || ", $hash_fn_sz{$_}, "\n"; 
+       if ($cnt > $num_topn) 
+       {
+           last;
+       }
+       $cnt++;
+    }
+    print "\n"; 
 }
 
 sub save_g_fn_list()
@@ -54,7 +68,9 @@ sub save_g_fn_list()
         if( &if_fn_match_pattern($fn, \@filter_param_list))
         {
 			# $g_fn_list .= $fn. " " . (stat($fn))[9]."\n"; # modify time
+
                 $g_fn_list .= $fn. " " . (stat($fn))[7]."\n"; # size
+                $hash_fn_sz{$fn} = (stat($fn))[7];
         }
 }
 
