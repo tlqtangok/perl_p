@@ -40,8 +40,8 @@ sub main()
 	}
 	else
 	{
-		say "- perl filter_src_fn.PL fn_all.txt h c cu";
-		say "- perl filter_src_fn.PL DEBUG";
+		print "- perl filter_src_fn.PL fn_all.txt h c cu\n";
+		print "- perl filter_src_fn.PL DEBUG\n";
 		die;
 	}
 	###
@@ -68,7 +68,7 @@ sub main()
 				{
 					if ($e =~ m/\.$e_filter$/)
 					{
-						say $e;
+						print $e,"\n";
 						last;
 					}
 				}
@@ -79,7 +79,7 @@ sub main()
 	}
 
 	#say Dumper(\%hash_suffix);
-	($DEBUG) && say ("--------\n",(join "\n",  (sort (keys %hash_suffix))), "\n-----\n");
+	($DEBUG) && print ("--------\n",(join "\n",  (sort (keys %hash_suffix))), "\n-----\n\n");
 
 
 }
