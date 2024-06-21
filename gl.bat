@@ -1,3 +1,3 @@
 @echo off 
-git log --all -n 11 
+git log --all -8
 @echo on 
