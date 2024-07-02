@@ -31,6 +31,8 @@ my %hash_fn_sz = ();
 ### sub list ###
 sub main()
 {
+    my $os_type = $^O; # MSWin32 | linux | darwin
+
 	my $num_topn = 11; 
 	if (@ARGV > 0)
 	{
@@ -52,7 +54,15 @@ sub main()
     my $cnt = 0;
     for( @fn_modified )
     {
-       print $_, " || ", $hash_fn_sz{$_}, "\n"; 
+    
+        my $fn_full = $_;
+        if ($os_type eq "MSWin32")
+        {
+            $fn_full =~ s|\/|\\|g;
+        }
+
+        print $fn_full, " || ", $hash_fn_sz{$_}, "\n"; 
+
        if ($cnt > $num_topn) 
        {
            last;
