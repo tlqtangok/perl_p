@@ -64,6 +64,7 @@ sub main()
     # read this windows dos cmd history, append to global history
     my @this_history = `doskey /HISTORY`;
     @this_history = grep {!m/^h.?$/} @this_history; 
+    @this_history = grep {!m/^! /} @this_history; 
 
     my $h_idx = 0;
 

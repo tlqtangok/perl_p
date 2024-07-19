@@ -42,6 +42,7 @@ sub main()
         $line_num = $ARGV[0]; 
     }
 
+    my $roi_cml = "";
     my $fn_cmd_exe_history = $ENV{tmp}.$SP."his_cmd.txt";
 
     open my $FILE_fn_cmd_exe_history, "<", $fn_cmd_exe_history or die; 
@@ -50,10 +51,15 @@ sub main()
 
     if (@fc_cmd_exe_history < $line_num )
     {
-        die " error ! no this idx $line_num cmd!\n";
+        $roi_cml = "";
     }
 
-    my $roi_cml = $fc_cmd_exe_history[$line_num]; 
+    if ("$line_num" =~ m/^\d{1,3}$/)
+    {
+        $roi_cml = $fc_cmd_exe_history[$line_num]; 
+    }
+
+
 
     $roi_cml =~ s/^.*?\d //;
 
@@ -63,6 +69,7 @@ sub main()
     my $fc_cml_to_write = q{@echo off}. "\n".
     $roi_cml.
     q{@echo on}; 
+
     print $FILE_roi_cmd $fc_cml_to_write;
 
     close $FILE_roi_cmd; 
