@@ -36,78 +36,40 @@ sub main()
 {
     my $os_type = $^O; # MSWin32 | linux | darwin
 
-
-    my $roi_num = 222;
+    my $line_num = 0; 
+    if (@ARGV > 0)
+    {
+        $line_num = $ARGV[0]; 
+    }
 
     my $fn_cmd_exe_history = $ENV{tmp}.$SP."his_cmd.txt";
 
-    # read cmd txt , get roi lines,strip the idx
-    my @fc_cmd_exe_history = ();
+    open my $FILE_fn_cmd_exe_history, "<", $fn_cmd_exe_history or die; 
+    my @fc_cmd_exe_history = <$FILE_fn_cmd_exe_history>;
+    close $FILE_fn_cmd_exe_history; 
 
-    open my $FILE_fn_cmd_exe_history, "<", $fn_cmd_exe_history;
-    if ( not defined $FILE_fn_cmd_exe_history)
-    {}
-    else
+    if (@fc_cmd_exe_history < $line_num )
     {
-        @fc_cmd_exe_history = <$FILE_fn_cmd_exe_history>;
-        close $FILE_fn_cmd_exe_history;
+        die " error ! no this idx $line_num cmd!\n";
     }
 
-    if (@fc_cmd_exe_history>$roi_num)
-    {
-        @fc_cmd_exe_history = @fc_cmd_exe_history[0..$roi_num];
-    }
-    map { $_ =~ s/^.*?\d //; }(@fc_cmd_exe_history);
-    ######
+    my $roi_cml = $fc_cmd_exe_history[$line_num]; 
+
+    $roi_cml =~ s/^.*?\d //;
+
+    my $fn_roi_cmd = $ENV{tmp}.$SP."e_his_cmd.bat";
+    open my $FILE_roi_cmd, ">" , $fn_roi_cmd or die;
     
+    my $fc_cml_to_write = q{@echo off}. "\n".
+    $roi_cml.
+    q{@echo on}; 
+    print $FILE_roi_cmd $fc_cml_to_write;
 
-    # read this windows dos cmd history, append to global history
-    my @this_history = `doskey /HISTORY`;
-    @this_history = grep {!m/^h.?$/} @this_history; 
+    close $FILE_roi_cmd; 
 
-    my $h_idx = 0;
+    #system($roi_cml); 
 
 
-    for my $e (@this_history)
-    {
-        my $new_insert = $e; 
-        my $idx_exist = &smart_match2($e, \@fc_cmd_exe_history);
-        if ($idx_exist != -1)  # exists
-        {
-            my $new_insert = splice @fc_cmd_exe_history, $idx_exist,1;
-        }
-
-        if ($new_insert !~ m/h.$/)
-        {
-            push @fc_cmd_exe_history, $new_insert;
-        }
-
-        $h_idx++;
-    }
-    ######
-
-    # add idx for cmd list 
-    $h_idx = 0;
-    my @idx_fc_cmd = (); 
-    for my $e (@fc_cmd_exe_history)
-    {
-        my $h_idx_str = sprintf("%3s",$h_idx."");
-        my $e_new = "$h_idx_str $e"; 
-        push @idx_fc_cmd, $e_new;
-        $h_idx++;
-    }
-
-    #######
-
-    # output idx+cmd list to cmd txt
-    my $fc_string = join "", @idx_fc_cmd; 
-
-    open my $FILE_fn_cmd_exe_history,">" , $fn_cmd_exe_history or die;  
-    print $FILE_fn_cmd_exe_history $fc_string; 
-    close $FILE_fn_cmd_exe_history;
-
-    print $fc_string;
-    ######
 
 }
 
