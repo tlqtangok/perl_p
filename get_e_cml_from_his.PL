@@ -65,7 +65,16 @@ sub main()
 
     my $fn_roi_cmd = $ENV{tmp}.$SP."e_his_cmd.bat";
     open my $FILE_roi_cmd, ">" , $fn_roi_cmd or die;
+
+
+    if ($roi_cml eq "")
+    {
     
+    }
+    else
+    {
+       print STDERR $roi_cml; 
+    }
     my $fc_cml_to_write = q{@echo off}. "\n".
     $roi_cml.
     q{@echo on}; 
