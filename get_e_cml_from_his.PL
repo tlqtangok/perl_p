@@ -73,7 +73,17 @@ sub main()
     }
     else
     {
-       print STDERR $roi_cml; 
+
+        my $h_idx = @fc_cmd_exe_history + 0; 
+        my $h_idx_str = sprintf("%3s",$h_idx."");
+
+        open my $FILE_fn_cmd_exe_history, ">>", $fn_cmd_exe_history or die; 
+        print $FILE_fn_cmd_exe_history "$h_idx_str $roi_cml"; 
+        #print  "$h_idx_str $roi_cml"; 
+
+        close $FILE_fn_cmd_exe_history; 
+
+        print STDERR $roi_cml; 
     }
     my $fc_cml_to_write = q{@echo off}. "\n".
     $roi_cml.

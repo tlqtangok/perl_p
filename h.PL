@@ -68,6 +68,7 @@ sub main()
 
     my $h_idx = 0;
 
+    my $old_last_cml = $fc_cmd_exe_history[-1]; 
 
     for my $e (@this_history)
     {
@@ -86,10 +87,20 @@ sub main()
         $h_idx++;
     }
     ######
+    
+    # save old last one to tail end ->prev
+    if (@fc_cmd_exe_history > 0)
+    {
+        my $last_t = $fc_cmd_exe_history[-1];
+        $fc_cmd_exe_history[-1] = $old_last_cml;
+        push @fc_cmd_exe_history, $last_t;
+    }
+    ######
 
     # add idx for cmd list 
     $h_idx = 0;
     my @idx_fc_cmd = (); 
+
     for my $e (@fc_cmd_exe_history)
     {
         my $h_idx_str = sprintf("%3s",$h_idx."");
@@ -97,6 +108,7 @@ sub main()
         push @idx_fc_cmd, $e_new;
         $h_idx++;
     }
+
 
     #######
 
