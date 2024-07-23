@@ -21,6 +21,12 @@ my $SP = File::Spec->catfile('', '');
 
 ### global var ###
 
+my $g_cml_pat = "NULL_PAT";
+if (@ARGV > 0)
+{
+    $g_cml_pat = $ARGV[0];
+}
+
 my @filter_param_list = qw(); 
 my $curdir = cwd();
 
@@ -29,11 +35,12 @@ my $g_fn_list = "";
 my %hash_fn_sz = ();
 ##################
 
-&main(); 
+&main($g_cml_pat); 
 
 ### sub list ###
-sub main()
+sub main($)
 {
+    my $cml_pat  = shift; 
     my $os_type = $^O; # MSWin32 | linux | darwin
 
 
@@ -119,7 +126,36 @@ sub main()
     print $FILE_fn_cmd_exe_history $fc_string; 
     close $FILE_fn_cmd_exe_history;
 
-    print $fc_string;
+    # filter print 
+    my @ret_fc_cmd = (); 
+    my %h_cmd = (); 
+
+   
+    if ($cml_pat ne "NULL_PAT")
+    {
+        #my $v_last_line = pop (@idx_fc_cmd);
+    }
+    for my $e (reverse @idx_fc_cmd)
+    {
+        my $old_e = $e; 
+        $e =~ s/^.*?\d //;
+
+        if ($cml_pat eq "NULL_PAT" or $e =~ m/$cml_pat/i)
+        {
+            if (not exists $h_cmd{$e}) 
+            {
+                push @ret_fc_cmd, $old_e; 
+            }
+            $h_cmd{$e}++;
+        }
+    }
+
+    @ret_fc_cmd = reverse @ret_fc_cmd;
+    
+    #######
+    
+    # print out to console
+    print join "", @ret_fc_cmd;
     ######
 
 }
