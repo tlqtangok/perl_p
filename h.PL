@@ -62,7 +62,9 @@ sub main($)
 
     if (@fc_cmd_exe_history>$roi_num)
     {
-        @fc_cmd_exe_history = @fc_cmd_exe_history[0..$roi_num];
+        my $sloc = @fc_cmd_exe_history - $roi_num;
+        my $eloc = @fc_cmd_exe_history - 1;
+        @fc_cmd_exe_history = @fc_cmd_exe_history[$sloc..$eloc];
     }
     map { $_ =~ s/^.*?\d //; }(@fc_cmd_exe_history);
     ######
