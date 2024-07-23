@@ -135,6 +135,7 @@ sub main($)
     {
         my $old_e = $e; 
         $e =~ s/^.*?\d //;
+        $e =~ s/\s+?$//g;
 
         if ($cml_pat eq "NULL_PAT" or $e =~ m/$cml_pat/i)
         {
