@@ -131,10 +131,6 @@ sub main($)
     my %h_cmd = (); 
 
    
-    if ($cml_pat ne "NULL_PAT")
-    {
-        #my $v_last_line = pop (@idx_fc_cmd);
-    }
     for my $e (reverse @idx_fc_cmd)
     {
         my $old_e = $e; 
@@ -142,7 +138,7 @@ sub main($)
 
         if ($cml_pat eq "NULL_PAT" or $e =~ m/$cml_pat/i)
         {
-            if (not exists $h_cmd{$e}) 
+            if (not exists $h_cmd{$e} and $e !~ m/^h /) 
             {
                 push @ret_fc_cmd, $old_e; 
             }
@@ -151,6 +147,7 @@ sub main($)
     }
 
     @ret_fc_cmd = reverse @ret_fc_cmd;
+
     
     #######
     
