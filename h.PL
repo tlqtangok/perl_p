@@ -20,33 +20,23 @@ my $SP = File::Spec->catfile('', '');
 
 
 ### global var ###
-
-my $g_cml_pat = "NULL_PAT";
-if (@ARGV > 0)
-{
-    $g_cml_pat = $ARGV[0];
-}
-
-my @filter_param_list = qw(); 
-my $curdir = cwd();
-
-#my $edit_log = $curdir."/"."bak_script/watch_folder_log.txt";
-my $g_fn_list = "";
-my %hash_fn_sz = ();
+my $g_cml_pat = $ARGV[0] || "NULL_PAT";
+my $g_roi_num = 222;
+my $g_fn_cmd_exe_history = $ENV{tmp}.$SP."his_cmd.txt";
 ##################
 
-&main($g_cml_pat); 
+&main($g_cml_pat, $g_roi_num, $g_fn_cmd_exe_history); 
 
 ### sub list ###
-sub main($)
+sub main($,$,$)
 {
     my $cml_pat  = shift; 
+    my $roi_num  = shift; 
+    my $fn_cmd_exe_history = shift;
+
     my $os_type = $^O; # MSWin32 | linux | darwin
 
 
-    my $roi_num = 222;
-
-    my $fn_cmd_exe_history = $ENV{tmp}.$SP."his_cmd.txt";
 
     # read cmd txt , get roi lines,strip the idx
     my @fc_cmd_exe_history = ();
@@ -75,8 +65,6 @@ sub main($)
     @this_history = grep {!m/^h.?$/} @this_history; 
     @this_history = grep {!m/^! /} @this_history; 
 
-    my $h_idx = 0;
-
     my $old_last_cml = $fc_cmd_exe_history[-1]; 
 
     for my $e (@this_history)
@@ -93,7 +81,6 @@ sub main($)
             push @fc_cmd_exe_history, $new_insert;
         }
 
-        $h_idx++;
     }
     ######
     
@@ -107,7 +94,7 @@ sub main($)
     ######
 
     # add idx for cmd list 
-    $h_idx = 0;
+    my $h_idx = 0;
     my @idx_fc_cmd = (); 
 
     for my $e (@fc_cmd_exe_history)
