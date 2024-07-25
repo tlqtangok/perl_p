@@ -30,6 +30,7 @@ my $g_fn_cmd_exe_history = $ENV{tmp}.$SP."his_cmd.txt";
 ### sub list ###
 sub main($,$,$)
 {
+    $| = 1;
     my $cml_pat  = shift; 
     my $roi_num  = shift; 
     my $fn_cmd_exe_history = shift;

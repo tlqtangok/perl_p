@@ -64,6 +64,8 @@ sub main()
     $roi_cml =~ s/^.*?\d //;
 
     my $fn_roi_cmd = $ENV{tmp}.$SP."e_his_cmd.bat";
+
+    $| = 1; 
     open my $FILE_roi_cmd, ">" , $fn_roi_cmd or die;
 
 
@@ -90,6 +92,7 @@ sub main()
     q{@echo on}; 
 
     print $FILE_roi_cmd $fc_cml_to_write;
+
 
     close $FILE_roi_cmd; 
 
