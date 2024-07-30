@@ -34,6 +34,7 @@ my %hash_fn_sz = ();
 ### sub list ###
 sub main()
 {
+    $| = 1;
     my $os_type = $^O; # MSWin32 | linux | darwin
 
     my $line_num = 0; 
