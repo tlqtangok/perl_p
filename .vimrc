@@ -123,5 +123,9 @@ let @g='yiw:vim /\<0\>(.*\n\{0,1\}{/##'
 let @s='yiw:vim /\<0\>/##'
 let @f=':!ctags -L %:args `cat %`:bf'
 let @i='i ____V:s/____/\=strftime("%Y-%m-%d")/:i'
+let @m=':!perl -pe "s/^/J/;"  '
+let @c=':!perl $perl_p/comment_lines.PL "//"  '
+let @p=':!perl $perl_p/comment_lines.PL "\#"  '
+
 
 " jd end
