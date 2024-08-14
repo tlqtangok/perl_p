@@ -66,8 +66,6 @@ sub main()
 
     my $fn_roi_cmd = $ENV{tmp}.$SP."e_his_cmd.bat";
 
-    $| = 1; 
-    open my $FILE_roi_cmd, ">" , $fn_roi_cmd or die;
 
 
     if ($roi_cml eq "")
@@ -92,14 +90,12 @@ sub main()
     $roi_cml.
     q{@echo on}; 
 
+    $| = 1; 
+    open my $FILE_roi_cmd, ">" , $fn_roi_cmd or die;
     print $FILE_roi_cmd $fc_cml_to_write;
-
-
     close $FILE_roi_cmd; 
 
-    #system($roi_cml); 
-
-
+    select(undef,undef,undef,0.35);   # sleep 0.35 s 
 
 }
 
