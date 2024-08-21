@@ -88,7 +88,7 @@ sub main()
     }
     my $fc_cml_to_write = q{@echo off}. "\n".
     $roi_cml.
-    q{@echo on}; 
+    q{@echo on} . "\n"; 
 
     $| = 1; 
     open my $FILE_roi_cmd, ">" , $fn_roi_cmd or die;

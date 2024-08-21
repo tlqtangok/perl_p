@@ -21,7 +21,7 @@ my $SP = File::Spec->catfile('', '');
 
 ### global var ###
 my $g_cml_pat = $ARGV[0] || "NULL_PAT";
-my $g_roi_num = 222;
+my $g_roi_num = 444;
 my $g_fn_cmd_exe_history = $ENV{tmp}.$SP."his_cmd.txt";
 ##################
 
@@ -113,7 +113,9 @@ sub main($,$,$)
     my $fc_string = join "", @idx_fc_cmd; 
 
     open my $FILE_fn_cmd_exe_history,">" , $fn_cmd_exe_history or die;  
+    $FILE_fn_cmd_exe_history->autoflush(1);
     print $FILE_fn_cmd_exe_history $fc_string; 
+    $FILE_fn_cmd_exe_history->autoflush(1);
     close $FILE_fn_cmd_exe_history;
 
     # filter print 

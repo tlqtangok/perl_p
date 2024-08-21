@@ -114,8 +114,14 @@ sub is_commented(\@fc,$comment_str)
     {
         if (m/\S/)
         {
-            if (index($_, $comment_str." ")!=-1)
+            my $loc_comment = index($_, $comment_str." ");
+            if ($loc_comment!=-1)
             {
+               my $prefix = substr $_, 0, $loc_comment; 
+               if ($prefix =~ m/\S/)
+               {
+                   $ret_str = "NOT_COMMENTED";
+               }
             }
             else
             {
