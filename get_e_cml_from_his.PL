@@ -27,6 +27,7 @@ my $curdir = cwd();
 #my $edit_log = $curdir."/"."bak_script/watch_folder_log.txt";
 my $g_fn_list = "";
 my %hash_fn_sz = ();
+$| = 1;
 ##################
 
 &main(); 
@@ -92,10 +93,12 @@ sub main()
 
     $| = 1; 
     open my $FILE_roi_cmd, ">" , $fn_roi_cmd or die;
+    $FILE_roi_cmd->autoflush(1);
     print $FILE_roi_cmd $fc_cml_to_write;
+    $FILE_roi_cmd->autoflush(1);
     close $FILE_roi_cmd; 
 
-    select(undef,undef,undef,0.35);   # sleep 0.35 s 
+    select(undef,undef,undef,0.15);   # sleep 0.15 s 
 
 }
 
