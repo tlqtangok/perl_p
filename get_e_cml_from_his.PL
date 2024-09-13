@@ -71,7 +71,7 @@ sub main()
 
     if ($roi_cml eq "")
     {
-    
+        print "\$roi_cml is NULL\n";
     }
     else
     {
