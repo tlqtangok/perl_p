@@ -1,0 +1,15 @@
+#define SQRAY_INCLUDE_PATH "D:\jd\t\git\sq2dz\productnamelide_demo\productnamelide_demo\productnamelide_20240202_x64\windows\include\productnamelideservice.h"
+#define SQRAY_LIB_PATH "D:\\jd\\t\\git\\sq2dz\\productnamelide_demo\\productnamelide_demo\\productnamelide_20240202_x64\\windows\\lib\\"
+
+
+#pragma comment(lib, SQRAY_LIB_PATH "productname0.lib")
+#pragma comment(lib, SQRAY_LIB_PATH "productname1.lib")
+#pragma comment(lib, SQRAY_LIB_PATH "productname2.lib")
+#pragma comment(lib, SQRAY_LIB_PATH "productname3.lib")
+
+#include SQRAY_INCLUDE_PATH
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <direct.h>
+using namespace std;
