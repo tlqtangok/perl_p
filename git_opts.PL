@@ -140,19 +140,19 @@ sub git_save()
 {
     system("git fetch");
 
-    my @fc = `git status -s`; 
-    chomp(@fc);
+    my @fc_local_modify = `git status -s`; 
+    chomp(@fc_local_modify);
 
-    @fc = grep {m/^M.? |^ M.? /} @fc;
+    @fc_local_modify = grep {m/^M.? |^ M.? /} @fc_local_modify;
 
     # strip ^M 
-    map{ my @a = split m/\s+/;    $_ = $a[-1]; }@fc; 
+    map{ my @a = split m/\s+/;    $_ = $a[-1]; }@fc_local_modify; 
 
     my $HEAD_COMMIT_ID = &get_git_commit_id();
 
     $HEAD_COMMIT_ID = substr $HEAD_COMMIT_ID, 0, 7;
 
-    my $fn_all_str = join "", @fc;
+    my $fn_all_str = join "", @fc_local_modify;
     my $fn_tgz = "./$g_t0/$HEAD_COMMIT_ID.tgz";
 
     my @fn_list_edit = &get_edit_filelist($HEAD_COMMIT_ID);
@@ -172,26 +172,44 @@ sub git_save()
 
 
 
-    if (@fn_list_edit == 0)
+    if (@fn_list_edit == 0 )
     {
         # no summits
-        print ("- no new commits\n");
+        print ("- no new commits, don't need merge\n");
     }
     else
     {
 
-        open my $FP, ">" , $fn_new_commits or die;
-        print $FP join "\n", @fn_list_edit;
-        close $FP; 
 
-        $cml_tar_all .= " $fn_new_commits";
+        if (@fc_local_modify == 0)
+        {
+            print ("\n","- no local modify","\n");
+            print ("now , run:\n");
+            print "######","\n";
+            print ("git_reset\n");
+            print "######","\n";
+        }
+        else
+        {
+            # have commits and local modify
+            open my $FP, ">" , $fn_new_commits or die;
+            print $FP join "\n", @fn_list_edit;
+            close $FP; 
 
-        print $cml_tar_all,"\n";
-        system($cml_tar_all); 
+            $cml_tar_all .= " $fn_new_commits";
 
-        system("del $fn_new_commits");
+            print $cml_tar_all,"\n";
+            system($cml_tar_all); 
 
-        print "\n";
+            system("del $fn_new_commits");
+
+            print "\n";
+            print ("now , run:\n");
+            print "######","\n";
+            print ("git_reset\n");
+            print ("git_merge\n");
+            print "######","\n";
+        }
     }
 
 
@@ -270,7 +288,12 @@ sub git_merge()
     my @cml_vimdiff_all = &tag_edit_fn(\@g_arr_fn_list, \@fn_list_edit);
 
 
+
+
+    print ("now , run cml to merge:\n");
+    print "######","\n";
     map{print; print "\n";}@cml_vimdiff_all;
+    print "######","\n";
 
     return @cml_vimdiff_all;
 
