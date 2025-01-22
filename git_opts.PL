@@ -188,6 +188,9 @@ sub git_save()
 
         print $cml_tar_all,"\n";
         system($cml_tar_all); 
+
+        system("del $fn_new_commits");
+
         print "\n";
     }
 
