@@ -152,7 +152,7 @@ sub git_save()
 
     $HEAD_COMMIT_ID = substr $HEAD_COMMIT_ID, 0, 7;
 
-    my $fn_all_str = join "", @fc_local_modify;
+    my $fn_all_str = join " ", @fc_local_modify;
     my $fn_tgz = "./$g_t0/$HEAD_COMMIT_ID.tgz";
 
     my @fn_list_edit = &get_edit_filelist($HEAD_COMMIT_ID);
@@ -167,6 +167,7 @@ sub git_save()
 
     if (! -d "./$g_t0")
     {
+        print ( "make_path $g_t0", "\n" );
         make_path("./$g_t0");
     }
 
