@@ -85,48 +85,6 @@ sub main()
         &git_merge();
     }
 
-
-    # find(\&save_g_fn_list ,  "$curdir/$g_t0"); 
-
-
-    # print $g_fn_list;
-
-
-    # my @fn_list_edit = &get_edit_filelist();
-
-    # my @cml_vimdiff_all = &tag_edit_fn(\@g_arr_fn_list, \@fn_list_edit);
-
-    # print join "\n", @cml_vimdiff_all;
-
-    #my %hash_fn_sz = (); 
-    #my $cmd_eval_to_hash =  q{%hash_fn_sz = } . "qw{$g_fn_list}"; 
-    #eval($cmd_eval_to_hash);
-
-
-
-    # my @fn_modified =  sort { $hash_fn_sz{$b} <=> $hash_fn_sz{$a} } keys %hash_fn_sz;
-
-    # #print join "\n", @fn_modified[0..$num_topn];
-    # my $cnt = 0;
-    # for( @fn_modified )
-    # {
-
-    #     my $fn_full = $_;
-    #     if ($os_type eq "MSWin32")
-    #     {
-    #         $fn_full =~ s|\/|\\|g;
-    #     }
-
-    #     print $fn_full, " || ", $hash_fn_sz{$_}, "\n"; 
-
-    #    if ($cnt > $num_topn) 
-    #    {
-    #        last;
-    #    }
-    #    $cnt++;
-    # }
-    # print "\n"; 
-
 }
 
 sub get_git_commit_id()
@@ -172,6 +130,13 @@ sub git_save()
     }
 
 
+    my $cnt_same = 0;
+
+    my @cml_vimdiff_all = &tag_edit_fn(\@fc_local_modify, \@fn_list_edit);
+   
+    my @fn_edit_same = grep{m/^gvim/;}@cml_vimdiff_all;
+   
+
 
     if (@fn_list_edit == 0 )
     {
@@ -188,6 +153,14 @@ sub git_save()
             print ("now , run:\n");
             print "######","\n";
             print ("git_reset\n");
+            print "######","\n";
+        }
+        elsif  (@fn_edit_same==0)
+        {
+            print ("\n","- find local modify, but remote depot change other files","\n");
+            print ("now , run:\n");
+            print "######","\n";
+            print ("git pull\n");
             print "######","\n";
         }
         else
