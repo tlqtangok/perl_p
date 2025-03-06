@@ -117,6 +117,7 @@ let @f=':!ctags -L %:args `type %`:bf'
 let @i='i ____V:s/____/\=strftime("%Y-%m-%d")/:i'
 let @c=':!perl \%perl_p\%\\comment_lines.PL "//"  '
 let @p=':!perl \%perl_p\%\\comment_lines.PL "\#"  '
+let @a=':let @+=expand("%:p")"'
 
 
 " jd end 

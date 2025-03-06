@@ -126,6 +126,6 @@ let @i='i ____V:s/____/\=strftime("%Y-%m-%d")/:i'
 let @m=':!perl -pe "s/^/J/;"  '
 let @c=':!perl $perl_p/comment_lines.PL "//"  '
 let @p=':!perl $perl_p/comment_lines.PL "\#"  '
-
+let @a=':let @a=expand("%:p")"'
 
 " jd end
