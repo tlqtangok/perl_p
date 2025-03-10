@@ -17,6 +17,8 @@ use strict;
 use threads;
 use IO::Handle;
 use File::Path;
+use File::Path qw(mkpath);
+use File::Spec::Functions qw( canonpath );  
 
 
 
@@ -114,6 +116,11 @@ sub git_save()
     my $fn_tgz = "./$g_t0/$HEAD_COMMIT_ID.tgz";
 
     my @fn_list_edit = &get_edit_filelist($HEAD_COMMIT_ID);
+
+
+    print "get_edit_filelist: @fn_list_edit"; 
+    print("\n"); 
+
     my $fn_new_commits = "$HEAD_COMMIT_ID".".txt";
 
     
@@ -121,18 +128,33 @@ sub git_save()
     
 
     $fn_tgz = File::Spec->abs2rel($fn_tgz, $curdir);  
+
+    
     my $cml_tar_all = "tar cvzf ".  $fn_tgz .  " $fn_all_str";
+    print "cml_tar_all: $cml_tar_all"; 
+    print("\n"); 
 
     if (! -d "./$g_t0")
     {
         print ( "make_path $g_t0", "\n" );
-        make_path("./$g_t0");
+        mkpath("./$g_t0");
     }
 
 
     my $cnt_same = 0;
 
+
+
+    # print "fc_local_modify: @fc_local_modify";
+    # print("\n"); 
+    # print "fn_list_edit:@fn_list_edit"; 
+    # print("\n"); 
+
     my @cml_vimdiff_all = &tag_edit_fn(\@fc_local_modify, \@fn_list_edit);
+
+    # print "cml_vimdiff_all: @cml_vimdiff_all"; 
+    # print("\n"); 
+
    
     my @fn_edit_same = grep{m/^gvim/;}@cml_vimdiff_all;
    
@@ -231,7 +253,13 @@ sub git_merge()
     my @fn_local = qx($cml_tar_all);  # system
 
 
+    # print "fn_local: @fn_local"; 
+    # print("\n"); 
+
     map{ my @a=split m/\s+/; $_=$a[-1]; }@fn_local;
+
+    # print "fn_local: @fn_local"; 
+    # print("\n"); 
     
 
 
@@ -240,6 +268,9 @@ sub git_merge()
 
     @fn_local = grep {! m/$HEAD_COMMIT_ID/} @fn_local;
 
+    # print "fn_local: @fn_local"; 
+    # print("\n"); 
+
     map
     {
 
@@ -247,16 +278,19 @@ sub git_merge()
         chomp($fn_git_fetch);
         my $fn = "./$g_t0/$fn_git_fetch"; 
         $fn = File::Spec->abs2rel($fn, $curdir);  
-        push @g_arr_fn_list, "$fn ___ $fn_git_fetch"; 
+        push @g_arr_fn_list, "${fn}___${fn_git_fetch}"; 
+
     }@fn_local;
 
-    # print @g_arr_fn_list;
+    # print "g_arr_fn_list: @g_arr_fn_list";
+    # print("\n"); 
 
 
     my @fn_list_edit = &get_edit_filelist($HEAD_COMMIT_ID);
 
 
-    # print @fn_list_edit;
+    # print "fn_list_edit:@fn_list_edit";
+    # print "\n"; 
 
 
     my @cml_vimdiff_all = &tag_edit_fn(\@g_arr_fn_list, \@fn_list_edit);
@@ -286,10 +320,18 @@ sub tag_edit_fn(\@g_arr_fn_list, \@fn_list_edit)
     {
         my $fn_diff = $g_arr_fn_list[$i]; 
         chomp($fn_diff);
+
+        my @arr_ = split m/___/, $fn_diff;
+        $fn_diff = $arr_[-1]; 
+
+        chomp($fn_diff);
+
+
+        $fn_diff = &unify_sep($fn_diff, $SP);
        
 
-        my @arr_file = split m/ ___ /, $fn_diff;
-        $fn_diff = $arr_file[1];
+        # my @arr_file = split m/ ___ /, $fn_diff;
+        # $fn_diff = $arr_file[1];
        
 
         my $flag_edit = 0;
@@ -297,6 +339,7 @@ sub tag_edit_fn(\@g_arr_fn_list, \@fn_list_edit)
         {
             my $fn_edit = $fn_list_edit[$j];
             chomp($fn_edit);
+            $fn_edit = &unify_sep($fn_edit, $SP);
 
             if ($fn_edit eq $fn_diff)
             {
@@ -305,7 +348,7 @@ sub tag_edit_fn(\@g_arr_fn_list, \@fn_list_edit)
 
         }
 
-        my $e_cml = "gvim -d $arr_file[0] $arr_file[1]";
+        my $e_cml = "gvim -d .$SP$g_t0$SP$fn_diff $fn_diff";
         if ($flag_edit==1)
         {
         }
@@ -580,6 +623,11 @@ sub run_cmd($cml)
 }
 
 
+sub unify_sep($path, $SP)
+{
+    my ($path,$SP) = @_;  
+    return canonpath($path);
+}
 
 
    
