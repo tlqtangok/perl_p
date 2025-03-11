@@ -100,6 +100,22 @@ sub git_save()
 {
     system("git fetch");
 
+    # count remote and local commit number "5    3" 
+    my $fc_remote_local = `git rev-list --left-right --count origin/master...master`;
+    chomp($fc_remote_local);
+
+    my @arr_remote_local = split m/\s+/, $fc_remote_local;
+    my $cnt_remote_commit = $arr_remote_local[0];
+    my $cnt_local_tocommit = $arr_remote_local[1];
+
+    if ($cnt_local_tocommit != 0)
+    {
+        my $cml_reset_local_comit = "git reset HEAD~" . "${cnt_local_tocommit}"; 
+        print $cml_reset_local_comit, "\n"; 
+        system($cml_reset_local_comit); 
+    }
+
+
     my @fc_local_modify = `git status -s`; 
     chomp(@fc_local_modify);
 
@@ -118,8 +134,8 @@ sub git_save()
     my @fn_list_edit = &get_edit_filelist($HEAD_COMMIT_ID);
 
 
-    print "get_edit_filelist: @fn_list_edit"; 
-    print("\n"); 
+    # print "get_edit_filelist: @fn_list_edit"; 
+    # print("\n"); 
 
     my $fn_new_commits = "$HEAD_COMMIT_ID".".txt";
 
@@ -131,8 +147,8 @@ sub git_save()
 
     
     my $cml_tar_all = "tar cvzf ".  $fn_tgz .  " $fn_all_str";
-    print "cml_tar_all: $cml_tar_all"; 
-    print("\n"); 
+    # print "cml_tar_all: $cml_tar_all"; 
+    # print("\n"); 
 
     if (! -d "./$g_t0")
     {
