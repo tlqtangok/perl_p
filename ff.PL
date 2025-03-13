@@ -67,7 +67,8 @@ for ( @fc ) {
 	push @ans_all, $_; 
 }
 
-say join "\n", @ans_all; 
+print join "\n", @ans_all;
+print "\n";
 #say ; 
 
 
