@@ -30,6 +30,7 @@ if ($pcnt == 2) {
 
     print "LOCAL: $local_file\n";
     print "REMOTE: $remote_file\n";
+    print "\n";
 
     # Start gvimdiff
     system("gvim -f -d \"$local_file\" \"$remote_file\"");
@@ -42,6 +43,7 @@ if ($pcnt == 3) {
     print "LOCAL: $local_file\n";
     print "REMOTE: $remote_file\n";
     print "TO_SAVE: $result_file\n";
+    print "\n";
 
     print "cp -p \"$remote_file\" \"$result_file\"\n";
     if (!copy($remote_file, $result_file)) {
