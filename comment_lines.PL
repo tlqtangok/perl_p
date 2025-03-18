@@ -1,6 +1,11 @@
 #!perl
 use File::Spec;
 use strict;
+use Encode;
+
+
+
+
 my $SP = File::Spec->catfile('', ''); 
 $| = 1;
 
@@ -12,6 +17,9 @@ $| = 1;
 sub main()
 {
 
+    # 设置标准输入和标准输出为 UTF-8 编码
+    binmode(STDIN, ":encoding(UTF-8)");
+    binmode(STDOUT, ":encoding(UTF-8)");
 
     my @fc = (
         '    ',
@@ -60,9 +68,11 @@ sub main()
         $comment_str = $ARGV[0];
     } 
 
-
     map{
         chomp;
+
+        s/^\x{FEFF}//;  # strip bom <feff>
+
         s/\t/    /g; # don't need <TAB>
     }@fc;
 
@@ -102,6 +112,11 @@ sub main()
 
 }
 
+sub is_utf8($)
+{
+    my ($data) = @_;
+    return !($data =~ /[^\x{0000}-\x{007F}\x{00A0}-\x{D7FF}\x{E000}-\x{FFFF}\x{10000}-\x{10FFFF}]/g);
+}
 
 sub is_commented(\@fc,$comment_str)
 {
@@ -345,4 +360,5 @@ sub say($)
     }
     print $str, "\n";
 }
+
 
