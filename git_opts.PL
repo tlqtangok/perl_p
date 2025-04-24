@@ -234,10 +234,15 @@ sub git_reset()
     my $verbose = 0;
     my $TMP = $ENV{tmp};
 
-    my $cml = q{
+    my @origin_master_or_main = `git branch -r`;
+    my $origin_master_or_main_0 = $origin_master_or_main[0];
+
+    $origin_master_or_main_0 =~ s/^.*origin/origin/;
+
+    my $cml = qq{
 
     git fetch --all
-    git reset --hard origin/master
+    git reset --hard $origin_master_or_main_0
     git pull 
 
     };
