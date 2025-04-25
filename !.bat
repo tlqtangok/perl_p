@@ -4,6 +4,13 @@
 SET pcnt=0  
 FOR %%A IN (%*) DO SET /A pcnt+=1  
 
+::count only none-empty
+::SET pcnt=0
+::FOR %%A IN (%*) DO (
+::    IF NOT "%%~A"=="" SET /A pcnt+=1
+::)
+
+
 
 
 set e_his_cmd=%tmp%\e_his_cmd.bat
