@@ -167,7 +167,7 @@ sub main()
         }
         else
         {
-            if ($SP_ELINE =~ m/\w/)
+            if (length $SP_ELINE >= 1)
             {
                 @arr_fc_each = split $SP_ELINE;
             }
