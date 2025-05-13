@@ -17,7 +17,7 @@ set "item=%~1"
 set "item=%item:/=\%"
 if 0 == 1 (
     if exist "%item%" (
-        for %%i in ("%item%") do echo  %%~fi
+        for %%i in ("%item%") do echo %%~fi
     ) else (
         echo   [ERROR] Path not found: %item%
     )
@@ -27,11 +27,12 @@ if exist "%item%" (
     for %%i in ("%item%") do (
         set "unix_path=%%~fi"
         set "unix_path=!unix_path:\=/!"
-        echo   !unix_path!
+        echo  !unix_path!
     )
 ) else (
-    echo   [ERROR] Path not found: %item%
+    echo   [ERROR] Path not found: %item% 1>&2
 )
+
 
 shift
 goto :process
@@ -39,3 +40,7 @@ goto :process
 :end
 ::echo --------------------------------------
 ::echo Processing complete
+::
+::echo.
+
+@echo off

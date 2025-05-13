@@ -19,12 +19,22 @@ set "item=%item:/=\%"
 if exist "%item%" (
     for %%i in ("%item%") do echo  %%~fi
 ) else (
-    echo   [ERROR] Path not found: %item%
+    echo   [ERROR] Path not found: %item% 1>&2
 )
+
 
 shift
 goto :process
 
+
+
+
+
 :end
 ::echo --------------------------------------
 ::echo Processing complete
+::
+
+::echo.
+
+@echo on 
