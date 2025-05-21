@@ -1,0 +1,7 @@
+/home/ubuntu/jd/t/main_cpp_test/main.cpp
+/home/ubuntu/jd/t/main_cpp_test/dep1.h
+/home/ubuntu/jd/t/main_cpp_test/dep.cpp
+/home/ubuntu/jd/t/main_cpp_test/dep1.cpp
+/home/ubuntu/jd/t/main_cpp_test/com.cpp
+/home/ubuntu/jd/t/main_cpp_test/com.h
+/home/ubuntu/jd/t/main_cpp_test/dep.h

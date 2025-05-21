@@ -30,7 +30,13 @@ all:$(elf_file)
 
 $(elf_file):$(o_files)
 	$(CC) $(c_flag) -o $@ $(o_files) $(deps_extra) 
-main.o: main.cpp
+main.o: main.cpp dep.h dep1.h com.h
+	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
+dep.o: dep.cpp dep.h
+	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
+dep1.o: dep1.cpp dep1.h
+	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
+com.o: com.cpp com.h
 	$(CC) $(c_flag) -o $@ -c $< $(deps_extra) 
 #	@echo "c_file is:$(c_files)"; echo "h_files:$(h_files)"; echo "o_files:$(o_files)"
 
