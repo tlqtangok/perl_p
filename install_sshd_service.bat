@@ -109,6 +109,18 @@ echo [COMMAND] %NSSM_CMD% install %service_name% "%service_exe%"
 ::%NSSM_CMD% set %service_name% Type SERVICE_INTERACTIVE_PROCESS
 ::%NSSM_CMD% set %service_name% ObjectName LocalSystem obj= creds=
 
+::d:\jd\t>type gui.bat
+::time /t >> d:\jd\t\log.txt
+
+::C:\Windows\System32\notepad.exe
+
+
+:: :LOOP_0
+::echo sleep 3 seconds
+::timeout /t 3 /nobreak >nul
+::goto LOOP_0
+
+
 if %errorlevel% neq 0 (
     echo ERROR: Failed to install service.
     pause
