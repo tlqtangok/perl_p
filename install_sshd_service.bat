@@ -5,6 +5,7 @@ set service_name=sshd_test
 set display_name=OpenSSH Server Test
 set description=OpenSSH SSH daemon (Test Service)
 set "service_exe=C:\Program Files\OpenSSH\sshd.exe"
+:: set "service_exe=C:\Windows\System32\cmd.exe"
 set "service_dir=C:\Program Files\OpenSSH"
 set "service_log_dir=%userprofile%\OpenSSH\logs"
 set "log_stdout=sshd_stdout.log"
@@ -100,6 +101,14 @@ REM Install the service
 echo [INFO] Installing %service_name% service...
 echo [COMMAND] %NSSM_CMD% install %service_name% "%service_exe%"
 %NSSM_CMD% install %service_name% "%service_exe%"
+
+:: echo [COMMAND] %NSSM_CMD% install %service_name% "%service_exe%" "/c d:\jd\t\gui.bat" "d:\jd\t" confirm
+:: %NSSM_CMD% install %service_name% "%service_exe%" "/c d:\jd\t\gui.bat" "d:\jd\t" confirm
+
+
+::%NSSM_CMD% set %service_name% Type SERVICE_INTERACTIVE_PROCESS
+::%NSSM_CMD% set %service_name% ObjectName LocalSystem obj= creds=
+
 if %errorlevel% neq 0 (
     echo ERROR: Failed to install service.
     pause
