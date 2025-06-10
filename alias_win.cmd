@@ -11,5 +11,5 @@ doskey tart=tar tvzf $*
 ::
 doskey tarx=tar xvzf $* ^>%TEMP%\tarx.log 2^>^&1 ^&^& ^( ^( findstr /N "^" %TEMP%\tarx.log ^| findstr /B /L "11:" ^>NUL 2^>^&1 ^&^& ^( head -n 5 %TEMP%\tarx.log ^&^& echo ... ^&^& tail -n 5 %TEMP%\tarx.log ^) ^|^| ^( type %TEMP%\tarx.log ^) ^) ^| uniq ^)
 ::call d:\jd\setenv.bat
-
+doskey cp=cp -pv $*
 
