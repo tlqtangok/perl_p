@@ -99,19 +99,45 @@ fi
 #    . /etc/bash_completion
 #fi
 ### jd export ###
+export perl_p=/home/ubuntu/jd/perl_p
+export t=/home/ubuntu/jd/t
+
+# h()
+# {
+#     if [ $# -eq 0 ]; then
+#         history
+#     else
+#         history | grep -i "$*"
+#     fi
+# }
+
+
+
 h()
 {
     if [ $# -eq 0 ]; then
-        history
+        history | perl $perl_p/h_linux.PL
     else
-        history | grep -i "$*"
+        history | grep -i "$*" |perl $perl_p/h_linux.PL |grep -i "$*"
     fi
 }
 
 HISTSIZE=5000
-HISTFILESIZE=10000
-export perl_p=/home/ubuntu/jd/perl_p
-export t=/home/ubuntu/jd/t
+HISTFILESIZE=20000
+
+# History configuration to avoid duplicates
+#export HISTCONTROL=ignoreboth:erasedups
+#export HISTTIMEFORMAT="%Y-%m-%d %H:%M:%S "
+
+# Append to history file
+shopt -s histappend
+shopt -s cmdhist
+
+# Update history after each command
+PROMPT_COMMAND="history -a; history -n"
+
+
+
 
 
 #export HISTTIMEFORMAT='%F %T'
@@ -124,6 +150,15 @@ alias s_b='source $perl_p/.bash_aliases'
 if [ "$SSH_TTY" ];then
 s_b
 fi
+
+# eval "$(gh copilot alias -- bash)"
+
+# # fnm
+# FNM_PATH="/root/.local/share/fnm"
+# if [ -d "$FNM_PATH" ]; then
+#   export PATH="$FNM_PATH:$PATH"
+#   eval "`fnm env`"
+# fi
 
 ###################
 
