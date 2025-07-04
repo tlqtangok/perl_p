@@ -102,6 +102,8 @@ fi
 export perl_p=/home/ubuntu/jd/perl_p
 export t=/home/ubuntu/jd/t
 
+alias ls='ls --time-style="+%Y%m%d_%H:%M"'
+
 # h()
 # {
 #     if [ $# -eq 0 ]; then
