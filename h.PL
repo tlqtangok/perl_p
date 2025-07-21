@@ -21,7 +21,7 @@ my $SP = File::Spec->catfile('', '');
 
 ### global var ###
 my $g_cml_pat = $ARGV[0] || "NULL_PAT";
-my $g_roi_num = 444;
+my $g_roi_num = 5000;
 my $g_fn_cmd_exe_history = $ENV{tmp}.$SP."his_cmd.txt";
 ##################
 

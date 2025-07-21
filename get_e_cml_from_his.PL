@@ -56,7 +56,7 @@ sub main()
         $roi_cml = "";
     }
 
-    if ("$line_num" =~ m/^\d{1,3}$/)
+    if ("$line_num" =~ m/^\d{1,4}$/)
     {
         $roi_cml = $fc_cmd_exe_history[$line_num]; 
     }
