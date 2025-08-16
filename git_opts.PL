@@ -244,6 +244,7 @@ sub git_reset()
     git fetch --all
     git reset --hard $origin_master_or_main_0
     git pull 
+    git submodule update --init --recursive
 
     };
 

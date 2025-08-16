@@ -21,7 +21,7 @@ my $SP = File::Spec->catfile('', '');
 
 ### global var ###
 my $g_cml_pat = $ARGV[0] || "NULL_PAT";
-my $g_roi_num = 5000;
+my $g_roi_num = 9999;
 my $g_fn_cmd_exe_history = $ENV{tmp}.$SP."his_cmd.txt";
 ##################
 
@@ -129,7 +129,8 @@ sub main($,$,$)
         $e =~ s/^.*?\d //;
         $e =~ s/\s+?$//g;
 
-        if ($cml_pat eq "NULL_PAT" or $e =~ m/$cml_pat/i)
+        # if ($cml_pat eq "NULL_PAT" or $e =~ m/$cml_pat/i)
+        if ($cml_pat eq "NULL_PAT" or index(lc($e), lc($cml_pat)) != -1)
         {
             if (not exists $h_cmd{$e} and $e !~ m/^h /) 
             {
