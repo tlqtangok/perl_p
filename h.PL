@@ -63,21 +63,48 @@ sub main($,$,$)
 
     # read this windows dos cmd history, append to global history
     my @this_history = `doskey /HISTORY`;
+
     @this_history = grep {!m/^h.?$/} @this_history; 
     @this_history = grep {!m/^! /} @this_history; 
 
+
+    # print "===\n"; 
+    # my @this_history_exec = grep {m/exec/} @this_history;
+    # print join "\n", @this_history_exec;
+    # print "===\n"; 
+
     my $old_last_cml = $fc_cmd_exe_history[-1]; 
+
+    # print "===\n";
+    # my @fc_cmd_exe_history_exec = grep {m/exec/} @fc_cmd_exe_history;
+    # print join "\n", @fc_cmd_exe_history_exec;
+    # print "===\n";
+
 
     for my $e (@this_history)
     {
         my $new_insert = $e; 
+
+        # my $flag_exec = 0;
+        # if ($e =~ m/exec/)
+        # {
+        #     $flag_exec = 1;
+        # }
+
         my $idx_exist = &smart_match2($e, \@fc_cmd_exe_history);
+
+        # if ($flag_exec == 1)
+        # {
+        #     print "idx_exist: $idx_exist, $e \n"; 
+        # }
+
+
         if ($idx_exist != -1)  # exists
         {
             my $new_insert = splice @fc_cmd_exe_history, $idx_exist,1;
         }
 
-        if ($new_insert !~ m/h.$/)
+        if ($new_insert !~ m/^\s+h.$/)
         {
             push @fc_cmd_exe_history, $new_insert;
         }
@@ -100,7 +127,7 @@ sub main($,$,$)
 
     for my $e (@fc_cmd_exe_history)
     {
-        my $h_idx_str = sprintf("%3s",$h_idx."");
+        my $h_idx_str = sprintf("%4s",$h_idx."");
         my $e_new = "$h_idx_str $e"; 
         push @idx_fc_cmd, $e_new;
         $h_idx++;
