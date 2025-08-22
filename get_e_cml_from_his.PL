@@ -58,7 +58,25 @@ sub main()
 
     if ("$line_num" =~ m/^\d{1,4}$/)
     {
-        $roi_cml = $fc_cmd_exe_history[$line_num]; 
+        for my $eline (@fc_cmd_exe_history)
+        {
+            # $eline substr 0,4
+            my $eline_num = substr($eline, 0, 4);
+
+            if ($eline_num == $line_num)
+            {
+                $roi_cml = $eline;
+                last; 
+            }
+        }
+
+        if ($roi_cml eq "")
+        {
+            die "No command found for line number $line_num\n";
+            exit 1; 
+        }
+
+        # $roi_cml = $fc_cmd_exe_history[$line_num-1]; 
     }
 
 
@@ -76,8 +94,9 @@ sub main()
     else
     {
 
-        my $h_idx = @fc_cmd_exe_history + 0; 
-        my $h_idx_str = sprintf("%3s",$h_idx."");
+        my $h_idx = 0; 
+        # my $h_idx = @fc_cmd_exe_history + 0; 
+        my $h_idx_str = sprintf("%4s",$h_idx."");
 
         open my $FILE_fn_cmd_exe_history, ">>", $fn_cmd_exe_history or die; 
         print $FILE_fn_cmd_exe_history "$h_idx_str $roi_cml"; 
@@ -86,6 +105,8 @@ sub main()
         close $FILE_fn_cmd_exe_history; 
 
         print STDERR $roi_cml; 
+
+
     }
     my $fc_cml_to_write = q{@echo off}. "\n".
     $roi_cml.

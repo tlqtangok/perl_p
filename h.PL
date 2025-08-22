@@ -125,12 +125,15 @@ sub main($,$,$)
     my $h_idx = 0;
     my @idx_fc_cmd = (); 
 
+    my $len_fc_cmd_exe = @fc_cmd_exe_history + 0;
+    my $cnt = 0;
     for my $e (@fc_cmd_exe_history)
     {
+        my $h_idx = $len_fc_cmd_exe - $cnt;
         my $h_idx_str = sprintf("%4s",$h_idx."");
         my $e_new = "$h_idx_str $e"; 
         push @idx_fc_cmd, $e_new;
-        $h_idx++;
+        $cnt++;
     }
 
 
