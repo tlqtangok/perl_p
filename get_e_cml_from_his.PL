@@ -58,7 +58,7 @@ sub main()
 
     if ("$line_num" =~ m/^\d{1,4}$/)
     {
-        for my $eline (@fc_cmd_exe_history)
+        for my $eline (reverse @fc_cmd_exe_history)
         {
             # $eline substr 0,4
             my $eline_num = substr($eline, 0, 4);

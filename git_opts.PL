@@ -123,6 +123,7 @@ sub git_save()
 
     # strip ^M 
     map{ my @a = split m/\s+/;    $_ = $a[-1]; }@fc_local_modify; 
+    @fc_local_modify = grep {-f $_}@fc_local_modify; # strip submodule list
 
     my $HEAD_COMMIT_ID = &get_git_commit_id();
 
@@ -234,22 +235,75 @@ sub git_reset()
     my $verbose = 0;
     my $TMP = $ENV{tmp};
 
-    my @origin_master_or_main = `git branch -r`;
+    my @origin_master_or_main = `git branch -r`;  # git ls-remote --symref origin HEAD
     my $origin_master_or_main_0 = $origin_master_or_main[0];
 
     $origin_master_or_main_0 =~ s/^.*origin/origin/;
+
+
+    my @subm_list = `git config --file .gitmodules --get-regexp path`;
+    chomp(@subm_list);
+
 
     my $cml = qq{
 
     git fetch --all
     git reset --hard $origin_master_or_main_0
     git pull 
-    git submodule update --init --recursive
+    ::git submodule update --init --recursive
 
     };
 
 
     my ($ret_code, @fc) = &run_cmd_bat($cml, $verbose);
+
+
+    if (@subm_list > 0)
+    {
+
+        for my $e_subm (@subm_list)
+        {
+            $e_subm =~ s/^.*\.path\s+//;
+
+            my $CURDIR = cwd();
+
+            
+
+            chdir($e_subm) or die "chdir $e_subm error\n";
+
+            print("\ncd $e_subm\n");
+            system("cd");
+
+            my $current_branch = `git branch --show-current`;
+            chomp($current_branch);
+            
+            my @main_or_master = `git ls-remote --symref origin HEAD`;
+            my $main_or_master_0 = $main_or_master[0];
+            chomp($main_or_master_0);
+
+            if ($current_branch !~ m/^master$/ && $current_branch !~ m/^main$/)
+            {
+                if ($main_or_master_0 =~ m/main/)
+                {
+                    system("git checkout main");
+                }
+                else
+                {
+                    system("git checkout master");
+                }
+            }
+
+            print("  run git_reset.bat\n");
+            system("git_reset.bat");
+
+            # print "now run : \n\t"; 
+            # print "cd $e_subm && git fetch --all && git checkout master && git reset --hard origin/master && git pull && cd ..\n";
+
+            chdir($CURDIR) or die "chdir $CURDIR error\n";
+
+        }
+
+    }
 
     # &post_process($ret_code, @fc);
 
