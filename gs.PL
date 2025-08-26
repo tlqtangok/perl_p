@@ -44,8 +44,8 @@ sub main()
 
     @fc_modify = grep{ m/^\s+M\s+/; }@fc_modify;
 
+    my @fc_modify_orig = @fc_modify;
 
-    print join "",@fc_modify;
 
     map{
     chomp; 
@@ -58,8 +58,14 @@ sub main()
         @fc_modify = grep {-f $_;}@fc_modify;
     }
 
-    my $cml_git_add ="\n".  " git add " . join " ",@fc_modify;
-    print $cml_git_add, "\n";
+
+
+    if (@fc_modify>0)
+    {
+        print join "",@fc_modify_orig;
+        my $cml_git_add ="\n".  " git add " . join " ",@fc_modify;
+        print $cml_git_add, "\n";
+    }
 
     # gitsubmodule 
     if (-e $fn_git_submodule)
@@ -85,12 +91,12 @@ sub main()
                 my $cml_cd = "pwd"; 
                 if ($OS =~ m/Win32/)
                 {
-                    $cml_cd = "pwd";
+                    $cml_cd = "cd";
                 }
 
                 my $cd_win = `$cml_cd`;
 
-                print "\nsubmodule:\n", "cd $cd_win";
+                print "\nsubmodule:\n", " cd $cd_win";
                 system("gs");
             }
 

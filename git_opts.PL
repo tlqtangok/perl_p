@@ -241,11 +241,8 @@ sub git_reset()
     $origin_master_or_main_0 =~ s/^.*origin/origin/;
 
 
-    my @subm_list = `git config --file .gitmodules --get-regexp path`;
-    chomp(@subm_list);
 
-
-    my $cml = qq{
+    my $cml_reset = qq{
 
     git fetch --all
     git reset --hard $origin_master_or_main_0
@@ -255,8 +252,17 @@ sub git_reset()
     };
 
 
-    my ($ret_code, @fc) = &run_cmd_bat($cml, $verbose);
+    my ($ret_code, @fc) = &run_cmd_bat($cml_reset, $verbose);
 
+
+    my $fn_submodule = ".gitmodules";
+    if (! -e $fn_submodule)
+    {
+        return ;
+    }
+
+    my @subm_list = `git config --file .gitmodules --get-regexp path`;
+    chomp(@subm_list);
 
     if (@subm_list > 0)
     {
@@ -271,8 +277,7 @@ sub git_reset()
 
             chdir($e_subm) or die "chdir $e_subm error\n";
 
-            print("\ncd $e_subm\n");
-            system("cd");
+            print("\nsubmodule:\n cd $e_subm\n");
 
             my $current_branch = `git branch --show-current`;
             chomp($current_branch);
@@ -293,8 +298,9 @@ sub git_reset()
                 }
             }
 
-            print("  run git_reset.bat\n");
-            system("git_reset.bat");
+            print(" run git_reset.bat\n");
+
+            my ($ret_code, @fc) = &run_cmd_bat($cml_reset, $verbose);
 
             # print "now run : \n\t"; 
             # print "cd $e_subm && git fetch --all && git checkout master && git reset --hard origin/master && git pull && cd ..\n";
