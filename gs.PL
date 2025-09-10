@@ -55,7 +55,16 @@ sub main()
 
     if (-e $fn_git_submodule)
     {
-        @fc_modify = grep {-f $_;}@fc_modify;
+        # print("-b-", "\n");
+        # print join "\n",@fc_modify; 
+        # print("\n");
+
+        @fc_modify = grep {!-d $_;}@fc_modify;
+
+        # print("-e-", "\n");
+        # print join "\n",@fc_modify;
+        # print("------", "\n");
+
     }
 
 
@@ -83,7 +92,22 @@ sub main()
             chdir($e_subm) or die "chdir $e_subm error\n";
 
             my @fc = `$cml_git_status_s`;
+            chomp(@fc);
+
             @fc = grep{ m/^\s+M\s+/; }@fc;
+
+            map{
+                chomp; 
+                my @arr = split m/M\s+/, $_;
+                $_ = $arr[-1];
+            }@fc;
+
+            @fc = grep {!-d $_;}@fc;
+
+
+            # print ("fc in submodule :\n");
+            # print join "\n",@fc;
+
 
             if (@fc>0)
             {
@@ -96,7 +120,7 @@ sub main()
 
                 my $cd_win = `$cml_cd`;
 
-                print "\nsubmodule:\n", " cd $cd_win";
+                print "\nsubmodule:\n", " cd $cd_win\n";
                 system("gs");
             }
 

@@ -93,11 +93,13 @@ sub get_git_commit_id()
 {
     my $HEAD_COMMIT_ID = `git rev-parse HEAD`;
     chomp($HEAD_COMMIT_ID);
+
     return $HEAD_COMMIT_ID;
 }
 
 sub git_save()
 {
+
     system("git fetch");
 
     # count remote and local commit number "5    3" 
@@ -123,9 +125,11 @@ sub git_save()
 
     # strip ^M 
     map{ my @a = split m/\s+/;    $_ = $a[-1]; }@fc_local_modify; 
-    @fc_local_modify = grep {-f $_}@fc_local_modify; # strip submodule list
+    @fc_local_modify = grep {! -d $_}@fc_local_modify; # strip submodule list
 
     my $HEAD_COMMIT_ID = &get_git_commit_id();
+
+    print $HEAD_COMMIT_ID, "\n";
 
     $HEAD_COMMIT_ID = substr $HEAD_COMMIT_ID, 0, 7;
 
