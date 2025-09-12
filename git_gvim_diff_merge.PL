@@ -26,11 +26,31 @@ if ($pcnt != 2 && $pcnt != 3) {
 }
 
 if ($pcnt == 2) {
-    my ($local_file, $remote_file) = @ARGV;
+    my ($remote_file, $local_file) = @ARGV;
 
-    print "LOCAL: $local_file\n";
-    print "REMOTE: $remote_file\n";
+    print "P0: $remote_file\n";
+    print "P1: $local_file\n";
     print "\n";
+
+
+    my $local_win_path = $local_file;
+    $local_win_path =~ s|\\|\/|g;  # to unix style path
+
+    # print $local_win_path . "\n";
+    open my $fh_local, '<', $local_file or die "Could not open file '$local_file' $!";
+    my @fc_local = <$fh_local>;
+    close $fh_local;
+
+    # print "line 1: " . $fc_local[0] . "\n";
+    # print "Local file content:\n";
+    # print @fc_local;
+
+
+    if (@fc_local == 1 && $fc_local[0] =~ /^Subproject commit /)  # Check for submodule commit line
+    {
+        print "it is submodule, do nothing\n";
+        exit 0;
+    }
 
     # Start gvimdiff
     system("gvim -f -d \"$local_file\" \"$remote_file\"");
