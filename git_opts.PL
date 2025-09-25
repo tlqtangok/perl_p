@@ -70,19 +70,21 @@ sub main()
     # my $cml_tar_all = &git_save();
 
 
-    if ($opt_mode eq "git_save")
+    print "opt_mode:\t$opt_mode", "\n";
+
+    if ($opt_mode =~ m/^git_save/i)
     {
         &git_save(); 
     }
 
 
-    if ($opt_mode eq "git_reset")
+    if ($opt_mode =~ m/^git_reset/i)
     {
        &git_reset(); 
     }
 
 
-    if ($opt_mode eq "git_merge")
+    if ($opt_mode =~ m/^git_merge/i)
     {
         &git_merge();
     }

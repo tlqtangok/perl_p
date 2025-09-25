@@ -2,6 +2,12 @@
 use POSIX qw(assert);
 use feature qw(say);
 
+$SIG{INT} = sub
+{
+    exit 1;
+};
+
+
 &main(); 
 ### sub list ###
 sub main()
