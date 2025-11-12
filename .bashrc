@@ -162,5 +162,16 @@ fi
 #   eval "`fnm env`"
 # fi
 
+
+
+# if share with other, 
+# add jd config : Load custom bashrc only when SSH from 192.168.2.129
+
+# if [ -n "$SSH_CLIENT" ]; then
+#     SSH_FROM=$(echo $SSH_CLIENT | awk '{print $1}')
+#     if [[ "$SSH_FROM" == 192.168.2.129 ]]; then
+#         [ -f /home/heer/jd/.bashrc ] && source /home/heer/jd/.bashrc
+#     fi
+# fi
 ###################
 
