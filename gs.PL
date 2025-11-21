@@ -121,7 +121,7 @@ sub main()
                 my $cd_win = `$cml_cd`;
 
                 print "\nsubmodule:\n", " cd $cd_win\n";
-                system("gs");
+                system("perl $0");
             }
 
             chdir($CURDIR) or die "chdir $CURDIR error\n";
