@@ -37,13 +37,18 @@ sub main(\@)
 		#print "___".$cml."___\n";  # Debugging line
 
 
+		my $length_cml = length $cml; 
+		my $MAX_CML_LEN = 128;
+
 
 		if ($cml =~ m/^h\s+/ 
 			|| $cml eq "lsh" 
 			|| $cml eq "ls" 
 			|| $cml eq "h" 
 			|| $cml eq "pwd" 
-			|| $cml eq "cd")
+			|| $cml eq "cd" 
+			|| substr($cml, 0, 1) eq "{"
+		)
 		{
 			next;  # Skip commands that start with h, ls, cd, or pwd
 		}
