@@ -111,6 +111,7 @@ alias gs='perl $perl_p/gs.PL'
 alias git_save='perl $perl_p/git_opts.PL git_save'
 alias git_reset='perl $perl_p/git_opts.PL git_reset'
 alias git_merge='perl $perl_p/git_opts.PL git_merge'
+alias grepw='grep --color=auto'
 
 
 #alias gdb='cgdb'

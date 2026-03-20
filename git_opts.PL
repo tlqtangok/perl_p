@@ -146,7 +146,7 @@ sub git_save
 
     my @fn_edit_same = grep{m/^gvim/;}@cml_vimdiff_all;
 
-    if (@fn_list_edit == 0 )
+    if (@fn_list_edit == 0 && $cnt_remote_commit == 0)
     {
         print ("- no new commits, don't need merge\n");
     }
@@ -294,11 +294,13 @@ sub git_merge
 
     my $fn_latest = $fc[0];
     my $fn_tgz = File::Spec->abs2rel($fn_latest, $curdir);
-    my $cml_tar_all = "tar xzf " . $fn_tgz . " -C $g_t0 2>&1";
+    my $cml_tar_all = "tar xvzf " . $fn_tgz . " -C $g_t0 2>&1";
 
     print $cml_tar_all, "\n\n";
 
     my @fn_local = qx($cml_tar_all);
+
+    # print "fn_local: @fn_local\n";
 
     map
     { 

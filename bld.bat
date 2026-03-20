@@ -4,9 +4,11 @@
 :: Verify VS environment
 where cl >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Error: Visual Studio environment not found. Run from VS Developer Command Prompt.
-    exit /b 1
+    call %perl_p%\env_vs.bat
+
 )
+
+@echo off
 
 :: Parse build configuration
 set "BUILD_CONFIG=Debug"

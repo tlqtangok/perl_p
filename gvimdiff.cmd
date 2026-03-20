@@ -14,6 +14,7 @@
 :: git merge --abort
 :: git push
 :: git pull 
+:: git difftool tag HEAD
 
 
 @echo off
