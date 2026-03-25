@@ -1,4 +1,13 @@
 @echo off 
 ::git fetch
-git log --all -8 --name-status
+SET pcnt=0
+FOR %%A IN (%*) DO SET /A pcnt+=1
+
+set tag_no=%1
+
+if %pcnt%==0 (
+    git log --all -55 --name-status
+) else (
+    git log %* -55 --name-status
+)
 @echo on 
