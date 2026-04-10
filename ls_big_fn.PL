@@ -10,7 +10,7 @@ use Scalar::Util qw/reftype/;
 use File::Copy;
 use File::Find;
 use Cwd qw(abs_path cwd);
-use POSIX qw(assert);
+use POSIX qw(assert strftime);
 use strict;
 use threads;
 use IO::Handle;
@@ -56,12 +56,15 @@ sub main()
     {
     
         my $fn_full = $_;
+
+		my $mtime_ = &formatted_mtime($fn_full);
+
         if ($os_type eq "MSWin32")
         {
             $fn_full =~ s|\/|\\|g;
         }
 
-        print $fn_full, " || ", $hash_fn_sz{$_}, "\n"; 
+        print $fn_full, " || ", $hash_fn_sz{$_}, " || " ,  $mtime_ , "\n"; 
 
        if ($cnt > $num_topn) 
        {
@@ -121,4 +124,13 @@ sub if_fn_match_pattern($fn, $ref_filter_param_list)
 	}
 
 	return $ret_code;
+}
+
+sub formatted_mtime($)
+{
+	my $fn = shift;
+	my $mtime = (stat($fn))[9];  # 第9项是修改时间(mtime)
+	my $formatted_time = strftime("%Y%m%d_%H%M", localtime($mtime));
+
+	return $formatted_time;
 }
