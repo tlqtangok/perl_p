@@ -107,6 +107,10 @@ alias t0='cd $t0'
 alias grepw='grep'
 alias p='pushd'
 alias pd='popd'
+alias gl='git log --all -55 --name-status'
+alias git_save='perl $perl_p/git_opts.PL git_save'
+alias git_reset='perl $perl_p/git_opts.PL git_reset'
+alias git_merge='perl $perl_p/git_opts.PL git_merge'
 
 
 
