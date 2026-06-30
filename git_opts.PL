@@ -29,6 +29,8 @@ my $g_t0 = "t0";
 
 my $SP = File::Spec->catfile('', '');
 my $is_windows = ($^O eq 'MSWin32');
+my $GVIM = $is_windows ? 'gvim' : 'vim';
+my $GVIM_UPPER = $is_windows ? 'GVIM' : 'VIM';
 ##################
 
 &main();
@@ -144,7 +146,7 @@ sub git_save
 
     my @cml_vimdiff_all = &tag_edit_fn(\@fc_local_modify, \@fn_list_edit);
 
-    my @fn_edit_same = grep{m/^gvim/;}@cml_vimdiff_all;
+    my @fn_edit_same = grep{m/^$GVIM/;}@cml_vimdiff_all;
 
     if (@fn_list_edit == 0 && $cnt_remote_commit == 0)
     {
@@ -368,13 +370,13 @@ sub tag_edit_fn
             }
         }
 
-        my $e_cml = "gvim -d .$SP$g_t0$SP$fn_diff $fn_diff";
+        my $e_cml = "$GVIM -d .$SP$g_t0$SP$fn_diff $fn_diff";
         if ($flag_edit==1)
         {
         }
         else
         {
-            $e_cml =~ s/^gvim /GVIM /;
+            $e_cml =~ s/^$GVIM /$GVIM_UPPER /;
         }
 
         push @cml_all, $e_cml;
@@ -392,7 +394,7 @@ sub save_g_fn_list
 
         my $fn_git_fetch = $fn;
         $fn_git_fetch =~ s|${g_t0}${SP}${SP}||;
-        $g_fn_list .= "gvim -d $fn $fn_git_fetch\n";
+        $g_fn_list .= "$GVIM -d $fn $fn_git_fetch\n";
 
         push @g_arr_fn_list, "$fn ___ $fn_git_fetch";
     }

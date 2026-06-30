@@ -1,0 +1,18 @@
+# config 
+server_addr: "xxx.tech:10200"
+trust_host_root_certs: false
+
+tunnels:
+  ssh_rdp:
+    remote_port: 10203
+    proto:
+      tcp: "3389"
+  ssh_ub24:
+    remote_port: 10209
+    proto:
+      tcp: "10211"  
+  http:
+    hostname: "xxx.tech:10201"    # hostname + port
+    proto:
+      http: "3000"
+

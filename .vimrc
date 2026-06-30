@@ -110,6 +110,9 @@ set shiftwidth=4
 set cindent
 set hlsearch
 
+
+colorscheme koehler
+
 if &diff
   "diff mode
   set diffopt+=iwhite

@@ -74,9 +74,9 @@ alias nll='nl -w 4 -b a -n rz '
 alias t='cd $t'
 alias tt='cd $tt'
 alias et='cd $et'
-alias gs='cd $gs'
-alias gss='cd $gss'
-alias gss_='cd $gss_'
+# alias gs='cd $gs'
+# alias gss='cd $gss'
+# alias gss_='cd $gss_'
 alias db='cd $db'
 
 alias dg='newgrp - docker'
@@ -111,8 +111,11 @@ alias gl='git log --all -55 --name-status'
 alias git_save='perl $perl_p/git_opts.PL git_save'
 alias git_reset='perl $perl_p/git_opts.PL git_reset'
 alias git_merge='perl $perl_p/git_opts.PL git_merge'
-
-
+alias cc1='cd $cc1'
+alias dl='cd $dl'
+alias ssd='cd $ssd'
+alias pro='cd $pro'
+alias gs='perl $perl_p/gs.PL '
 
 #alias gdb='cgdb'
 

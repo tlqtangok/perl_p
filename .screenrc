@@ -1,1 +1,16 @@
 shell /bin/bash
+
+
+# 开启鼠标追踪
+mousetrack on
+
+# 允许滚轮事件穿透给终端底层，从而实现平滑滚动历史记录
+# termcapinfo xterm* ti@:te@
+# termcapinfo linux* ti@:te@
+
+# 增加历史缓冲区大小，不然没滚几下就没了
+# defscrollback 80000
+
+# defmouse on
+# maptimeout 100
+

@@ -1,0 +1,28 @@
+[filter "lfs"]
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+[credential "https://codeup.aliyun.com"]
+	provider = generic
+[user]
+	name = jd
+	email = tlqtangok@126.com
+[gui]
+	encoding = utf-8
+[core]
+	autocrlf = false
+[diff]
+	tool = gvimdiff
+[difftool "gvimdiff"]
+	cmd = git_gvim_diff_merge.bat $LOCAL $REMOTE
+	trustExitCode = true
+[merge]
+	tool = gvim
+[difftool]
+	prompt = false
+[mergetool "gvim"]
+	cmd = git_gvim_diff_merge.bat $LOCAL $REMOTE $MERGED
+	trustExitCode = true
+[safe]
+	directory = D:/jd/t/t0/cc1/Claw/cpp_cli_srv
